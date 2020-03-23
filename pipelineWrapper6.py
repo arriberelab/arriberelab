@@ -1,0 +1,203 @@
+"""
+Joshua Arribere, July 25, 2014
+
+Revising the pipelineWrapper script
+
+run as python pipelineWrapper5.py inputReads.fastq outPrefix
+"""
+import sys, common, os, assignReadsToGenes3, metaStartStop, readCollapser2, filterJoshSAMByReadLength
+import readCollapser3
+from logJosh import Tee
+
+def main(args):
+    fastqFile,minimumReadLength,maximumReadLength,outPrefix=args[0:]
+    
+    ############################################################################################################
+    """First set some parameters"""
+    ############################################################################################################
+    #adaptorSeq='CTGTAGGCACCATCAAT'#adaptor for Komili loc1 dataset (looks same as rachel's adaptor)
+    #adaptorSeq='AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'#oJA126
+    #adaptorSeq='AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCGTATCATT'#revCompl of forward adaptor
+    #adaptorSeq='CACTCGGGCACCAAGGAC'#from BZ boris oligos
+    #adaptorSeq='CTGTAGGCACCATCAATC'#Jonathan Gent
+    #adaptorSeq='TGGAATTCTCGGGTGCCAAGG'#hendriks 3'adaptor for Ribo-seq time course
+    #adaptorSeq='AGATGACGGGAAATAAAAGACACGTGCTGAAGTCAA'#another possibility for nextSeq adaptor from NEB
+    adaptorSeq='AGATCGGAAGAGCACACGTCTGAACTCC'#possibly the nextSeq adaptor from NEB
+    #Atail
+    #adaptorSeq='AAAAAAAAAAAAAAAAAA'
+    #adaptorSeq='CTGTAGGCACCATCAA'#this is rachel's adaptor
+    minimumReadLength=int(minimumReadLength)
+    maximumReadLength=int(maximumReadLength)
+    #genomeDir='/data3/genomes/170622_yeastWithUTRs/'
+    #genomeDir='/data1/genomes/161002_yeast/'
+    #genomeDir='/data1/genomes/160212_Celegans_Ce10with_unc-54Degenerate/'
+    #genomeDir='/home/josh/genomes/150226_Scer/'
+    #genomeDir='/home/josh/genomes/150321_GFP_with_Ce_Chr/150325_PD8362/'
+    #genomeDir='/home/josh/genomes/131217_Ty1/140127_Ty1/'
+    #genomeDir='/home/josh/genomes/150518_Celegans/'
+    #genomeDir='/data3/genomes/170620_unc-54GFPwithT2A/'
+    #genomeDir='/data3/genomes/170719_unc-54e1092/'
+    #genomeDir='/data4/genomes/171207_Celegans_release90/'
+    #genomeDir='/data5/marissa/180411_genomes/180417_ensembl/'
+    #genomeDir='/data4/genomes/171218_historicalGenomeT2A/'
+    #genomeDir='/data1/genomes/170322_genomeWithUnc-54GFPNonStopDegenerate2/'
+    #genomeDir='/data1/genomes/160110_Celegans_rel83/'
+    #genomeDir='/data7/180330_backups/160520_joshGallifreyBackup/data1/genomes/161002_yeast/'
+    genomeDir='/data12/joshua/genomes/180402_clone_160110_Celegans_rel83/160110_Celegans_rel83/'
+    #genomeDir='/data12/joshua/genomes/171218_historicalGenomeT2A/'
+    #genomeDir='/data12/joshua/genomes/191125_srf0788FromParissa/'
+    #genomeAnnots='/home/josh/genomes/131217_Ty1/140127_Ty1/131217_M18706_revised.gtf'
+    #genomeAnnots='/home/josh/working/141117_working_newGTF/Caenorhabditis_elegans.WBcel215.70.sansBJA7_40_77.gtf'
+    #genomeAnnots='/data3/genomes/170622_yeastWithUTRs/170622_Saccharomyces_cerevisiae.R64-1-1.85.gtf'
+    #genomeAnnots='/data1/genomes/161002_yeast/Saccharomyces_cerevisiae.R64-1-1.85.gtf'
+    #genomeAnnots='/data1/genomes/160212_Celegans_Ce10with_unc-54Degenerate/Caenorhabditis_elegans.WBcel235.83.gtf'
+    #genomeAnnots='/home/josh/genomes/150226_Scer/Saccharomyces_cerevisiae.R64-1-1.78.gtf'
+    #genomeAnnots='/home/josh/genomes/150321_GFP_with_Ce_Chr/150325_WBcel215.70_chrPD2874-2876and8362.gtf'
+    #genomeAnnots='/data1/genomes/160110_Celegans_rel83/Caenorhabditis_elegans.WBcel235.83.gtf'
+    #genomeAnnots='/data1/genomes/170322_genomeWithUnc-54GFPNonStopDegenerate2/170322_genomeWithExtraUnc-54Chr.gtf'
+    #genomeAnnots='/data3/genomes/170620_unc-54GFPwithT2A/170612_genomeWithUnc-54ChrAsItAppearsInPD4092.gtf'
+    #genomeAnnots='/data3/genomes/170719_unc-54e1092/Caenorhabditis_elegans.WBcel235.83.gtf'
+    #genomeAnnots='/data4/genomes/171207_Celegans_release90/Caenorhabditis_elegans.WBcel235.90.gtf'
+    #genomeAnnots='/data5/marissa/180411_genomes/180417_ensembl/Schizosaccharomyces_pombe.ASM294v2.22.gtf'
+    #genomeAnnots='/data4/genomes/171218_historicalGenomeT2A/170612_genomeWithUnc-54ChrAsItAppearsInPD4092.gtf'
+    #genomeAnnots='/data7/180330_backups/160520_joshGallifreyBackup/data1/genomes/161002_yeast/Saccharomyces_cerevisiae.R64-1-1.85.gtf'
+    genomeAnnots='/data12/joshua/genomes/180402_clone_160110_Celegans_rel83/160110_Celegans_rel83/Caenorhabditis_elegans.WBcel235.83.gtf'
+    #genomeAnnots='/data12/joshua/genomes/171218_historicalGenomeT2A/170612_genomeWithUnc-54ChrAsItAppearsInPD4092.gtf'
+    #genomeAnnots='/data12/joshua/genomes/191125_srf0788FromParissa/191122_genomeWithUnc-54AsItAppearsInWJA0788.gtf'
+    cores=10#groundcontrol has 16 cores total: cat /proc/cpuinfo | grep processor | wc -l
+    misMatchMax=0
+    
+    print '    adaptorseq:%s\n\
+    minimumReadLength (not including N6):%s\n\
+    maximumReadLength (not including N6):%s\n\
+    genomeDir:%s\n\
+    genomeAnnots:%s\n\
+    cores To Use:%s\n\
+    misMatchMax:%s\n\
+    '%(adaptorSeq,minimumReadLength,maximumReadLength,genomeDir,genomeAnnots,cores,misMatchMax)
+    
+    ############################################################################################################
+    """Trim reads"""
+    ############################################################################################################
+    #print 'skipping trimming of any kind, so min/maximumReadLength restrictions ignored.'
+    #os.system('cp %s %s.trimmed'%(fastqFile,outPrefix))
+    
+    print 'read length restriction does not include 6NNNs. This program will NOT add 6'
+    #print 'read length restriction does not include 6Ns and 4Ns. This program WILL add 10'
+    #print 'read length restriction does not include 6Ns. This program WILL add 6'
+    
+    os.system('cutadapt -a %s -m %s -M %s --too-short-output %s --too-long-output %s %s > %s 2>/dev/null'%(adaptorSeq,
+                                                            minimumReadLength,#+6,
+                                                            maximumReadLength,#+6,
+                                                            outPrefix+'.trimmed.tooShort',
+                                                            outPrefix+'.trimmed.tooLong',
+                                                            fastqFile,
+                                                            outPrefix+'.trimmed'))
+    
+    ############################################################################################################
+    """Collapse the reads and trim off 6 nts from the 3'end [and 3 nts from 5'end, maybe, you have to check script]"""
+    ############################################################################################################
+    #readCollapser3.main([outPrefix+'.trimmed',outPrefix+'.trimmed.collapsed.fastq'])
+    print 'skipping collapsing...'
+    os.system('cp %s.trimmed %s.trimmed.collapsed.fastq'%(outPrefix,outPrefix))
+    
+    ############################################################################################################
+    """Introduce a variable to make reading code easier"""
+    ############################################################################################################
+    readFile=outPrefix+'.trimmed.collapsed.fastq'
+    
+    ############################################################################################################
+    """Perform a filter round of mapping. e.g. to rDNA or RNAi trigger"""
+    ############################################################################################################
+    
+    #genomeDir2='/data1/genomes/170320_unc-54GFPNonStop/'
+    #genomeAnnots2='/data1/genomes/170320_unc-54GFPNonStop/170320_unc-54GFPNonStop.gtf'
+    #genomeDir2='/data1/genomes/170320_unc-54BJA40TriggerChr/'
+    #genomeAnnots2='/data1/genomes/170320_unc-54BJA40TriggerChr/170320_dummyGTF.gtf'
+    #genomeDir2='/data1/genomes/161031_Ty1/'
+    #genomeAnnots2='/data1/genomes/161031_Ty1/131217_M18706_revised.gtf'
+    #genomeDir2='/home/josh/genomes/150519_triggerChr4/'
+    #genomeDir2='/home/josh/genomes/150608_triggerChr5_onlyunc-22andunc-54/'
+    #genomeDir2='/data3/genomes/170626_rDNAcerevisiae/'
+    #genomeAnnots2='/data3/genomes/170626_rDNAcerevisiae/blah.gtf'
+    #genomeDir2='/data4/genomes/171207_BJA40BJA7chr/'
+    #genomeDir2='/data4/genomes/180103_BJA7_40_77_chr/'
+    #genomeAnnots2=genomeDir2+'blah.gtf'
+    #genomeDir2='/data4/genomes/180331_triggerChr_pJA7_pJA40_pJA77/'
+    #genomeDir2='/data4/genomes/180514_triggerChr_pJA7_pJA77_pJA151_pJA153/'
+    #genomeAnnots2=genomeDir2+'blah.gtf'
+    """
+    genomeDir2='/data8/genomes/181106_pMPmismatchFeeding/'
+    genomeAnnots2=genomeDir2+'blah.gtf'
+    misMatchMax2=0
+    print 'performing filter round of mapping to '+genomeDir2
+    print 'Only running on %s cores.'%cores
+    print '%s mismatch max!'%misMatchMax2
+    optString='--outFilterScoreMin 14 --outFilterScoreMinOverLread 0.3 --outFilterMatchNmin 14 --outFilterMatchNminOverLread 0.3 --outReadsUnmapped Fastx --outFilterMismatchNmax %s --outSJfilterOverhangMin 1000 1000 1000 1000 '%misMatchMax2
+    print 'Length/Score parameters: '+optString
+    os.system('STAR '+optString+' \
+              --alignIntronMax 1 \
+              --sjdbGTFfile '+genomeAnnots2+' \
+              --genomeDir '+genomeDir2+' \
+              --readFilesIn '+readFile+' --runThreadN '+str(cores)+' --outFileNamePrefix '+outPrefix+'.trimmed.collapsed.mapped.filter')
+    """
+    #"""Now rewrite the read file to map from the unmapped reads"""
+    print 'skipping filter round of mapping...'
+    #readFile=outPrefix+'.trimmed.collapsed.mapped.filterUnmapped.out.mate1'
+    
+    ############################################################################################################
+    """Commence read mapping"""
+    ############################################################################################################
+    print 'Only running on %s cores.'%cores
+    print '%s mismatch max!'%misMatchMax
+    #optString='--outFilterScoreMin 14 --outFilterScoreMinOverLread 0.3 --outFilterMatchNmin 14 --outFilterMatchNminOverLread 0.3 --outFilterMismatchNmax %s --outSJfilterOverhangMin 20 10 10 10'%misMatchMax
+    #os.system('STAR '+optString+' \
+    #          --alignIntronMax 1 \
+    #          --sjdbGTFfile '+genomeAnnots+' \
+    #          --genomeDir '+genomeDir+' \
+    #          --readFilesIn '+readFile+' --runThreadN '+str(cores)+' --outFileNamePrefix '+outPrefix+'.finalMapped.')
+    optString='--outFilterMatchNmin 70 --outReadsUnmapped Fastx --outFilterMismatchNmax %s --outSJfilterOverhangMin 6 6 6 6'%misMatchMax
+    #use the next optString for the normal pipeline
+    #optString='--outFilterScoreMin 14 --outFilterScoreMinOverLread 0.3 --outFilterMatchNmin 14 --outFilterMatchNminOverLread 0.3 --outReadsUnmapped Fastx --outFilterMismatchNmax %s --outSJfilterOverhangMin 6 6 6 6'%misMatchMax
+    print 'Length/Score parameters: '+optString
+    os.system('STAR '+optString+' \
+              --alignIntronMax 1 \
+              --sjdbGTFfile '+genomeAnnots+' \
+              --genomeDir '+genomeDir+' \
+              --readFilesIn '+readFile+' --runThreadN '+str(cores)+' --outFileNamePrefix '+outPrefix+'.finalMapped.')
+    
+    #print 'Printing file '+outPrefix+'Log.final.out'
+    #os.system('lpr -p '+outPrefix+'Log.final.out')
+    ############################################################################################################
+    """Assign reads to genes"""
+    ############################################################################################################
+    print 'Assigning reads to genes...'
+    assignReadsToGenes3.main([genomeAnnots,
+                             outPrefix+'.finalMapped.Aligned.out.sam',
+                             outPrefix])
+    
+    ############################################################################################################
+    """Additional filtering of reads by length"""
+    ############################################################################################################
+    #print 'Quitting early!!!',sys.exit()
+    print 'Filtering read lengths again...'
+    filterJoshSAMByReadLength.main([outPrefix+'.joshSAM',
+                                minimumReadLength,
+                                maximumReadLength,
+                                outPrefix+'.joshSAM.filtered_%s-%snt'%(minimumReadLength,maximumReadLength)])
+    print 'Quitting early!!!',sys.exit()
+    
+    ############################################################################################################
+    """Make a metagene plot of start/stop codon"""
+    ############################################################################################################
+    #print 'skipping the output metagene plot...'
+    print 'Plotting metagene...'
+    metaStartStop.main([genomeAnnots,
+                        outPrefix+'.plot',
+                        outPrefix+'.joshSAM.filtered_%s-%snt'%(minimumReadLength,maximumReadLength),
+                        'Library'])
+    print 'Done! '+outPrefix
+
+if __name__ == '__main__':
+    Tee()
+    main(sys.argv[1:])
