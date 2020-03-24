@@ -33,13 +33,12 @@ class Tee(object):
             pass
         filename = filename or os.getcwd() + '/logs/%s_%s' % (script_name, time)
         # filename = filename or '/home/josh/data/logs/%s_%s' %(script_name, time)
-        print
-        'logging to ', filename
-        self.file = open(filename + '.log', mode)
+        print(f'logging to {filename}')
+        self.file = open(f'{filename}.log', mode)
         self.stdout = sys.stdout
         sys.stdout = self
-        with open(filename + '.cmd', 'w') as f:
-            f.write('From directory: ' + os.getcwd() + '\n')  # let's you know where you are
+        with open(f'{filename}.cmd', 'w') as f:
+            f.write(f'From directory: {os.getcwd()}\n')  # let's you know where you are
             f.write(' '.join(sys.argv[0:]) + '\n')  # writes the command that was run.
 
     def __del__(self):
