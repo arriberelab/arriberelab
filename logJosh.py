@@ -1,5 +1,7 @@
+#!/usr/bin/env python3
 """
 Aug 27, 2013 Joshua Arribere
+Converted to python 3: Mar 24, 2020
 
 Script to perform automatic reporting of another python script when invoked. This script will:
 (1) Create a file with filename including script used, and date/time
@@ -14,7 +16,6 @@ This was originally adapted from a script from Jason Merkin.
 EDIT: Oct 4, 2013 - JOSH revised to make output logs in the directory where python is called. This makes
     trying to identify the command used to make a given file that much easier.
 """
-# !/usr/bin/python
 import sys
 import os
 import datetime
@@ -31,8 +32,8 @@ class Tee(object):
             os.mkdir('logs')
         except OSError:  # then the log directory already exists
             pass
-        filename = filename or os.getcwd() + '/logs/%s_%s' % (script_name, time)
-        # filename = filename or '/home/josh/data/logs/%s_%s' %(script_name, time)
+        filename = filename or os.getcwd() + f'/logs/{script_name}_{time}'
+        # filename = filename or f'/home/josh/data/logs/{script_name}_{time}'
         print(f'logging to {filename}')
         self.file = open(f'{filename}.log', mode)
         self.stdout = sys.stdout
@@ -57,9 +58,6 @@ if __name__ == '__main__':
     # Tee()
     Tee(script_name=os.path.basename(__file__))
 
-    print
-    'testing'
-    print
-    1, 2
-    print
-    'passed'
+    print('testing')
+    print(1, 2)
+    print('passed')
