@@ -195,7 +195,7 @@ def main(args):
     exactLength = None
     # exactLength=[28,29,30]
     # exactLength=[15,16,17,18]
-    print('Length restriction on reads: ', exactLength)
+    print(f'Length restriction on reads: {exactLength}')
 
     txtLengths, cdsLengths, txtGroups = getLengths(annots)
 
