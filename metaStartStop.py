@@ -14,7 +14,7 @@ run as python metaStartStop.py outPrefix infile1.joshSAM name1 ... infilen.joshS
 """
 import sys, common, csv, collections, numpy
 from logJosh import Tee
-from pyx import *
+import pyx
 
 def getLengths(annots):
     """Will return two dicts of total txt length and cds length"""
@@ -80,7 +80,8 @@ def getMetaStartStop(inFile,txtLengths,txtGroups,readLengthRestriction=None):
     
     totalCt={}
     #Apply the normalization factor and record read positions
-    metaStart,metaStop={'S':collections.defaultdict(list),'AS':collections.defaultdict(list)},{'S':collections.defaultdict(list),'AS':collections.defaultdict(list)}
+    metaStart, metaStop = {'S':collections.defaultdict(list),'AS':collections.defaultdict(list)},\
+                          {'S':collections.defaultdict(list),'AS':collections.defaultdict(list)}
     inFrame=0.
     outOfFrame=0.
     with open(inFile,'r') as f:
@@ -121,10 +122,10 @@ def getMetaStartStop(inFile,txtLengths,txtGroups,readLengthRestriction=None):
                         metaStart[SorAS][relStart].append(1./normFactors[gene_id]/numMapped)
                         metaStop[SorAS][relStop].append(1./normFactors[gene_id]/numMapped)
                         """
-    
-    print 'For metaORF, averaged over whole read'
-    print inFrame, outOfFrame
-    print inFrame/(outOfFrame+inFrame)
+
+    print('For metaORF, averaged over whole read')
+    print(inFrame, outOfFrame)
+    print(inFrame / (outOfFrame + inFrame))
     metaAverage(metaStart,len(totalCt))
     metaAverage(metaStop,len(totalCt))
     
@@ -143,29 +144,29 @@ def processMeta(dict1,flip=0):
 def mkStartStopPlot(names,metaData,outPrefix):
     """metaData={name:({'S':metaStartSense,'AS':metaStartAS},{'S':metaStopSense,'AS':metaStopAS})}.
     Will plot sense above x=0, antisense below x=0, Start plot on left and Stop plot on right"""
-    start=graph.graphxy(width=8,height=8,
-                    x=graph.axis.linear(min=-200,max=200,
+    start=pyx.graph.graphxy(width=8,height=8,
+                    x=pyx.graph.axis.linear(min=-200,max=200,
                                         title='Position Relative to Start Codon'),
-                    y=graph.axis.linear(title='Normalized Read Density'))
-    stop=graph.graphxy(width=8,height=8,xpos=start.width*1.1,
-                       key=graph.key.key(pos='tr'),
-                    x=graph.axis.linear(min=-200,max=200,
+                    y=pyx.graph.axis.linear(title='Normalized Read Density'))
+    stop=pyx.graph.graphxy(width=8,height=8,xpos=start.width*1.1,
+                       key=pyx.graph.key.key(pos='tr'),
+                    x=pyx.graph.axis.linear(min=-200,max=200,
                                         title='Position Relative to Stop Codon'),
-                    y=graph.axis.linkedaxis(start.axes["y"]))
+                    y=pyx.graph.axis.linkedaxis(start.axes["y"]))
     
     for ii in range(len(names)):
         name=names[ii]
         metaStartSense=processMeta(metaData[name][0]['S'])
-        start.plot(graph.data.points(metaStartSense,x=1,y=2),[graph.style.line([common.colors(ii)])])
+        start.plot(pyx.graph.data.points(metaStartSense,x=1,y=2),[pyx.graph.style.line([common.colors(ii)])])
         metaStartAS=processMeta(metaData[name][0]['AS'],flip=1)
-        start.plot(graph.data.points(metaStartAS,x=1,y=2),[graph.style.line([common.colors(ii)])])
+        start.plot(pyx.graph.data.points(metaStartAS,x=1,y=2),[pyx.graph.style.line([common.colors(ii)])])
         
         metaStopSense=processMeta(metaData[name][1]['S'])
-        stop.plot(graph.data.points(metaStopSense,x=1,y=2,title=name),[graph.style.line([common.colors(ii)])])
+        stop.plot(pyx.graph.data.points(metaStopSense,x=1,y=2,title=name),[pyx.graph.style.line([common.colors(ii)])])
         metaStopAS=processMeta(metaData[name][1]['AS'],flip=1)
-        stop.plot(graph.data.points(metaStopAS,x=1,y=2,title=name),[graph.style.line([common.colors(ii)])])
+        stop.plot(pyx.graph.data.points(metaStopAS,x=1,y=2,title=name),[pyx.graph.style.line([common.colors(ii)])])
     
-    c=canvas.canvas()
+    c=pyx.canvas.canvas()
     c.insert(start)
     c.insert(stop)
     c.writePDFfile(outPrefix)
@@ -178,8 +179,8 @@ def main(args):
     exactLength=None
     #exactLength=[28,29,30]
     #exactLength=[15,16,17,18]
-    print 'Length restriction on reads: ',exactLength
-    
+    print('Length restriction on reads: ', exactLength)
+
     txtLengths,cdsLengths,txtGroups=getLengths(annots)
     
     metaData={}
@@ -190,6 +191,7 @@ def main(args):
         metaData[name]=getMetaStartStop(inFile,txtLengths,txtGroups,readLengthRestriction=exactLength)
     
     mkStartStopPlot(names,metaData,outPrefix)
+
 
 if __name__=='__main__':
     Tee()
