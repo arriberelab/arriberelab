@@ -1,9 +1,10 @@
 """
 Joshua Arribere, July 25, 2014
+Python3 Marcus Viscardi March 23, 2020
 
 Revising the pipelineWrapper script
 
-run as python pipelineWrapper5.py inputReads.fastq outPrefix
+run as python3 pipelineWrapper5.py inputReads.fastq outPrefix
 """
 import sys, common, os, assignReadsToGenes3, metaStartStop, readCollapser2, filterJoshSAMByReadLength
 import readCollapser3
@@ -66,45 +67,47 @@ def main(args):
     #genomeAnnots='/data12/joshua/genomes/191125_srf0788FromParissa/191122_genomeWithUnc-54AsItAppearsInWJA0788.gtf'
     cores=10#groundcontrol has 16 cores total: cat /proc/cpuinfo | grep processor | wc -l
     misMatchMax=0
-    
-    print '    adaptorseq:%s\n\
-    minimumReadLength (not including N6):%s\n\
-    maximumReadLength (not including N6):%s\n\
-    genomeDir:%s\n\
-    genomeAnnots:%s\n\
-    cores To Use:%s\n\
-    misMatchMax:%s\n\
-    '%(adaptorSeq,minimumReadLength,maximumReadLength,genomeDir,genomeAnnots,cores,misMatchMax)
-    
+
+    print(f'\tadaptorseq: {adaptorSeq}\n'
+          f'\tminimumReadLength (not including N6): {minimumReadLength}\n'
+          f'\tmaximumReadLength (not including N6): {maximumReadLength}\n'
+          f'\tgenomeDir: {genomeDir}\n'
+          f'\tgenomeAnnots: {genomeAnnots}\n'
+          f'\tcores To Use: {cores}\n'
+          f'\tmisMatchMax: {misMatchMax}\n'
+          )
+
     ############################################################################################################
     """Trim reads"""
     ############################################################################################################
-    #print 'skipping trimming of any kind, so min/maximumReadLength restrictions ignored.'
-    #os.system('cp %s %s.trimmed'%(fastqFile,outPrefix))
-    
-    print 'read length restriction does not include 6NNNs. This program will NOT add 6'
-    #print 'read length restriction does not include 6Ns and 4Ns. This program WILL add 10'
-    #print 'read length restriction does not include 6Ns. This program WILL add 6'
-    
-    os.system('cutadapt -a %s -m %s -M %s --too-short-output %s --too-long-output %s %s > %s 2>/dev/null'%(adaptorSeq,
-                                                            minimumReadLength,#+6,
-                                                            maximumReadLength,#+6,
-                                                            outPrefix+'.trimmed.tooShort',
-                                                            outPrefix+'.trimmed.tooLong',
-                                                            fastqFile,
-                                                            outPrefix+'.trimmed'))
+    # print('skipping trimming of any kind, so min/maximumReadLength restrictions ignored.')
+    # os.system('cp %s %s.trimmed'%(fastqFile,outPrefix))
+
+    print('read length restriction does not include 6NNNs. This program will NOT add 6')
+    # print('read length restriction does not include 6Ns and 4Ns. This program WILL add 10')
+    # print('read length restriction does not include 6Ns. This program WILL add 6')
+
+    os.system(f'cutadapt -a {adaptorSeq} '
+              f'-m {minimumReadLength} '
+              f'-M {maximumReadLength} '
+              f'--too-short-output {outPrefix + ".trimmed.tooShort"} '
+              f'--too-long-output {outPrefix + ".trimmed.tooLong"} '
+              f'{fastqFile} > {outPrefix + ".trimmed"} '
+              f'2>/dev/null'
+              )
     
     ############################################################################################################
     """Collapse the reads and trim off 6 nts from the 3'end [and 3 nts from 5'end, maybe, you have to check script]"""
     ############################################################################################################
-    #readCollapser3.main([outPrefix+'.trimmed',outPrefix+'.trimmed.collapsed.fastq'])
-    print 'skipping collapsing...'
-    os.system('cp %s.trimmed %s.trimmed.collapsed.fastq'%(outPrefix,outPrefix))
+    # readCollapser3.main([outPrefix+'.trimmed',outPrefix+'.trimmed.collapsed.fastq'])
+    print('skipping collapsing...')
+    os.system(f'cp {outPrefix}.trimmed '
+              f'{outPrefix}.trimmed.collapsed.fastq')
     
     ############################################################################################################
     """Introduce a variable to make reading code easier"""
     ############################################################################################################
-    readFile=outPrefix+'.trimmed.collapsed.fastq'
+    readFile=f'{outPrefix}.trimmed.collapsed.fastq'
     
     ############################################################################################################
     """Perform a filter round of mapping. e.g. to rDNA or RNAi trigger"""
@@ -130,48 +133,76 @@ def main(args):
     genomeDir2='/data8/genomes/181106_pMPmismatchFeeding/'
     genomeAnnots2=genomeDir2+'blah.gtf'
     misMatchMax2=0
-    print 'performing filter round of mapping to '+genomeDir2
-    print 'Only running on %s cores.'%cores
-    print '%s mismatch max!'%misMatchMax2
-    optString='--outFilterScoreMin 14 --outFilterScoreMinOverLread 0.3 --outFilterMatchNmin 14 --outFilterMatchNminOverLread 0.3 --outReadsUnmapped Fastx --outFilterMismatchNmax %s --outSJfilterOverhangMin 1000 1000 1000 1000 '%misMatchMax2
-    print 'Length/Score parameters: '+optString
-    os.system('STAR '+optString+' \
-              --alignIntronMax 1 \
-              --sjdbGTFfile '+genomeAnnots2+' \
-              --genomeDir '+genomeDir2+' \
-              --readFilesIn '+readFile+' --runThreadN '+str(cores)+' --outFileNamePrefix '+outPrefix+'.trimmed.collapsed.mapped.filter')
+    print(f'performing filter round of mapping to {genomeDir2}')
+    print(f'Only running on {cores} cores.')
+    print(f'{misMatchMax2} mismatch max!')
+    optString= f'--outFilterScoreMin 14 ' \
+        f'--outFilterScoreMinOverLread 0.3 ' \
+        f'--outFilterMatchNmin 14 ' \
+        f'--outFilterMatchNminOverLread 0.3 ' \
+        f'--outReadsUnmapped Fastx ' \
+        f'--outFilterMismatchNmax {misMatchMax2} ' \
+        f'--outSJfilterOverhangMin 1000 1000 1000 1000 '
+    print(f'Length/Score parameters: {optString}')
+    os.system(f'STAR {optString} '
+              f'--alignIntronMax 1 '
+              f'--sjdbGTFfile {genomeAnnots2} '
+              f'--genomeDir {genomeDir2} '
+              f'--readFilesIn {readFile} '
+              f'--runThreadN {cores} '
+              f'--outFileNamePrefix {outPrefix}.trimmed.collapsed.mapped.filter'
+              )
     """
     #"""Now rewrite the read file to map from the unmapped reads"""
-    print 'skipping filter round of mapping...'
+    print('skipping filter round of mapping...')
     #readFile=outPrefix+'.trimmed.collapsed.mapped.filterUnmapped.out.mate1'
     
     ############################################################################################################
     """Commence read mapping"""
     ############################################################################################################
-    print 'Only running on %s cores.'%cores
-    print '%s mismatch max!'%misMatchMax
-    #optString='--outFilterScoreMin 14 --outFilterScoreMinOverLread 0.3 --outFilterMatchNmin 14 --outFilterMatchNminOverLread 0.3 --outFilterMismatchNmax %s --outSJfilterOverhangMin 20 10 10 10'%misMatchMax
-    #os.system('STAR '+optString+' \
-    #          --alignIntronMax 1 \
-    #          --sjdbGTFfile '+genomeAnnots+' \
-    #          --genomeDir '+genomeDir+' \
-    #          --readFilesIn '+readFile+' --runThreadN '+str(cores)+' --outFileNamePrefix '+outPrefix+'.finalMapped.')
-    optString='--outFilterMatchNmin 70 --outReadsUnmapped Fastx --outFilterMismatchNmax %s --outSJfilterOverhangMin 6 6 6 6'%misMatchMax
+    print(f'Only running on {cores} cores.')
+    print(f'{misMatchMax} mismatch max!')
+    # optString= f'--outFilterScoreMin 14 ' \
+    #     f'--outFilterScoreMinOverLread 0.3 ' \
+    #     f'--outFilterMatchNmin 14 ' \
+    #     f'--outFilterMatchNminOverLread 0.3 ' \
+    #     f'--outFilterMismatchNmax {misMatchMax} ' \
+    #     f'--outSJfilterOverhangMin 20 10 10 10'
+    # os.system(f'STAR {optString} '
+    #           f'--alignIntronMax 1 '
+    #           f'--sjdbGTFfile {genomeAnnots} '
+    #           f'--genomeDir {genomeDir} '
+    #           f'--readFilesIn {readFile} '
+    #           f'--runThreadN {cores} '
+    #           f'--outFileNamePrefix {outPrefix}.finalMapped.')
+    optString= f'--outFilterMatchNmin 70 ' \
+        f'--outReadsUnmapped Fastx ' \
+        f'--outFilterMismatchNmax {misMatchMax} ' \
+        f'--outSJfilterOverhangMin 6 6 6 6'
+
     #use the next optString for the normal pipeline
-    #optString='--outFilterScoreMin 14 --outFilterScoreMinOverLread 0.3 --outFilterMatchNmin 14 --outFilterMatchNminOverLread 0.3 --outReadsUnmapped Fastx --outFilterMismatchNmax %s --outSJfilterOverhangMin 6 6 6 6'%misMatchMax
-    print 'Length/Score parameters: '+optString
-    os.system('STAR '+optString+' \
-              --alignIntronMax 1 \
-              --sjdbGTFfile '+genomeAnnots+' \
-              --genomeDir '+genomeDir+' \
-              --readFilesIn '+readFile+' --runThreadN '+str(cores)+' --outFileNamePrefix '+outPrefix+'.finalMapped.')
-    
-    #print 'Printing file '+outPrefix+'Log.final.out'
-    #os.system('lpr -p '+outPrefix+'Log.final.out')
+    # optString= f'--outFilterScoreMin 14 ' \
+    #     f'--outFilterScoreMinOverLread 0.3 ' \
+    #     f'--outFilterMatchNmin 14 ' \
+    #     f'--outFilterMatchNminOverLread 0.3 ' \
+    #     f'--outReadsUnmapped Fastx ' \
+    #     f'--outFilterMismatchNmax {misMatchMax} ' \
+    #     f'--outSJfilterOverhangMin 6 6 6 6'
+    print(f'Length/Score parameters: {optString}')
+    os.system(f'STAR {optString} '
+              f'--alignIntronMax 1 '
+              f'--sjdbGTFfile {genomeAnnots} '
+              f'--genomeDir {genomeDir} '
+              f'--readFilesIn {readFile} '
+              f'--runThreadN {cores} '
+              f'--outFileNamePrefix {outPrefix}.finalMapped.')
+
+    # print(f'Printing file {outPrefix}Log.final.out')
+    # os.system(f'lpr -p {outPrefix}Log.final.out')
     ############################################################################################################
     """Assign reads to genes"""
     ############################################################################################################
-    print 'Assigning reads to genes...'
+    print('Assigning reads to genes...')
     assignReadsToGenes3.main([genomeAnnots,
                              outPrefix+'.finalMapped.Aligned.out.sam',
                              outPrefix])
@@ -179,24 +210,25 @@ def main(args):
     ############################################################################################################
     """Additional filtering of reads by length"""
     ############################################################################################################
-    #print 'Quitting early!!!',sys.exit()
-    print 'Filtering read lengths again...'
+    # print('Quitting early!!!', sys.exit())
+    print('Filtering read lengths again...')
     filterJoshSAMByReadLength.main([outPrefix+'.joshSAM',
                                 minimumReadLength,
                                 maximumReadLength,
                                 outPrefix+'.joshSAM.filtered_%s-%snt'%(minimumReadLength,maximumReadLength)])
-    print 'Quitting early!!!',sys.exit()
-    
+    print('Quitting early!!!', sys.exit())
+
     ############################################################################################################
     """Make a metagene plot of start/stop codon"""
     ############################################################################################################
     #print 'skipping the output metagene plot...'
-    print 'Plotting metagene...'
+    print('Plotting metagene...')
     metaStartStop.main([genomeAnnots,
-                        outPrefix+'.plot',
-                        outPrefix+'.joshSAM.filtered_%s-%snt'%(minimumReadLength,maximumReadLength),
+                        f'{outPrefix}.plot',
+                        f'{outPrefix}.joshSAM.filtered_{minimumReadLength}-{maximumReadLength}nt',
                         'Library'])
-    print 'Done! '+outPrefix
+    print(f'Done! {outPrefix}')
+
 
 if __name__ == '__main__':
     Tee()
