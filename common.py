@@ -5,7 +5,6 @@ Converted to python 3: Mar 24, 2020
 
 Several commonly used scripts
 """
-
 from pyx import color
 from pickle import load, dump
 
@@ -209,18 +208,18 @@ def colors(i):
          ]
     """
     a=[    
-            pyx.color.cmyk(1,0.5,0,0),#blue
-            pyx.color.cmyk(0.8,0,0,0),
-            pyx.color.cmyk(0.17,0,0.29,0.51),#green
-            pyx.color.cmyk(0.17,0,0.33,0.34),
-            pyx.color.cmyk(0,0.36,0.71,0),#poppy
-            pyx.color.cmyk(0,0.16,0.71,0.02),
-            pyx.color.cmyk(0,0.8,1,0),#vermillion
-            pyx.color.cmyk(0,0.8,0.8,0.1),
-            pyx.color.cmyk(0.1,0.7,0,0),
-            pyx.color.cmyk(0.1,0.05,0.9,0),
-            pyx.color.cmyk(0.97,0,0.75,0),
-            pyx.color.cmyk(0,0,0,1)
+            color.cmyk(1,0.5,0,0),#blue
+            color.cmyk(0.8,0,0,0),
+            color.cmyk(0.17,0,0.29,0.51),#green
+            color.cmyk(0.17,0,0.33,0.34),
+            color.cmyk(0,0.36,0.71,0),#poppy
+            color.cmyk(0,0.16,0.71,0.02),
+            color.cmyk(0,0.8,1,0),#vermillion
+            color.cmyk(0,0.8,0.8,0.1),
+            color.cmyk(0.1,0.7,0,0),
+            color.cmyk(0.1,0.05,0.9,0),
+            color.cmyk(0.97,0,0.75,0),
+            color.cmyk(0,0,0,1)
             ]
     """
     return a[i % len(a)]
