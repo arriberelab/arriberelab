@@ -10,8 +10,9 @@ import sys, common, os, assignReadsToGenes3, metaStartStop, readCollapser2, filt
 import readCollapser3
 from logJosh import Tee
 
+
 def main(args):
-    fastqFile,minimumReadLength,maximumReadLength,outPrefix=args[0:]
+    fastqFile, minimumReadLength, maximumReadLength, outPrefix = args[0:]
     
     ############################################################################################################
     """First set some parameters"""
@@ -24,11 +25,13 @@ def main(args):
     #adaptorSeq='TGGAATTCTCGGGTGCCAAGG'#hendriks 3'adaptor for Ribo-seq time course
     #adaptorSeq='AGATGACGGGAAATAAAAGACACGTGCTGAAGTCAA'#another possibility for nextSeq adaptor from NEB
     adaptorSeq='AGATCGGAAGAGCACACGTCTGAACTCC'#possibly the nextSeq adaptor from NEB
-    #Atail
+    # Atail
     #adaptorSeq='AAAAAAAAAAAAAAAAAA'
     #adaptorSeq='CTGTAGGCACCATCAA'#this is rachel's adaptor
-    minimumReadLength=int(minimumReadLength)
-    maximumReadLength=int(maximumReadLength)
+
+    minimumReadLength = int(minimumReadLength)
+    maximumReadLength = int(maximumReadLength)
+
     #genomeDir='/data3/genomes/170622_yeastWithUTRs/'
     #genomeDir='/data1/genomes/161002_yeast/'
     #genomeDir='/data1/genomes/160212_Celegans_Ce10with_unc-54Degenerate/'
@@ -65,8 +68,8 @@ def main(args):
     genomeAnnots='/data12/joshua/genomes/180402_clone_160110_Celegans_rel83/160110_Celegans_rel83/Caenorhabditis_elegans.WBcel235.83.gtf'
     #genomeAnnots='/data12/joshua/genomes/171218_historicalGenomeT2A/170612_genomeWithUnc-54ChrAsItAppearsInPD4092.gtf'
     #genomeAnnots='/data12/joshua/genomes/191125_srf0788FromParissa/191122_genomeWithUnc-54AsItAppearsInWJA0788.gtf'
-    cores=10#groundcontrol has 16 cores total: cat /proc/cpuinfo | grep processor | wc -l
-    misMatchMax=0
+    cores = 10  #groundcontrol has 16 cores total: cat /proc/cpuinfo | grep processor | wc -l
+    misMatchMax = 0
 
     print(f'\tadaptorseq: {adaptorSeq}\n'
           f'\tminimumReadLength (not including N6): {minimumReadLength}\n'
@@ -81,7 +84,7 @@ def main(args):
     """Trim reads"""
     ############################################################################################################
     # print('skipping trimming of any kind, so min/maximumReadLength restrictions ignored.')
-    # os.system('cp %s %s.trimmed'%(fastqFile,outPrefix))
+    # os.system(f'cp {fastqFile} {outPrefix}.trimmed')
 
     print('read length restriction does not include 6NNNs. This program will NOT add 6')
     # print('read length restriction does not include 6Ns and 4Ns. This program WILL add 10')
@@ -99,7 +102,7 @@ def main(args):
     ############################################################################################################
     """Collapse the reads and trim off 6 nts from the 3'end [and 3 nts from 5'end, maybe, you have to check script]"""
     ############################################################################################################
-    # readCollapser3.main([outPrefix+'.trimmed',outPrefix+'.trimmed.collapsed.fastq'])
+    # readCollapser3.main([f'{outPrefix}.trimmed', f'{outPrefix}.trimmed.collapsed.fastq'])
     print('skipping collapsing...')
     os.system(f'cp {outPrefix}.trimmed '
               f'{outPrefix}.trimmed.collapsed.fastq')
@@ -107,7 +110,7 @@ def main(args):
     ############################################################################################################
     """Introduce a variable to make reading code easier"""
     ############################################################################################################
-    readFile=f'{outPrefix}.trimmed.collapsed.fastq'
+    readFile = f'{outPrefix}.trimmed.collapsed.fastq'
     
     ############################################################################################################
     """Perform a filter round of mapping. e.g. to rDNA or RNAi trigger"""
@@ -175,12 +178,12 @@ def main(args):
     #           f'--readFilesIn {readFile} '
     #           f'--runThreadN {cores} '
     #           f'--outFileNamePrefix {outPrefix}.finalMapped.')
-    optString= f'--outFilterMatchNmin 70 ' \
+    optString = f'--outFilterMatchNmin 70 ' \
         f'--outReadsUnmapped Fastx ' \
         f'--outFilterMismatchNmax {misMatchMax} ' \
         f'--outSJfilterOverhangMin 6 6 6 6'
 
-    #use the next optString for the normal pipeline
+    # #Use the next optString for the normal pipeline
     # optString= f'--outFilterScoreMin 14 ' \
     #     f'--outFilterScoreMinOverLread 0.3 ' \
     #     f'--outFilterMatchNmin 14 ' \
@@ -221,7 +224,7 @@ def main(args):
     ############################################################################################################
     """Make a metagene plot of start/stop codon"""
     ############################################################################################################
-    #print 'skipping the output metagene plot...'
+    # print('skipping the output metagene plot...')
     print('Plotting metagene...')
     metaStartStop.main([genomeAnnots,
                         f'{outPrefix}.plot',
