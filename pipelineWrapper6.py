@@ -2,7 +2,7 @@
 
 """
 Joshua Arribere, July 25, 2014
-Python3 Marcus Viscardi March 23, 2020
+Converted to python 3: Mar 23, 2020
 
 Revising the pipelineWrapper script
 
