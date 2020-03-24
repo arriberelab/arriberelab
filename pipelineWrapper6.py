@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Joshua Arribere, July 25, 2014
 Python3 Marcus Viscardi March 23, 2020
