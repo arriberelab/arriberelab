@@ -6,8 +6,17 @@ Revising the pipelineWrapper script
 
 run as python3 pipelineWrapper5.py inputReads.fastq outPrefix
 """
-import sys, common, os, assignReadsToGenes3, metaStartStop, readCollapser2, filterJoshSAMByReadLength
+# Import short list:
+import os
+import sys
+import assignReadsToGenes3
+import metaStartStop
 import readCollapser3
+import filterJoshSAMByReadLength
+
+# Old import lines:
+# import sys, common, os, assignReadsToGenes3, metaStartStop, readCollapser2, filterJoshSAMByReadLength
+# import readCollapser3
 from logJosh import Tee
 
 
