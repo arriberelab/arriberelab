@@ -1,5 +1,6 @@
 """
 Joshua Arribere June 26, 2017
+Still python 2
 
 Script to filter a joshSAM file by readlength
 
