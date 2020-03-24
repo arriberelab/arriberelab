@@ -1,6 +1,5 @@
 """
 Joshua Arribere June 26, 2017
-Still python 2
 
 Script to filter a joshSAM file by readlength
 
@@ -21,7 +20,7 @@ def main(args):
                     line2=line.strip().split('\t')
                     """
                     if len(line2[3])!=int(line2[4]):
-                        print line
+                        print (line)
                     """
                     if minL<=len(line2[3])<=maxL:
                         g.write(line)
