@@ -1,5 +1,8 @@
 """
 Joshua Arribere Feb 24, 2014
+Updated to python 3: Mar 23, 2020
+
+NOTE: As-is, this works for libraries with 6N on 3end.
 
 Script to collapse reads containing the exact same sequence. Will pick the read information
     from the first occurence of that read for the outFile.
