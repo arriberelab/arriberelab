@@ -1,5 +1,6 @@
 """
 Joshua Arribere Sept 10, 2013
+Still python 2
 
 Script to assign reads to genes. Will first assign sense, then antisense
 
