@@ -1,6 +1,6 @@
 """
 Joshua Arribere Sept 10, 2013
-Still python 2
+Updated to python 3: Mar 23, 2020
 
 Script to assign reads to genes. Will first assign sense, then antisense
 
@@ -17,7 +17,7 @@ EDIT: March 6, 2014 JOSH revised to input output of prepareReadAssignmentFile.py
     assignment instead of recalculating read positions from annotations
 EDIT: Sept 19, 2014 JOSH revised to be take advantage of faster prepareReadAssignmentFile2.py output
 """
-import sys, os, collections, csv, common, re, time, cPickle, copy, linecache
+import sys, os, collections, csv, common, re, time, pickle, copy, linecache
 from logJosh import Tee
 csv.field_size_limit(sys.maxsize)
 
@@ -62,9 +62,9 @@ def loadReadPositions(reads):
                 if row[11].split(':')[-1]=='1':#restriction for uniquely mapping
                     a[Chr][position]={}
                     if 'NH' not in row[11]:
-                        print 'ERROR: Restriction for uniquely mapping failed due to unexpected formatting.', sys.exit()
-    print 'Restricted to single mapping reads.'
-    print time.time()-t
+                        print('ERROR: Restriction for uniquely mapping failed due to unexpected formatting.', sys.exit())
+    print('Restricted to single mapping reads.')
+    print(time.time()-t)
     return a
 
 def parseAnnots(annots,readPositions):
@@ -95,9 +95,9 @@ def parseAnnots(annots,readPositions):
     
     b=dict((txt,a[txt]) for txt in a if a[txt]['CDS']!=[])
     #print len(b), ' number of annotated CDSs'
-    print 'hello'
-    print time.time() -t
-    print 'goodbye'
+    print('hello')
+    print(time.time() -t)
+    print('goodbye')
     return b,readPositions
 
 def getDist(exon_list,position):
@@ -108,8 +108,8 @@ def getDist(exon_list,position):
             return dist+position-exon[0]
         else:
             dist+=exon[1]-exon[0]+1#Edit July 28, 2014 added +1.
-    print exon_list, position, dist
-    print 'Error: position not found in txt', sys.exit()
+    print(exon_list, position, dist)
+    print('Error: position not found in txt', sys.exit())
 
 def getTxtRelPositions(transcript_id,txt_annot,readStrand,readPosition):
     """Given txt_annot={strand,exon,CDS},readStrand,readPosiiton, will return a colon-separated string of
@@ -129,7 +129,7 @@ def getTxtRelPositions(transcript_id,txt_annot,readStrand,readPosition):
     exonStarts=[exon[0] for exon in exons]
     exonEnds=[exon[1] for exon in exons]
     exonStarts.sort(),exonEnds.sort()
-    exons=zip(exonStarts,exonEnds)
+    exons=list(zip(exonStarts,exonEnds))
     #Edit: Apparently the exons are not necessarily orderd in the gtf file.
     
     txtStart_cdsStart_dist=getDist(exons,cdsStart)
@@ -214,8 +214,8 @@ def assignReads(reads,annots,outPrefix):
                             #hwriter.writerow(readInfo+readPositions[Chr][position].keys())
                             if row[12].split(':')[-1]=='1':#only count a multiply-mapping read the first time it appears
                                 unassignedCt+=1#0.066million in UCSC v 0.334million in ENS
-    print '%s reads (%s of reads) were uniquely assigned to a gene with file %s.'%(readCt,readCt/(unassignedCt+readCt),reads)
-    print '%s reads (%s of reads) were unassigned.'%(unassignedCt,unassignedCt/(unassignedCt+readCt))
+    print('%s reads (%s of reads) were uniquely assigned to a gene with file %s.'%(readCt,readCt/(unassignedCt+readCt),reads))
+    print('%s reads (%s of reads) were unassigned.'%(unassignedCt,unassignedCt/(unassignedCt+readCt)))
 
 def main(args):
     t=time.time()
@@ -225,7 +225,7 @@ def main(args):
     #    annots=cPickle.load(f)
     
     assignReads(reads,annotGTFFile,outPrefix)
-    print time.time()-t
+    print(time.time()-t)
 
 
 if __name__=='__main__':
