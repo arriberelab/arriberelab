@@ -1,5 +1,6 @@
 """
 Joshua Arribere Feb 24, 2014
+Still python2 2
 
 Script to collapse reads containing the exact same sequence. Will pick the read information
     from the first occurence of that read for the outFile.
