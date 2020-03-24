@@ -1,5 +1,6 @@
 """
 Joshua Arribere Sept 27, 2013
+Converted to python 3: Mar 24, 2020
 
 Script to make a metaGene Plot of an arbitrary number of libraries
 
@@ -10,7 +11,7 @@ Input: annots.gtf - gtf formatted annotation file (used to get txt lengths)
 
 Output: Plot of metaStart, metaStop
 
-run as python metaStartStop.py outPrefix infile1.joshSAM name1 ... infilen.joshSAM namen
+run as python3 metaStartStop.py annots.gtf outPrefix infile1.joshSAM name1 ... infilen.joshSAM namen
 """
 import sys, common, csv, collections, numpy
 from logJosh import Tee
