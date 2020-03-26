@@ -214,7 +214,6 @@ def assignReads(reads,annots,outPrefix):
                             #hwriter.writerow(readInfo+readPositions[Chr][position].keys())
                             if row[12].split(':')[-1]=='1':#only count a multiply-mapping read the first time it appears
                                 unassignedCt+=1#0.066million in UCSC v 0.334million in ENS
-                    linecache.clearcache()#needed to prevent RAM usage from blowing up.
     print('%s reads (%s of reads) were uniquely assigned to a gene with file %s.'%(readCt,readCt/(unassignedCt+readCt),reads))
     print('%s reads (%s of reads) were unassigned.'%(unassignedCt,unassignedCt/(unassignedCt+readCt)))
 
