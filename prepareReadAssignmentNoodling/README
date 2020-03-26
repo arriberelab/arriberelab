@@ -1,0 +1,1 @@
+This is a folder containing some scripts to play around with how we're assigning reads to genes. This will center on two scripts: prepareReadAssignmentFile#.py and assignReadsToGenes#.py.
