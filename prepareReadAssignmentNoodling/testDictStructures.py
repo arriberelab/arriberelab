@@ -14,6 +14,8 @@ import sys
 from logJosh import Tee
 from random import randrange
 import os, psutil
+import numpy as np
+import pandas as pd
 
 def method1(chrs,chrSize,N):
     aa={}
@@ -123,6 +125,33 @@ def method8(chrs,chrSize,N):
             aa[intern(Chr)][kk]+='Somestring:%s:S'%(randrange(10**5))
     return aa
 
+def pandas_df_method(chrs, chrSize, N):
+    """This is really just generating the data, in an effort to look at the 'weight' of the final df"""
+    # Empty dataframe makes the if statements below a little easier
+    df = pd.DataFrame()
+    for ii in range(chrs):
+        if not df.empty:
+            # hold onto previous chromosomes, to be added together later
+            old_df = df
+            # pandas was freaking about about using .insert with non-empty dataframe
+            df = pd.DataFrame()
+        # below three calls generate and add columns
+        df.insert(0, 'loc',
+                  [x[0] for x in np.random.randint(0, chrSize, size=(N, 1))])
+        df.insert(1, 'trans',
+                  [f'somestring:{x[0]}:s' for x in np.random.randint(0, 10**5, size=(N, 1))])
+        df.insert(0, 'chr', f"chr{ii}")
+        # Unsure if this is necessary, but could be a way to lighten the dataframe later on
+        df.astype({'chr': 'object', 'loc': 'Int32', 'trans': 'object'}).dtypes
+        if ii > 0:
+            # if we are working with more than one chromosomes, reconnect the generated chr to old chrs
+            df = old_df.append(df, ignore_index=True)
+        # F-STRINGS!!
+        print(f'Dataframe size (cells): {df.size}, after {ii+1} chromosome(s)')
+        print(f"first index of chr{ii}: {df.values[1+ii*99999]}\n\n")
+    # print(df)
+    return df
+
 
 def main(args):
     #first compute as nested dict
@@ -130,7 +159,7 @@ def main(args):
     chrSize=10**9
     N=10**5
     #
-    aa=method1(chrs,chrSize,N)
+    #aa=method1(chrs,chrSize,N)
     #
     #bb=method2(chrs,chrSize,N)
     #
@@ -145,6 +174,8 @@ def main(args):
     #gg=method7(chrs,chrSize,N)
     #
     #hh=method8(chrs,chrSize,N)
+    #
+    df = pandas_df_method(chrs, chrSize, N)
     #
     process = psutil.Process(os.getpid())
     print(process.memory_info().rss/(10**6))
