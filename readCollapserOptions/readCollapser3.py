@@ -69,20 +69,20 @@ def main(args):
             currRead=[]                                                 #create list
             for line in f:                                              #lines in inFile
                 line=line.strip()                                       #remove first character
-                if len(currRead)==4:                                    #has 4 lines??
+                if len(currRead)==4:                                    #has 4 lines?
                     #UMI=currRead[1][:4]+currRead[1][-6:]               #if you use this, you must use other if reads... below
                     UMI=currRead[1][-6:]                                #UMI = last 6 characters of line 1. line 1 is 1-index in currRead
                     #line 1 contains the read. line 3 contains the quality score.
                     #if reads[currRead[1][4:-6]][UMI]==0:
-                    if reads[currRead[1][:-6]][UMI]==0:                 #compare read w/o index to UMI?
+                    if reads[currRead[1][:-6]][UMI]==0:                 #check if we've seen this read+UMI before
                         g.write('%s\n%s\n%s\n%s\n'%(currRead[0].replace(' ','-'),currRead[1][4:-6],currRead[2],currRead[3][4:-6]))
-                        #write 0th w/o spaces, 1st from index 4 to 6th from last, 2nd, 3rd same as 1st
+                        #write 0th w/o spaces, 1st from index 4 to 6th from last (don't include -6), 2nd, and 3rd same as 1st
                         if len(currRead[1])!=len(currRead[3]):          #only want reads the same length as quality score
                             print(currRead, sys.exit())
                     #reads[currRead[1][4:-6]][UMI]+=1
                     reads[currRead[1][:-6]][UMI]+=1                     #mark this one as done?
                     currRead=[]                                         #clear list
-                    currRead.append(line)                               #add line to list
+                    currRead.append(line)                               #add new line to list and start over
                 else:
                     currRead.append(line)                               #handles first case
 
