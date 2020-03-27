@@ -63,7 +63,8 @@ def main(args):
 def main(args):
     inFile,outPrefix=args[0:]                                           #order of stuff given in command line. outPrefix is second thing given
     print('trimming 6 Ns from the 3\'end and 4nts from 5\'end')
-    reads=collections.defaultdict(lambda:collections.defaultdict(int))  #create dictionary of reads?
+    reads=collections.defaultdict(lambda:collections.defaultdict(int))  
+    #create dictionary of reads? will automatically add keys as they're called, with value as an integer
     with open(inFile,'r') as f:                                         #read inFile as f
         with open(outPrefix,'w') as g:                                  #write outFile as g
             currRead=[]                                                 #create list
