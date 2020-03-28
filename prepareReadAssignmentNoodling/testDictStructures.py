@@ -126,6 +126,7 @@ def method8(chrs,chrSize,N):
     return aa
 
 def pandas_df_method(chrs, chrSize, N):
+    #comparable to method6
     """This is really just generating the data, in an effort to look at the 'weight' of the final df"""
     # Empty dataframe makes the if statements below a little easier
     df = pd.DataFrame()
@@ -149,9 +150,44 @@ def pandas_df_method(chrs, chrSize, N):
         # F-STRINGS!!
         print(f'Dataframe size (cells): {df.size}, after {ii+1} chromosome(s)')
         print(f"first index of chr{ii}: {df.values[1+ii*99999]}\n\n")
+    print(df.size)
+    #print(df)
+    return df
+
+def pandas_df_method2(chrs, chrSize, N):
+    #this takes too long to do
+    """This is really just generating the data, in an effort to look at the 'weight' of the final df"""
+    # Empty dataframe makes the if statements below a little easier
+    df = pd.DataFrame(columns=['genes'])
+    cntr=0
+    for ii in range(chrs):
+        Chr='chr%s'%(ii)
+        for jj in range(N):
+            kk=randrange(0,chrSize)
+            theChr='%s_%s'%(Chr,kk)
+            theValue='Somestring:%s:S'%(randrange(10**5))
+            df2=pd.DataFrame([[theValue]],columns=['genes'],index=[theChr])
+            df=df.append(df2)
+            cntr+=1
+            if cntr%10000==0:
+                print(f'Working {cntr}...')
+        ## Unsure if this is necessary, but could be a way to lighten the dataframe later on
+        #df.astype({'chr': 'object', 'loc': 'Int32', 'trans': 'object'}).dtypes
+        # F-STRINGS!!
+        print(f'Dataframe size (cells): {df.size}, after {ii+1} chromosome(s)')
+        print(f"first index of chr{ii}: {df.values[1+ii*99999]}\n\n")
     # print(df)
     return df
 
+def pandas_df_method3(chrs, chrSize, N):
+    #this takes too long to do...
+    """This is really just generating the data, in an effort to look at the 'weight' of the final df"""
+    # Empty dataframe makes the if statements below a little easier
+    df = pd.DataFrame([['Somestring:%s:%s:%s:S'%(ii,jj,randrange(10**5))] for ii in range(chrs) for jj in range(N)],
+        columns=['genes'],
+        index=[[f'Chr{ii}_{jj}'] for ii in range(chrs) for jj in range(N)])
+    print(df)
+    return df
 
 def main(args):
     #first compute as nested dict
@@ -175,7 +211,11 @@ def main(args):
     #
     #hh=method8(chrs,chrSize,N)
     #
-    df = pandas_df_method(chrs, chrSize, N)
+    #df = pandas_df_method(chrs, chrSize, N)
+    #
+    #df = pandas_df_method2(chrs, chrSize, N)
+    #
+    #df = pandas_df_method3(chrs, chrSize, N)
     #
     process = psutil.Process(os.getpid())
     print(process.memory_info().rss/(10**6))
