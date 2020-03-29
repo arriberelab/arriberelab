@@ -1,7 +1,7 @@
 """
 Joshua Arribere, March 6, 2014
-
-EDIT Nov 26 2019 - Made it so prepareReadAssignmentFile creates a .txt output for each chr one at a time. Doing all at once was maxxing out memory.
+Updated to python3, revamped output so that it only writes lines for chromosomal positions
+    that contain a txt.
 
 Read assignment with assignReadsToGenes.py is taking an interminable amount of time. Part
     of this is because for each read, I calculate whether a gene overlaps with it, whether
@@ -9,7 +9,7 @@ Read assignment with assignReadsToGenes.py is taking an interminable amount of t
     transcripts for that gene. This is a lot of calculations, for each read.
     
     An alternative that I'm going to try out here, is to calculate this for every possible
-    position in the worm genome. Then when I have my reads, loop through them and simply
+    position in the genome. Then when I have my reads, loop through them and simply
     perform a look up in that data structure.
     
     This script will create that data structure. It will, for every position in a provided
@@ -19,15 +19,15 @@ Read assignment with assignReadsToGenes.py is taking an interminable amount of t
 
 Input: annots.gtf - gtf-formatted annotations. Will also get output name from this
 
-Output: format TBD
+Output: a txt file where each line contains a position on a chr, and the txts at that site
+    as:
+        position|txt1:posRelStart:posRelStop:+\tgene:+\n
 
 run as python prepareReadAssignmentFile.py annots.gtf
-EDIT Sept 19 2014 - JOSH made it output a .txt file for each chr, which should speed up
-    assignment b/c it doesn't have to load the entire thing into memory at once.
 """
-import sys, common, time, collections, csv, subprocess, cPickle
+import sys, common, time, collections, csv, subprocess, pickle
 from logJosh import Tee
-import assignReadsToGenes3, multiprocessing
+import assignReadsToGenes4, multiprocessing
 
 def parseAnnots(annots):#borrowed and adapted from parseAnnots
     """Will output readPositions, a dictionary of {chr:position:{}} where the innermost dictionary
@@ -66,13 +66,11 @@ def parseAnnots(annots):#borrowed and adapted from parseAnnots
                         a[transcript_id]={'strand':row[6],'exon':[],'CDS':[]}
                     a[transcript_id][featureType].append([int(row[3]),int(row[4])])
                 if ct%25000==0:
-                    print '%s fraction of the way through the input file...'%str(ct/total)
+                    print('%s fraction of the way through the input file...'%str(ct/total))
     
     b=dict((txt,a[txt]) for txt in a if a[txt]['CDS']!=[])
     #print len(b), ' number of annotated CDSs'
-    print 'hello'
-    print time.time() -t
-    print 'goodbye'
+    print('Done parsing annotations...')
     return b,readPositions
 
 def getTxtRelPositions(transcript_id,txt_annot,readPosition):#modified so that it returns strand +/- instead of S/AS
@@ -86,16 +84,20 @@ def getTxtRelPositions(transcript_id,txt_annot,readPosition):#modified so that i
     exonStarts=[exon[0] for exon in exons]
     exonEnds=[exon[1] for exon in exons]
     exonStarts.sort(),exonEnds.sort()
-    exons=zip(exonStarts,exonEnds)
+    #the zip function works differently in python2 and python3.
+    #So changed the next line of code to work via list comprehension
+    #https://stackoverflow.com/questions/31683959/the-zip-function-in-python-3
+    #exons=zip(exonStarts,exonEnds)
+    exons=[(exonStarts[ii],exonEnds[ii]) for ii in range(len(exonStarts))]
     #Edit: Apparently the exons are not necessarily orderd in the gtf file.
     
-    txtStart_cdsStart_dist=assignReadsToGenes3.getDist(exons,cdsStart)
-    txtStart_readPosition_dist=assignReadsToGenes3.getDist(exons,readPosition)
+    txtStart_cdsStart_dist=assignReadsToGenes4.getDist(exons,cdsStart)
+    txtStart_readPosition_dist=assignReadsToGenes4.getDist(exons,readPosition)
     readPosition_rel_to_CDSstart=txtStart_readPosition_dist-txtStart_cdsStart_dist
     
     #now do the same thing with the cdsEnd
     cdsEnd=max([entry[1] for entry in txt_annot['CDS']])
-    txtStart_cdsEnd_dist=assignReadsToGenes3.getDist(exons,cdsEnd)
+    txtStart_cdsEnd_dist=assignReadsToGenes4.getDist(exons,cdsEnd)
     #already determined txtStart_readPosition_dist
     readPosition_rel_to_CDSend=txtStart_readPosition_dist-txtStart_cdsEnd_dist
     
@@ -111,15 +113,42 @@ def writeOutput(someTuple):
     will write a line. If the key is in dict1, will tab, then write the value.
     """
     Chr,dict1,annotFileName=someTuple[0],someTuple[1],someTuple[2]
+    ct=0
     with open('.'.join(annotFileName.split('.')[:-1])+'.%s.txt'%Chr,'w') as f:
         for ii in range(1,max(dict1)+1):
-            f.write('%s'%ii)
             if ii not in dict1:
-                f.write('\n')
+                #f.write('\n')
+                pass
             else:
+                if ct==0:
+                    f.write('%s|'%ii)
+                    ct+=1
+                elif ct!=0:
+                    f.write('\n%s|'%ii)
                 for entry in dict1[ii]:
-                    f.write('\t%s'%entry)
-                f.write('\n')
+                    f.write('%s\t'%entry)
+
+def writeOutput2(someDict,annotFileName):
+    """
+    Will write the output file. For every position from 1 to the largest key in dict1,
+    will write a line. If the key is in dict1, will tab, then write the value.
+    """
+    ct=0
+    with open('.'.join(annotFileName.split('.')[:-1])+'.allChrs.txt','w') as f:
+        for Chr in someDict:
+            dict1=someDict[Chr]
+            for ii in range(1,max(dict1)+1):
+                if ii not in dict1:
+                    #f.write('\n')
+                    pass
+                else:
+                    if ct==0:
+                        f.write('%s_%s|'%(Chr,ii))
+                        ct+=1
+                    elif ct!=0:
+                        f.write('\n%s_%s|'%(Chr,ii))
+                    for entry in dict1[ii]:
+                        f.write('%s\t'%entry)
 
 def positionReadsOnTxts(annots,readPositions,annotFileName):
     """Given annots={txt_ID:{strand,CDS,exon}}, readPositions={chr:position:gene_id:{strand,txt_ids}},
@@ -130,6 +159,7 @@ def positionReadsOnTxts(annots,readPositions,annotFileName):
     #print sum([len(readPositions[Chr]) for Chr in readPositions]), ' number of reads'
     
     outputPositions={}
+    print('Starting positioning of theoretical reads on txts...')
     
     for Chr in readPositions:
         outputPositions[Chr]=collections.defaultdict(list)
@@ -138,7 +168,10 @@ def positionReadsOnTxts(annots,readPositions,annotFileName):
             if readPositions[Chr][position]=={}:#then the read never mapped within to an annotated feature, Should not exist in this version.
                 pass#for now I'll ignore these reads
             elif len(readPositions[Chr][position])==1 and readPositions[Chr][position]!={}:#omiting reads that are ambiguously assignable to genes b/c genes overlap
-                gene_id=readPositions[Chr][position].keys()[0]
+                #the next line is a python2/3 issue. This line contains python2 code, and
+                #below it is the python3 code
+                #gene_id=readPositions[Chr][position].keys()[0]
+                gene_id=list(readPositions[Chr][position])[0]
                 positionInfo=[]
                 for transcript_id in readPositions[Chr][position][gene_id]['transcript_id']:
                     if transcript_id in annots:
@@ -153,8 +186,10 @@ def positionReadsOnTxts(annots,readPositions,annotFileName):
             elif len(readPositions[Chr][position])>1:#then it's multiply mapping
                 pass
     
-    with open('.'.join(annotFileName.split('.')[:-1])+'.processed.p','w') as f:
-        cPickle.dump(outputPositions,f,protocol=2)
+    print('Done positioning theoretical reads on txts and now pickling output...')
+    #in python2 > python3 'w' must be 'wb'
+    with open('.'.join(annotFileName.split('.')[:-1])+'.processed.p','wb') as f:
+        pickle.dump(outputPositions,f)
     
     #If you already have a processed.p file. comment out 137 to 157, and uncomment 160 to 162.
 
@@ -167,9 +202,12 @@ def positionReadsOnTxts(annots,readPositions,annotFileName):
     #p.map(writeOutput,[(Chr,outputPositions[Chr],annotFileName) for Chr in outputPositions])
     
     for Chr in outputPositions:
-        print 'Working on %s...'%(Chr)
+        print('Working on %s...'%(Chr))
         writeOutput((Chr,outputPositions[Chr],annotFileName))
-        print 'Finished %s.'%(Chr)
+        print('Finished %s.'%(Chr))
+    #added this to see if I can later process everything in one pd DataFrame
+    print('Working on all chromsome-file...')
+    writeOutput2(outputPositions,annotFileName)
 
 def main(args):
     annotFileName=args[0]
