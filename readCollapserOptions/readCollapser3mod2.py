@@ -63,6 +63,7 @@ def main(args):
             cntr.append(sum([1 for barcode in reads[read] if reads[read][barcode]==1])/float(len(reads[read])))
     print('%s average +/-SD fraction of reads with 2-5 counts with unique barcodes: % s+/- %s'%(inFile,numpy.average(cntr), numpy.std(cntr)))
 
+
 if __name__=='__main__':
     Tee()
     main(sys.argv[1:])
