@@ -4,22 +4,29 @@ Updated to python 3: Mar 23, 2020
 
 Script to assign reads to genes. Will first assign sense, then antisense
 
-Input: annotGTFFile - GTF file used for input for prepareReadAssignmentFile2.py
+Input: annots.allChrs.txt - output of prepareReadAssignmentFile2.py
     reads.bowtie - as output from bowtie
     BOTH OF THESE FILES ARE ASSUMED TO BE 1-INDEXED
 
-Output: outPrefix.joshSAM - Output will be just like input, but will include a last column with the gene at that position, if applicable.
-    #outPrefix.geneCount - These output files will have "gene   ct"
+Output: outPrefix.joshSAM - Output will be just like input, but will include a
+    last column with the gene at that position, if applicable.
 
 run as python assignReadsToGenes.py annots.gtf reads.bowtie outPrefix
-EDIT: Sept 27, 2013 JOSH revised to put sense/antisense in one file, also omit .geneCount file
-EDIT: March 6, 2014 JOSH revised to input output of prepareReadAssignmentFile.py for read
-    assignment instead of recalculating read positions from annotations
-EDIT: Sept 19, 2014 JOSH revised to be take advantage of faster prepareReadAssignmentFile2.py output
 """
 import sys, os, collections, csv, common, re, time, pickle, copy, linecache
+import pandas
 from logJosh import Tee
 csv.field_size_limit(sys.maxsize)
+
+def parseAnnotationDataFrame(annotFile):
+    """Will take as input a file of the format:
+    chrName_Number|txtInfo\ttxtInfo...\tGene\n
+    And return a pandas DataFrame where the indexes are the first
+    column (chrName_Number) and the only column is everything after
+    the pipe (|)"""
+    df=pandas.read_csv(annotFile,index_col=0,delimiter='|',
+        names=['genes'])
+    return df
 
 def recoverMappedPortion(Cigar,Read):
     """Given a Cigar string and a Read, will return the sequence of the read that mapped to the genome."""
@@ -100,60 +107,12 @@ def parseAnnots(annots,readPositions):
     print('goodbye')
     return b,readPositions
 
-def getDist(exon_list,position):
-    """Will return distance from the first position of the first exon to position, in mRNA space"""
-    dist=0
-    exon_list=[entry for entry in exon_list]
-    for exon in exon_list:
-        if position in range(exon[0],exon[1]+1):
-            return dist+position-exon[0]
-        else:
-            dist+=exon[1]-exon[0]+1#Edit July 28, 2014 added +1.
-    print(exon_list, position, dist)
-    print('Error: position not found in txt'), sys.exit()
-
-def getTxtRelPositions(transcript_id,txt_annot,readStrand,readPosition):
-    """Given txt_annot={strand,exon,CDS},readStrand,readPosiiton, will return a colon-separated string of
-    transcript_id, readPosition_rel_to_CDSstart, readPosition_rel_to_CDSEnd, S/AS where S/AS indicates whether
-    the read is on the same strand or not"""
-    #figure out sense/antisense. Easy
-    txtStrand=txt_annot['strand']
-    if txtStrand==readStrand:
-        SorAS='S'
-    else:
-        SorAS='AS'
-    
-    #Great, now figure out position relative to CDSStart
-    #To do this, I will calculate the distance from the txtStart to readPosition, and txtStart to CDSStart. I'll subtract the two.
-    cdsStart=min([entry[0] for entry in txt_annot['CDS']])
-    exons=txt_annot['exon']
-    exonStarts=[exon[0] for exon in exons]
-    exonEnds=[exon[1] for exon in exons]
-    exonStarts.sort(),exonEnds.sort()
-    exons=list(zip(exonStarts,exonEnds))
-    #Edit: Apparently the exons are not necessarily orderd in the gtf file.
-    
-    txtStart_cdsStart_dist=getDist(exons,cdsStart)
-    txtStart_readPosition_dist=getDist(exons,readPosition)
-    readPosition_rel_to_CDSstart=txtStart_readPosition_dist-txtStart_cdsStart_dist
-    
-    #now do the same thing with the cdsEnd
-    cdsEnd=max([entry[1] for entry in txt_annot['CDS']])
-    txtStart_cdsEnd_dist=getDist(exons,cdsEnd)
-    #already determined txtStart_readPosition_dist
-    readPosition_rel_to_CDSend=txtStart_readPosition_dist-txtStart_cdsEnd_dist
-    
-    #stranded issues. Although ensembl defines start_codon and stop_codon as those exact locations on the - and + strand, here I find the start/stop by taking min/max of CDS exon boundaries, so I need to flip it
-    if txtStrand=='+':
-        return ':'.join([transcript_id,str(readPosition_rel_to_CDSstart),str(readPosition_rel_to_CDSend),SorAS])
-    else:
-        return ':'.join([transcript_id,str(-readPosition_rel_to_CDSend),str(-readPosition_rel_to_CDSstart),SorAS])
-
-def assignReads(reads,annots,outPrefix):
-    """Given annots={txt_ID:{strand,CDS,exon}}, readPositions={chr:position:gene_id:{strand,txt_ids}},
-    and a reads file (from STAR, sam format), will make a file with
-    chr position strand read_seq Aligned_length gene_id txt_id:relToCDSStart:relToCDSEnd:S/AS
-    where the last column has potentially multiple comma-separated entries"""
+def assignReads(reads,annotDF,outPrefix):
+    """Given annotDF, a pandas DataFrame with indexes as chr_position and
+    first (and only column) as the txt information,
+    and a reads file (from STAR, sam format), will make a joshSAM file,
+    which contains all the info in the samFile along with the txt information
+    """
     
     #print len(annots), ' number of annotated txts.'
     #print sum([len(readPositions[Chr]) for Chr in readPositions]), ' number of reads'
@@ -161,10 +120,8 @@ def assignReads(reads,annots,outPrefix):
     unassignedCt=0
     with open(reads,'r') as f:
         with open(outPrefix+'.joshSAM','w') as g:
-            #with open(outPrefix+'.unassigned','w') as h:
             freader=csv.reader(f,delimiter='\t')
             gwriter=csv.writer(g,delimiter='\t')
-            #hwriter=csv.writer(h,delimiter='\t')
             for row in freader:
                 if row[0][0]!='@':#then it's presumably a read line
                     ########parse the read information
@@ -187,16 +144,15 @@ def assignReads(reads,annots,outPrefix):
                     readInfo=[Chr,position,readStrand,readSeq[:alignLength],alignLength]
                     ######done parsing readInformation
                     
-                    if os.path.isfile('.'.join(annots.split('.')[:-1])+'.%s.txt'%Chr):
-                        annotFileLine=linecache.getline('.'.join(annots.split('.')[:-1])+'.%s.txt'%Chr,position)
-                        annotFileLine=annotFileLine.strip().split('\t')
+                    #figure out if the position is present in the annotations
+                    chrPosition=f'{Chr}_{position}'
+                    try:
+                        txtInfo=annotDF.loc[chrPosition]['genes']
+                        annotFileLine=txtInfo.strip().split('\t')
                         
                         if len(annotFileLine)>1:
-                            #print row
-                            #print row[11]
-                            #print row[11].split(':')[-1]
                             if row[11].split(':')[-1]=='1':#restriction for uniquely mapping#added July 27, 2014
-                                geneInfo=copy.copy(annotFileLine[1:])
+                                geneInfo=copy.copy(annotFileLine)
                                 ######using pop below makes the above copy necessary
                                 gene,geneStrand=geneInfo.pop().split(':')
                                 if geneStrand==readStrand:
@@ -207,27 +163,33 @@ def assignReads(reads,annots,outPrefix):
                                 readInfo.append(gene)
                                 for txt in geneInfo:
                                     readInfo.append(':'.join([txt,SorAS]))
-                                #if 'T25F10.5' in readInfo:#left over from fixing a bug after doing an analysis for Drew Nager
-                                #    print readInfo
                                 gwriter.writerow(readInfo)
                                 readCt+=1
                         else:
                             #hwriter.writerow(readInfo+readPositions[Chr][position].keys())
                             if row[12].split(':')[-1]=='1':#only count a multiply-mapping read the first time it appears
                                 unassignedCt+=1#0.066million in UCSC v 0.334million in ENS
+                    except KeyError:
+                        #then the chr_position is not in the annotations,
+                        #meaning no txt is annotated as overlapping with it
+                        pass
+    print('We need to fix the next two lines to make more \
+        meaningful.')
     print('%s reads (%s of reads) were uniquely assigned to a gene with file %s.'%(readCt,readCt/(unassignedCt+readCt),reads))
     print('%s reads (%s of reads) were unassigned.'%(unassignedCt,unassignedCt/(unassignedCt+readCt)))
 
 def main(args):
     t=time.time()
-    annotGTFFile,reads,outPrefix=args[0:]
+    annotFile,reads,outPrefix=args[0:]
+    
+    #first parse in the output of prepareReadAssignmentFile
+    annotDF=parseAnnotationDataFrame(annotFile)
     
     #with open(annots,'r') as f:
     #    annots=cPickle.load(f)
     
-    assignReads(reads,annotGTFFile,outPrefix)
+    assignReads(reads,annotDF,outPrefix)
     print(time.time()-t)
-
 
 if __name__=='__main__':
     Tee()
