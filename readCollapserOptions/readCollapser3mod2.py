@@ -59,7 +59,7 @@ def main(args):
                     currRead.append(line)                               #add line by line to currRead list
     
     #now look at complexity
-    print(reads)
+    #print(reads)
     cntr=[]
     for read in reads:
         if 2<=sum(reads[read].values())<=5: #use range 2-5 because they're likely PCR duplicates. beyond 5 are probably rRNA
