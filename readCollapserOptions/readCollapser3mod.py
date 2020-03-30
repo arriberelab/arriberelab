@@ -62,7 +62,7 @@ def main(args):
 ############################################################################################################
 def main(args):
     inFile,x,y,outPrefix=args[0:]                                       #x=5'N y=3'N
-    print('trimming 6Ns from the 3\'end and 4Ns from 5\'end')
+    print('trimming %sNs from the 3\'end and %sNs from 5\'end'%(int(x), int(y)))
     reads=collections.defaultdict(lambda:collections.defaultdict(int))  
     #create nested dict, automatically adding keys as they're called and only if they haven't been seen before.
     #key = read. value = dict with key = UMI, value = count
