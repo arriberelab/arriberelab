@@ -4,6 +4,7 @@ Converted to python 3: Mar 23, 2020
 
 Script to collapse reads containing the exact same sequence. 
     Will pick the read information from the first occurence of that read for the outFile.
+    Will trim off UMI nts as specified by user.
     
 Mar 30, 2020: Parissa updated to make use of UMI lengths given in command line.
 
@@ -16,7 +17,6 @@ run as python readCollapser3.py inFile.fastq number5'N number3'N outPrefix
 
 import sys, common, collections, numpy
 from logJosh import Tee
-
 
 def main(args):
     inFile,x,y,outPrefix=args[0:]                                       #x=5'N y=3'N
@@ -32,7 +32,7 @@ def main(args):
                 if len(currRead)==4:                                    #stop when currRead has 4 items in list
                     UMI=currRead[1][:int(x)]+currRead[1][-int(y):]      #UMI = first 4 and last 6 chars of line 1 aka 1-index
                     #line 1 contains the read. line 3 contains the quality score
-                    if int(y)==0:                                       #handles libraries without UMI on 3' end (and 5' end)
+                    if int(y)==0:                                       #handles libraries without UMI on 3' end (and 5' end). NEED TO FIX!
                         g.write('%s\n%s\n%s\n%s\n'%(currRead[0].replace(' ','-'),currRead[1],currRead[2],currRead[3]))
                         #not adding x=0 because the following will work for libraries without 5' UMI
                     if reads[currRead[1][int(x):-int(y)]][UMI]==0:      #check if we've seen this read+UMI before
@@ -53,7 +53,6 @@ def main(args):
             #cntr.append(float(len(reads[read]))/sum(reads[read].values()))
             cntr.append(sum([1 for barcode in reads[read] if reads[read][barcode]==1])/float(len(reads[read])))
     print('%s average +/-SD fraction of reads with 2-5 counts with unique barcodes: % s+/- %s'%(inFile,numpy.average(cntr), numpy.std(cntr)))
-
 
 if __name__=='__main__':
     Tee()
