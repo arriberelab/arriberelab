@@ -1,1 +1,8 @@
 print("hello world")
+print("Joshua has successfully edited the script!")
+print("Hello world, from Matt!")
+print("Marissa says sup!")
+print("Greetings, from Parissa!")
+print("Salutations! ~Nitin")
+print("Howdy, from Marcus")
+print("hello from John")
