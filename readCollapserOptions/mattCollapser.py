@@ -28,16 +28,16 @@
  28             for line in f:$
  29                 line=line.strip()$
  30                 if len(currRead)==4:$
- 31                     if reads[currRead[1][:x]][currRead[1][-y:]]==0:$
+ 31                     if reads[currRead[1][x:]][currRead[1][:-y]]==0:$
  32                         #the next line has been moved ~6 lines down$
  33                         #reads[currRead[1]]+=1#also need to change this line for 3 or 6EDIT: DO NOT NEED TO CHANGE: This keeps track of read+barcode, and only writes if read appears with new barcode$
  34                         #g.write('%s\n%s\n%s\n%s\n'%(currRead[0],currRead[1],currRead[2],currRead[3]))$
- 35                         g.write('%s\n%s\n%s\n%s\n'%(currRead[0],currRead[1][:x][-y:],currRead[2],currRead[3][:x][-y:]))$
+ 35                         g.write('%s\n%s\n%s\n%s\n'%(currRead[0],currRead[1][x:][:-y],currRead[2],currRead[3][x:][:-y]))$
  36                         #g.write('%s\n%s\n%s\n%s\n'%(currRead[0].replace(' ','-'),currRead[1][:-6],currRead[2],currRead[3][:-6]))$
  37                         if len(currRead[1])!=len(currRead[3]):$
  38                             print currRead, sys.exit()$
  39                         #must trim quality scores and reads simultaneously. Hence the double -6$
- 40                     reads[currRead[1][:x]][currRead[1][-y:]]+=1$
+ 40                     reads[currRead[1][x:]][currRead[1][:-y]]+=1$
  41                     currRead=[]$
  42                     currRead.append(line)$
  43                 else:$
