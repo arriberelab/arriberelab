@@ -34,7 +34,8 @@ def main(args):
                 if len(currRead)==4:                                    #stop when currRead has 4 items in list
                     UMI=currRead[1][:x]+currRead[1][-y:]                #UMI = first 4 and last 6 chars of line 1 aka 1-index
                     #line 1 contains the read. line 3 contains the quality score
-                    if y==0:                                            #handles libraries without UMI on 3' end (and 5' end). NEED TO FIX!
+                    if y==0:                                            
+                        #handles libraries without UMI on 3' end (and 5' end). NEED TO FIX!
                         g.write('%s\n%s\n%s\n%s\n'%(currRead[0].replace(' ','-'),currRead[1],currRead[2],currRead[3]))
                         #not adding x=0 because the following will work for libraries without 5' UMI
                     if reads[currRead[1][x:-y]][UMI]==0:                #check if we've seen this read+UMI before
@@ -42,7 +43,7 @@ def main(args):
                         #write 0th w/o spaces, 1st from index 4 to 6th from last, 2nd, and 3rd same as 1st
                         if len(currRead[1])!=len(currRead[3]):          #only want reads the same length as quality score
                             print(currRead, sys.exit())
-                    reads[currRead[1][x:-y]][UMI]+=1          #mark this one as done
+                    reads[currRead[1][x:-y]][UMI]+=1                    #mark this one as done
                     currRead=[]                                         #clear list
                     currRead.append(line)                               #add line to list
                 else:
@@ -50,6 +51,7 @@ def main(args):
 
     #now look at complexity
     cntr=[]
+    #need to fix this!
     for read in reads:
         if 2<=sum(reads[read].values())<=5: #use range 2-5 because they're likely PCR duplicates. beyond 5 are probably rRNA
             #cntr.append(float(len(reads[read]))/sum(reads[read].values()))
