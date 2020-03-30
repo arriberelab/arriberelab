@@ -72,14 +72,17 @@ def main(args):
             for line in f:                                              #lines in inFile
                 line=line.strip()                                       #make everything one line
                 if len(currRead)==4:                                    #stop when currRead has 4 items in list
-                    UMI=currRead[1][:int(x)]+currRead[1][-int(y):]                # UMI = first 4 and last 6 chars of line 1 aka 1-index
+                    UMI=currRead[1][:int(x)]+currRead[1][-int(y):]      #UMI = first 4 and last 6 chars of line 1 aka 1-index
                     #line 1 contains the read. line 3 contains the quality score
-                    if reads[currRead[1][int(x):-int(y)]][UMI]==0:                #check if we've seen this read+UMI before
+                    if int(y)==0:                                       #handles libraries without UMI on 3' end (and 5' end)
+                        g.write('%s\n%s\n%s\n%s\n'%(currRead[0].replace(' ','-'),currRead[1],currRead[2],currRead[3]))
+                        #not adding x=0 because the following will work for libraries without 5' UMI
+                    if reads[currRead[1][int(x):-int(y)]][UMI]==0:      #check if we've seen this read+UMI before
                         g.write('%s\n%s\n%s\n%s\n'%(currRead[0].replace(' ','-'),currRead[1][int(x):-int(y)],currRead[2],currRead[3][int(x):-int(y)]))
                         #write 0th w/o spaces, 1st from index 4 to 6th from last, 2nd, and 3rd same as 1st
                         if len(currRead[1])!=len(currRead[3]):          #only want reads the same length as quality score
                             print(currRead, sys.exit())
-                    reads[currRead[1][int(x):-int(y)]][UMI]+=1                    #mark this one as done
+                    reads[currRead[1][int(x):-int(y)]][UMI]+=1          #mark this one as done
                     currRead=[]                                         #clear list
                     currRead.append(line)                               #add line to list
                 else:
