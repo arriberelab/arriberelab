@@ -111,7 +111,9 @@ def main(args):
     ############################################################################################################
     """Collapse reads and trim off UMIs"""
     ############################################################################################################
-    readCollapser3.main(outPrefix+'.trimmed', umi5, umi3, outPrefix+'.trimmed.collapsed.fastq')
+    readCollapser3.main([outPrefix+'.trimmed', 
+                         umi5, umi3, 
+                         outPrefix+'.trimmed.collapsed.fastq'])
     #print('skipping collapsing...')
     os.system(f'cp {outPrefix}.trimmed '
               f'{outPrefix}.trimmed.collapsed.fastq')
