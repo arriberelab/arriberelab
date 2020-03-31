@@ -12,7 +12,7 @@ Input: reads.fastq - fastq-formatted reads
 
 Output: reads.collapsed.fastq - same as input, with redundant reads removed
 
-run as python readCollapser3.py inFile.fastq number5'N number3'N outPrefix
+run as python3 readCollapser3.py inFile.fastq number5'N number3'N outPrefix
 """
 
 import sys, common, collections, numpy
