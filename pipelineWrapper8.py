@@ -9,7 +9,7 @@ Parissa edited to make use of UMI lengths given in command line and revised read
 run as python3 pipelineWrapper.py inputReads.fastq minReadLength maxReadLength 5'UMILength 3'UMILength outPrefix
 """
 
-import sys, common, os, assignReadsToGenes3, metaStartStop, readCollapser3, filterJoshSAMByReadLength
+import sys, common, os, assignReadsToGenes4, metaStartStop, readCollapser4, filterJoshSAMByReadLength
 from logJosh import Tee
 
 
@@ -22,18 +22,18 @@ def main(args):
     #adaptorSeq='CTGTAGGCACCATCAAT'#adaptor for Komili loc1 dataset (looks same as rachel's adaptor)
     #adaptorSeq='AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'#oJA126
     #adaptorSeq='AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCGTATCATT'#revCompl of forward adaptor
-    #adaptorSeq='CACTCGGGCACCAAGGAC'#from BZ boris oligos
+    adaptorSeq='CACTCGGGCACCAAGGAC'#from BZ boris oligos
     #adaptorSeq='CTGTAGGCACCATCAATC'#Jonathan Gent
     #adaptorSeq='TGGAATTCTCGGGTGCCAAGG'#hendriks 3'adaptor for Ribo-seq time course
     #adaptorSeq='AGATGACGGGAAATAAAAGACACGTGCTGAAGTCAA'#another possibility for nextSeq adaptor from NEB
-    adaptorSeq='AGATCGGAAGAGCACACGTCTGAACTCC'#possibly the nextSeq adaptor from NEB
+    #adaptorSeq='AGATCGGAAGAGCACACGTCTGAACTCC'#possibly the nextSeq adaptor from NEB
     # Atail
     #adaptorSeq='AAAAAAAAAAAAAAAAAA'
     #adaptorSeq='CTGTAGGCACCATCAA'#this is rachel's adaptor
-
+    
     minimumReadLength = int(minimumReadLength)
     maximumReadLength = int(maximumReadLength)
-
+    
     #genomeDir='/data3/genomes/170622_yeastWithUTRs/'
     #genomeDir='/data1/genomes/161002_yeast/'
     #genomeDir='/data1/genomes/160212_Celegans_Ce10with_unc-54Degenerate/'
@@ -49,9 +49,10 @@ def main(args):
     #genomeDir='/data1/genomes/170322_genomeWithUnc-54GFPNonStopDegenerate2/'
     #genomeDir='/data1/genomes/160110_Celegans_rel83/'
     #genomeDir='/data7/180330_backups/160520_joshGallifreyBackup/data1/genomes/161002_yeast/'
-    genomeDir='/data12/joshua/genomes/180402_clone_160110_Celegans_rel83/160110_Celegans_rel83/'
+    #genomeDir='/data12/joshua/genomes/180402_clone_160110_Celegans_rel83/160110_Celegans_rel83/'
     #genomeDir='/data12/joshua/genomes/171218_historicalGenomeT2A/'
     #genomeDir='/data12/joshua/genomes/191125_srf0788FromParissa/'
+    genomeDir='/data15/joshua/genomes/200329_cerevisiae/'
     
     #genomeAnnots='/home/josh/genomes/131217_Ty1/140127_Ty1/131217_M18706_revised.gtf'
     #genomeAnnots='/home/josh/working/141117_working_newGTF/Caenorhabditis_elegans.WBcel215.70.sansBJA7_40_77.gtf'
@@ -68,24 +69,25 @@ def main(args):
     #genomeAnnots='/data5/marissa/180411_genomes/180417_ensembl/Schizosaccharomyces_pombe.ASM294v2.22.gtf'
     #genomeAnnots='/data4/genomes/171218_historicalGenomeT2A/170612_genomeWithUnc-54ChrAsItAppearsInPD4092.gtf'
     #genomeAnnots='/data7/180330_backups/160520_joshGallifreyBackup/data1/genomes/161002_yeast/Saccharomyces_cerevisiae.R64-1-1.85.gtf'
-    genomeAnnots='/data12/joshua/genomes/180402_clone_160110_Celegans_rel83/160110_Celegans_rel83/Caenorhabditis_elegans.WBcel235.83.gtf'
+    #genomeAnnots='/data12/joshua/genomes/180402_clone_160110_Celegans_rel83/160110_Celegans_rel83/Caenorhabditis_elegans.WBcel235.83.gtf'
     #genomeAnnots='/data12/joshua/genomes/171218_historicalGenomeT2A/170612_genomeWithUnc-54ChrAsItAppearsInPD4092.gtf'
     #genomeAnnots='/data12/joshua/genomes/191125_srf0788FromParissa/191122_genomeWithUnc-54AsItAppearsInWJA0788.gtf'
+    genomeAnnots='/data15/joshua/genomes/200329_cerevisiae/Saccharomyces_cerevisiae.R64-1-1.99.gtf'
     
     cores = 10  #groundcontrol has 16 cores total: cat /proc/cpuinfo | grep processor | wc -l
     misMatchMax = 0
-
-    print(f'\tadaptorseq: {adaptorSeq}\n'
-          f'\tminimumReadLength (not including UMI): {minimumReadLength}\n'
-          f'\tmaximumReadLength (not including UMI): {maximumReadLength}\n'
-          f'\t5\' UMI length: {umi5}\n'
-          f'\t3\' UMI length: {umi3}\n'
-          f'\tgenomeDir: {genomeDir}\n'
-          f'\tgenomeAnnots: {genomeAnnots}\n'
-          f'\tcores To Use: {cores}\n'
-          f'\tmisMatchMax: {misMatchMax}\n'
+    
+    print(f'adaptorseq: {adaptorSeq}\n'
+          f'minimumReadLength (not including UMI): {minimumReadLength}\n'
+          f'maximumReadLength (not including UMI): {maximumReadLength}\n'
+          f'5\' UMI length: {umi5}\n'
+          f'3\' UMI length: {umi3}\n'
+          f'genomeDir: {genomeDir}\n'
+          f'genomeAnnots: {genomeAnnots}\n'
+          f'cores To Use: {cores}\n'
+          f'misMatchMax: {misMatchMax}\n'
           )
-
+    
     ############################################################################################################
     """Trim adaptor from reads and sort by desired length"""
     ############################################################################################################
@@ -98,7 +100,7 @@ def main(args):
     #print('read length restriction does not include 6Ns. This program will NOT add 6')
     #print('read length restriction does not include 6Ns and 4Ns. This program WILL add 10')
     #print('read length restriction does not include 6Ns. This program WILL add 6')
-
+    
     os.system(f'cutadapt -a {adaptorSeq} '
               f'-m {minimumReadLength+umi5+umi3} '
               f'-M {maximumReadLength+umi5+umi3} '
@@ -111,12 +113,12 @@ def main(args):
     ############################################################################################################
     """Collapse reads and trim off UMIs"""
     ############################################################################################################
-    readCollapser3.main([outPrefix+'.trimmed', 
+    readCollapser4.main([outPrefix+'.trimmed', 
                          umi5, umi3, 
                          outPrefix+'.trimmed.collapsed.fastq'])
-    #print('skipping collapsing...')
-    os.system(f'cp {outPrefix}.trimmed '
-              f'{outPrefix}.trimmed.collapsed.fastq')
+    ##print('skipping collapsing...')
+    #os.system(f'cp {outPrefix}.trimmed '
+    #          f'{outPrefix}.trimmed.collapsed.fastq')
     
     ############################################################################################################
     """Introduce a variable to make reading code easier"""
@@ -193,7 +195,7 @@ def main(args):
         #f'--outReadsUnmapped Fastx ' \
         #f'--outFilterMismatchNmax {misMatchMax} ' \
         #f'--outSJfilterOverhangMin 6 6 6 6'
-
+    
     #Use the next optString for the normal pipeline
     optString= f'--outFilterScoreMin 14 ' \
         f'--outFilterScoreMinOverLread 0.3 ' \
@@ -210,14 +212,15 @@ def main(args):
               f'--readFilesIn {readFile} '
               f'--runThreadN {cores} '
               f'--outFileNamePrefix {outPrefix}.finalMapped.')
-
+    
     # print(f'Printing file {outPrefix}Log.final.out')
     # os.system(f'lpr -p {outPrefix}Log.final.out')
     ############################################################################################################
     """Assign reads to genes"""
     ############################################################################################################
     print('Assigning reads to genes...')
-    assignReadsToGenes3.main([genomeAnnots,
+    genomeAnnotProcessed=genomeAnnots.strip('gtf')+'allChrs.txt'
+    assignReadsToGenes4.main([genomeAnnotProcessed,
                              outPrefix+'.finalMapped.Aligned.out.sam',
                              outPrefix])
     
@@ -231,7 +234,7 @@ def main(args):
                                 maximumReadLength,
                                 outPrefix+'.joshSAM.filtered_%s-%snt'%(minimumReadLength,maximumReadLength)])
     print('Quitting early!!!', sys.exit())
-
+    
     ############################################################################################################
     """Make a metagene plot of start/stop codon"""
     ############################################################################################################
@@ -242,7 +245,6 @@ def main(args):
                         f'{outPrefix}.joshSAM.filtered_{minimumReadLength}-{maximumReadLength}nt',
                         'Library'])
     print(f'Done! {outPrefix}')
-
 
 if __name__ == '__main__':
     Tee()
