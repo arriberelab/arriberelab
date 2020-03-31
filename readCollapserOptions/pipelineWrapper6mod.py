@@ -94,7 +94,7 @@ def main(args):
     umi5=int(umi5)
     umi3=int(umi3)
     print('read length restriction does not include %sNs and %sNs.'%(umi5,umi3))
-    print('To accomodate UMI length, this program will add %snts to acceptable length.'%(umi5+umi3))
+    print('to accomodate UMI length, this program will add %snts to acceptable length.'%(umi5+umi3))
     #print('read length restriction does not include 6Ns. This program will NOT add 6')
     #print('read length restriction does not include 6Ns and 4Ns. This program WILL add 10')
     #print('read length restriction does not include 6Ns. This program WILL add 6')
@@ -111,7 +111,7 @@ def main(args):
     ############################################################################################################
     """Collapse reads and trim off UMIs"""
     ############################################################################################################
-    readCollapser3.main(outPrefix+'.trimmed', umi5, umi3, outPrefix+'.trimmed.collapsed.fastq'])
+    readCollapser3.main(outPrefix+'.trimmed', umi5, umi3, outPrefix+'.trimmed.collapsed.fastq')
     #print('skipping collapsing...')
     os.system(f'cp {outPrefix}.trimmed '
               f'{outPrefix}.trimmed.collapsed.fastq')
