@@ -17,7 +17,7 @@ import numpy as np
 
 # Imports from assignReadsToGenes4.py >>>
 import sys, os, collections, csv, common, re, time, pickle, copy, linecache
-import pandas
+# import pandas
 from logJosh import Tee
 csv.field_size_limit(sys.maxsize)
 # <<< Imports from assignReadsToGenes4.py
