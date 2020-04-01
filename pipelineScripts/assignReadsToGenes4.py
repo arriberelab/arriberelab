@@ -89,7 +89,7 @@ def parseAnnots(annots,readPositions):
                 transcript_id = row[8].split('transcript_id')[1].split('"')[1]
                 for ii in range(int(row[3]),int(row[4])):
                     if ii in readPositions[Chr]:
-                        continue
+                        continue  # This is skipping the following code, intentional?
                         if gene_id not in readPositions[Chr][ii]:
                             readPositions[Chr][ii][gene_id]={'strand':strand,'transcript_id':[]}
                         readPositions[Chr][ii][gene_id]['transcript_id'].append(transcript_id)
