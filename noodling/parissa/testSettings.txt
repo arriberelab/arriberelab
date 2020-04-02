@@ -1,0 +1,7 @@
+CACTCGGGCACCAAGGAC
+15
+18
+4
+6
+/data15/joshua/genomes/200329_cerevisiae/
+/data15/joshua/genomes/200329_cerevisiae/Saccharomyces_cerevisiae.R64-1-1.99.gtf
