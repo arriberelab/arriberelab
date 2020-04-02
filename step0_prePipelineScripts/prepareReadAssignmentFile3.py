@@ -137,24 +137,29 @@ def writeOutput2(someDict,annotFileName):
     with open('.'.join(annotFileName.split('.')[:-1])+'.allChrs.txt','w') as f:
         for Chr in someDict:
             dict1=someDict[Chr]
-            for ii in range(1,max(dict1)+1):
-                if ii not in dict1:
-                    #f.write('\n')
-                    pass
-                else:
-                    if ct==0:
-                        f.write('%s_%s|'%(Chr,ii))
-                        ct+=1
-                    elif ct!=0:
-                        f.write('\n%s_%s|'%(Chr,ii))
-                    for entry in dict1[ii]:
-                        f.write('%s\t'%entry)
+            try:
+                for ii in range(1,max(dict1)+1):
+                    if ii not in dict1:
+                        #f.write('\n')
+                        pass
+                    else:
+                        if ct==0:
+                            f.write('%s_%s|'%(Chr,ii))
+                            ct+=1
+                        elif ct!=0:
+                            f.write('\n%s_%s|'%(Chr,ii))
+                        for entry in dict1[ii]:
+                            f.write('%s\t'%entry)
+            except ValueError:
+                print(dict1)
+                pass
 
 def positionReadsOnTxts(annots,readPositions,annotFileName):
     """Given annots={txt_ID:{strand,CDS,exon}}, readPositions={chr:position:gene_id:{strand,txt_ids}},
     will make a file with
     chr position strand read_seq Aligned_length gene_id txt_id:relToCDSStart:relToCDSEnd:S/AS
     where the last column has potentially multiple comma-separated entries"""
+    
     #print len(annots), ' number of annotated txts.'
     #print sum([len(readPositions[Chr]) for Chr in readPositions]), ' number of reads'
     
@@ -191,20 +196,24 @@ def positionReadsOnTxts(annots,readPositions,annotFileName):
     with open('.'.join(annotFileName.split('.')[:-1])+'.processed.p','wb') as f:
         pickle.dump(outputPositions,f)
     
+    
     #If you already have a processed.p file. comment out 137 to 157, and uncomment 160 to 162.
 
-    #print 'Unpickling...'
-    #outputPositions=common.unPickle('.'.join(annotFileName.split('.')[:-1])+'.processed.p')
-    #print 'Done unpickling!'
+    print('Unpickling...')
+    tempFile='.'.join(annotFileName.split('.')[:-1])+'.processed.p'
+    with open(tempFile,'rb') as f:
+        outputPositions=pickle.load(f)
+    print('Done unpickling!')
     
     ##now output .txt file
     #p=multiprocessing.Pool(len(outputPositions)) #do not do multiprocessing because it will max out memory
     #p.map(writeOutput,[(Chr,outputPositions[Chr],annotFileName) for Chr in outputPositions])
     
     for Chr in outputPositions:
-        print('Working on %s...'%(Chr))
-        writeOutput((Chr,outputPositions[Chr],annotFileName))
-        print('Finished %s.'%(Chr))
+        if len(outputPositions[Chr])>0:
+            print('Working on %s...'%(Chr))
+            writeOutput((Chr,outputPositions[Chr],annotFileName))
+            print('Finished %s.'%(Chr))
     #added this to see if I can later process everything in one pd DataFrame
     print('Working on all chromsome-file...')
     writeOutput2(outputPositions,annotFileName)
