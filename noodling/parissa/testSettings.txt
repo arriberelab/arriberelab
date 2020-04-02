@@ -1,8 +1,14 @@
-adaptorSeq minReadLength maxReadLength 5'UMI 3'UMI genomeDir genomeAnnots
+#adaptorSeq:
 CACTCGGGCACCAAGGAC
+#minReadLength:
 15
+#maxReadLength:
 18
+#5'UMI:
 4
+#3'UMI:
 6
-/data15/joshua/genomes/200329_cerevisiae/
-/data15/joshua/genomes/200329_cerevisiae/Saccharomyces_cerevisiae.R64-1-1.99.gtf
+#genomeDir:
+/data14/parissa/genomes/191218_genomeWithdOrazioReporter/
+#genomeAnnots:
+/data14/parissa/genomes/191218_genomeWithdOrazioReporter/191218_genomeWithdOrazioReporter.gtf

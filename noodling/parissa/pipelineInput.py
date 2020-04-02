@@ -2,7 +2,6 @@
 Script to parse a line-delimited settings file for pipelineWrapper
 
 Input: settings.txt - a line-delimited settings file in the format:
-    header WITHOUT info
     adaptorSeq (raw sequence of adaptor)
     minReadLength (min length after adaptor and UMI trimming)
     maxReadLength (max length after adaptor and UMI trimming)
@@ -21,15 +20,17 @@ def parseSettingsFile(settings):
         setList=[]
         for line in s:
             line=line.strip()
-            setList.append(line)
-    adaptorSeq=setList[1]
-    minimumReadLength=setList[2]
-    maximumReadLength=setList[3]
-    umi5=setList[4]
-    umi3=setList[5]
-    genomeDir=setList[6]
-    genomeAnnots=setList[7]
-
+            if not line.startswith("#"):
+                setList.append(line)
+    adaptorSeq=setList[0]
+    minimumReadLength=setList[1]
+    maximumReadLength=setList[2]
+    umi5=setList[3]
+    umi3=setList[4]
+    genomeDir=setList[5]
+    genomeAnnots=setList[6]
+    print(setList)
+    
 def main(args):
     parsedSettings=parseSettingsFile(args)
 
