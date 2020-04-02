@@ -1,3 +1,4 @@
+adaptorSeq minReadLength maxReadLength 5'UMI 3'UMI genomeDir genomeAnnots
 CACTCGGGCACCAAGGAC
 15
 18
