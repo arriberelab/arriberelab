@@ -23,7 +23,6 @@ import sys, common, os, assignReadsToGenes4, readCollapser4, filterJoshSAMByRead
 #import metaStartStop, 
 from logJosh import Tee
 
-
 def main(args):
     settings, fastqFile, outPrefix = args[0:]
     
@@ -45,7 +44,7 @@ def main(args):
     maximumReadLength = int(maximumReadLength)
 
     ############################################################################################################
-    """First set some parameters"""
+    """First set some parameters-- all of this can be deleted if we're good""" 
     ############################################################################################################
     #adaptorSeq='CTGTAGGCACCATCAAT'#adaptor for Komili loc1 dataset (looks same as rachel's adaptor)
     #adaptorSeq='AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'#oJA126
@@ -58,9 +57,6 @@ def main(args):
     # Atail
     #adaptorSeq='AAAAAAAAAAAAAAAAAA'
     #adaptorSeq='CTGTAGGCACCATCAA'#this is rachel's adaptor
-    
-    #minimumReadLength = int(minimumReadLength)
-    #maximumReadLength = int(maximumReadLength)
     
     #genomeDir='/data3/genomes/170622_yeastWithUTRs/'
     #genomeDir='/data1/genomes/161002_yeast/'
@@ -101,6 +97,8 @@ def main(args):
     #genomeAnnots='/data12/joshua/genomes/171218_historicalGenomeT2A/170612_genomeWithUnc-54ChrAsItAppearsInPD4092.gtf'
     #genomeAnnots='/data12/joshua/genomes/191125_srf0788FromParissa/191122_genomeWithUnc-54AsItAppearsInWJA0788.gtf'
     #genomeAnnots='/data15/joshua/genomes/200329_cerevisiae/Saccharomyces_cerevisiae.R64-1-1.99.gtf'
+    
+    ############################################################################################################
     
     cores = 10  #groundcontrol has 16 cores total: cat /proc/cpuinfo | grep processor | wc -l
     misMatchMax = 0
@@ -252,13 +250,13 @@ def main(args):
     ############################################################################################################
     """Additional filtering of reads by length"""
     ############################################################################################################
-    # print('Quitting early!!!', sys.exit())
-    print('Filtering read lengths again...')
+    # print('Quitting early!!!'), sys.exit()
+    print('filtering read lengths again...')
     filterJoshSAMByReadLength.main([outPrefix+'.joshSAM',
                                 minimumReadLength,
                                 maximumReadLength,
                                 outPrefix+'.joshSAM.filtered_%s-%snt'%(minimumReadLength,maximumReadLength)])
-    print('Quitting early!!!', sys.exit())
+    #print('Quitting early!!!'), sys.exit()
     
     ############################################################################################################
     """Make a metagene plot of start/stop codon"""
