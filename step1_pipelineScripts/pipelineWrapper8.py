@@ -42,7 +42,7 @@ def main(args):
     
     minimumReadLength = int(minimumReadLength)
     maximumReadLength = int(maximumReadLength)
-
+    
     ############################################################################################################
     """First set some parameters-- all of this can be deleted if we're good""" 
     ############################################################################################################
