@@ -5,8 +5,8 @@ Input: settings.txt - a line-delimited settings file in the format:
     adaptorSeq=raw sequence of adaptor
     minReadLength=min length after adaptor and UMI trimming
     maxReadLength=max length after adaptor and UMI trimming
-    UMI5=5' UMI length in nts
-    UMI3=3' UMI length in nts
+    umi5=5' UMI length in nts
+    umi3=3' UMI length in nts
     genomeDir=full path to genome directory
     genomeAnnots=full path to genome annotation file in gtf format
 
