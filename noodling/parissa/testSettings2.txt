@@ -1,0 +1,14 @@
+#adaptorSeq:
+adaptorSeq=CACTCGGGCACCAAGGAC
+#minReadLength:
+minimumReadLength=15
+#maxReadLength:
+maximumReadLength=34
+#5' UMI:
+umi5=4
+#3' UMI:
+umi3=6
+#genomeDir:
+genomeDir=/data14/parissa/genomes/200329_cerevisiae/
+#genomeAnnots:
+genomeAnnots=/data14/parissa/genomes/200329_cerevisiae/Saccharomyces_cerevisiae.R64-1-1.99.gtf
