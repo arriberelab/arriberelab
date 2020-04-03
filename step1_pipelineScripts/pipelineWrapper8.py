@@ -6,15 +6,26 @@ Converted to python 3: Mar 23, 2020
 
 Parissa edited to make use of UMI lengths given in command line and revised readCollapser.
 
-run as python3 pipelineWrapper.py inputReads.fastq minReadLength maxReadLength 5'UMILength 3'UMILength outPrefix
+run as python3 pipelineWrapper8.py inputReads.fastq outPrefix --options
 """
 
-import sys, common, os, assignReadsToGenes4, metaStartStop, readCollapser4, filterJoshSAMByReadLength
+import sys, common, os, assignReadsToGenes4, metaStartStop, readCollapser4, filterJoshSAMByReadLength, argparse
 from logJosh import Tee
+parser = argparse.ArgumentParser(description='Wrapper for the handling of libraries starting from fastq files.')
+parser.add_argument('fastqFile', help='The fastq file input')
+parser.add_argument('outPrefix', type=str, help='The outPrefix that all files produced will be named as.')
+parser.add_argument('--umi5', type=int, default=0, help='The number of nucleotides to be trimmed from the 5prime end of reads.')
+parser.add_argument('--umi3', type=int, default=6, help='The number of nucleotides to be trimmed from the 3prime end of reads.')
+parser.add_argument('--minimumReadLength', type=int, default=15, help='The shortest reads to be mapped to the genome.')
+parser.add_argument('--maximumReadLength', type=int, default=30, help='The longest reads to be mapped to the genome.')
+parser.add_argument('--adaptorSeq', type=str, dest='adaptorSeq', default='AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC', help='The adaptor sequence to be trimmed from reads.')
+parser.add_argument('--genomeDir', default= '/data13/mmodena/genomes/171218_historicalGenomeT2A', help='The location of the genome directory that the reads will be mapped to.')
+parser.add_argument('--genomeAnnots', default='/data13/mmodena/genomes/171218_historicalGenomeT2A/170612_genomeWithUnc-54ChrAsItAppearsInPD4092.gtf', help='The genome annotation file/location')
+args = parser.parse_args()
 
-
-def main(args):
-    fastqFile, minimumReadLength, maximumReadLength, umi5, umi3, outPrefix = args[0:]
+def main(fastqFile,outPrefix,umi5,umi3,minimumReadLength,maximumReadLength,adaptorSeq,genomeDir,genomeAnnots):
+    
+    #fastqFile, minimumReadLength, maximumReadLength, umi5, umi3, outPrefix = args[0:]
     
     ############################################################################################################
     """First set some parameters"""
@@ -22,7 +33,7 @@ def main(args):
     #adaptorSeq='CTGTAGGCACCATCAAT'#adaptor for Komili loc1 dataset (looks same as rachel's adaptor)
     #adaptorSeq='AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'#oJA126
     #adaptorSeq='AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCGTATCATT'#revCompl of forward adaptor
-    adaptorSeq='CACTCGGGCACCAAGGAC'#from BZ boris oligos
+    #adaptorSeq='CACTCGGGCACCAAGGAC'#from BZ boris oligos
     #adaptorSeq='CTGTAGGCACCATCAATC'#Jonathan Gent
     #adaptorSeq='TGGAATTCTCGGGTGCCAAGG'#hendriks 3'adaptor for Ribo-seq time course
     #adaptorSeq='AGATGACGGGAAATAAAAGACACGTGCTGAAGTCAA'#another possibility for nextSeq adaptor from NEB
@@ -31,14 +42,14 @@ def main(args):
     #adaptorSeq='AAAAAAAAAAAAAAAAAA'
     #adaptorSeq='CTGTAGGCACCATCAA'#this is rachel's adaptor
     
-    minimumReadLength = int(minimumReadLength)
-    maximumReadLength = int(maximumReadLength)
+    #minimumReadLength = int(minimumReadLength)
+    #maximumReadLength = int(maximumReadLength)
     
     #genomeDir='/data3/genomes/170622_yeastWithUTRs/'
     #genomeDir='/data1/genomes/161002_yeast/'
     #genomeDir='/data1/genomes/160212_Celegans_Ce10with_unc-54Degenerate/'
     #genomeDir='/home/josh/genomes/150226_Scer/'
-    #genomeDir='/home/josh/genomes/150321_GFP_with_Ce_Chr/150325_PD8362/'
+    #genomeDir='/homAGATCGGAAGAGCACACGTCTGAACTCCAGTCACe/josh/genomes/150321_GFP_with_Ce_Chr/150325_PD8362/'
     #genomeDir='/home/josh/genomes/131217_Ty1/140127_Ty1/'
     #genomeDir='/home/josh/genomes/150518_Celegans/'
     #genomeDir='/data3/genomes/170620_unc-54GFPwithT2A/'
@@ -52,7 +63,7 @@ def main(args):
     #genomeDir='/data12/joshua/genomes/180402_clone_160110_Celegans_rel83/160110_Celegans_rel83/'
     #genomeDir='/data12/joshua/genomes/171218_historicalGenomeT2A/'
     #genomeDir='/data12/joshua/genomes/191125_srf0788FromParissa/'
-    genomeDir='/data15/joshua/genomes/200329_cerevisiae/'
+    #genomeDir='/data15/joshua/genomes/200329_cerevisiae/'
     
     #genomeAnnots='/home/josh/genomes/131217_Ty1/140127_Ty1/131217_M18706_revised.gtf'
     #genomeAnnots='/home/josh/working/141117_working_newGTF/Caenorhabditis_elegans.WBcel215.70.sansBJA7_40_77.gtf'
@@ -72,12 +83,12 @@ def main(args):
     #genomeAnnots='/data12/joshua/genomes/180402_clone_160110_Celegans_rel83/160110_Celegans_rel83/Caenorhabditis_elegans.WBcel235.83.gtf'
     #genomeAnnots='/data12/joshua/genomes/171218_historicalGenomeT2A/170612_genomeWithUnc-54ChrAsItAppearsInPD4092.gtf'
     #genomeAnnots='/data12/joshua/genomes/191125_srf0788FromParissa/191122_genomeWithUnc-54AsItAppearsInWJA0788.gtf'
-    genomeAnnots='/data15/joshua/genomes/200329_cerevisiae/Saccharomyces_cerevisiae.R64-1-1.99.gtf'
+    #genomeAnnots='/data15/joshua/genomes/200329_cerevisiae/Saccharomyces_cerevisiae.R64-1-1.99.gtf'
     
     cores = 10  #groundcontrol has 16 cores total: cat /proc/cpuinfo | grep processor | wc -l
     misMatchMax = 0
     
-    print(f'adaptorseq: {adaptorSeq}\n'
+    print(f'adaptorSeq: {adaptorSeq}\n'
           f'minimumReadLength (not including UMI): {minimumReadLength}\n'
           f'maximumReadLength (not including UMI): {maximumReadLength}\n'
           f'5\' UMI length: {umi5}\n'
@@ -155,7 +166,7 @@ def main(args):
     optString= f'--outFilterScoreMin 14 ' \
         f'--outFilterScoreMinOverLread 0.3 ' \
         f'--outFilterMatchNmin 14 ' \
-        f'--outFilterMatchNminOverLread 0.3 ' \
+        f'--outFilterMatchNminOverLADAPTORSEQread 0.3 ' \
         f'--outReadsUnmapped Fastx ' \
         f'--outFilterMismatchNmax {misMatchMax2} ' \
         f'--outSJfilterOverhangMin 1000 1000 1000 1000 '
@@ -188,7 +199,7 @@ def main(args):
     #           f'--alignIntronMax 1 '
     #           f'--sjdbGTFfile {genomeAnnots} '
     #           f'--genomeDir {genomeDir} '
-    #           f'--readFilesIn {readFile} '
+    #     AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC      f'--readFilesIn {readFile} '
     #           f'--runThreadN {cores} '
     #           f'--outFileNamePrefix {outPrefix}.finalMapped.')
     #optString = f'--outFilterMatchNmin 70 ' \
@@ -248,4 +259,4 @@ def main(args):
 
 if __name__ == '__main__':
     Tee()
-    main(sys.argv[1:])
+    main(**vars(args))
