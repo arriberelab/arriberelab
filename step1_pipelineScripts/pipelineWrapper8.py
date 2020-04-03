@@ -2,27 +2,55 @@
 
 """
 Joshua Arribere, July 25, 2014
-Converted to python 3: Mar 23, 2020
+Mar 23, 2020: Converted to python 3
+April 2, 2020: Now accepts settings via a line-delimited txt file
 
-Parissa edited to make use of UMI lengths given in command line and revised readCollapser.
+Input: settings.txt - a line-delimited settings file in the format:
+    adaptorSeq (raw sequence of adaptor)
+    minReadLength (min length after adaptor and UMI trimming)
+    maxReadLength (max length after adaptor and UMI trimming)
+    UMI5 (5' UMI length in nts)
+    UMI3 (3' UMI length in nts)
+    genomeDir (full path to genome directory)
+    genomeAnnots (full path to genome annotation file in gtf format)
 
-run as python3 pipelineWrapper.py inputReads.fastq minReadLength maxReadLength 5'UMILength 3'UMILength outPrefix
+    inputReads.fastq - a fastq file of reads
+
+run as python3 pipelineWrapper8.py settings.txt inputReads.fastq outPrefix
 """
 
-import sys, common, os, assignReadsToGenes4, metaStartStop, readCollapser4, filterJoshSAMByReadLength
+import sys, common, os, assignReadsToGenes4, readCollapser4, filterJoshSAMByReadLength
+#import metaStartStop, 
 from logJosh import Tee
 
 
 def main(args):
-    fastqFile, minimumReadLength, maximumReadLength, umi5, umi3, outPrefix = args[0:]
+    settings, fastqFile, outPrefix = args[0:]
     
+    with open (settings,'r') as s:
+        setList=[]
+        for line in s:
+            line=line.strip()
+            if not line.startswith("#"):
+                setList.append(line)
+    adaptorSeq=setList[0]
+    minimumReadLength=setList[1]
+    maximumReadLength=setList[2]
+    umi5=setList[3]
+    umi3=setList[4]
+    genomeDir=setList[5]
+    genomeAnnots=setList[6]
+    
+    minimumReadLength = int(minimumReadLength)
+    maximumReadLength = int(maximumReadLength)
+
     ############################################################################################################
     """First set some parameters"""
     ############################################################################################################
     #adaptorSeq='CTGTAGGCACCATCAAT'#adaptor for Komili loc1 dataset (looks same as rachel's adaptor)
     #adaptorSeq='AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'#oJA126
     #adaptorSeq='AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCGTATCATT'#revCompl of forward adaptor
-    adaptorSeq='CACTCGGGCACCAAGGAC'#from BZ boris oligos
+    #adaptorSeq='CACTCGGGCACCAAGGAC'#from BZ boris oligos
     #adaptorSeq='CTGTAGGCACCATCAATC'#Jonathan Gent
     #adaptorSeq='TGGAATTCTCGGGTGCCAAGG'#hendriks 3'adaptor for Ribo-seq time course
     #adaptorSeq='AGATGACGGGAAATAAAAGACACGTGCTGAAGTCAA'#another possibility for nextSeq adaptor from NEB
@@ -31,8 +59,8 @@ def main(args):
     #adaptorSeq='AAAAAAAAAAAAAAAAAA'
     #adaptorSeq='CTGTAGGCACCATCAA'#this is rachel's adaptor
     
-    minimumReadLength = int(minimumReadLength)
-    maximumReadLength = int(maximumReadLength)
+    #minimumReadLength = int(minimumReadLength)
+    #maximumReadLength = int(maximumReadLength)
     
     #genomeDir='/data3/genomes/170622_yeastWithUTRs/'
     #genomeDir='/data1/genomes/161002_yeast/'
@@ -52,7 +80,7 @@ def main(args):
     #genomeDir='/data12/joshua/genomes/180402_clone_160110_Celegans_rel83/160110_Celegans_rel83/'
     #genomeDir='/data12/joshua/genomes/171218_historicalGenomeT2A/'
     #genomeDir='/data12/joshua/genomes/191125_srf0788FromParissa/'
-    genomeDir='/data15/joshua/genomes/200329_cerevisiae/'
+    #genomeDir='/data15/joshua/genomes/200329_cerevisiae/'
     
     #genomeAnnots='/home/josh/genomes/131217_Ty1/140127_Ty1/131217_M18706_revised.gtf'
     #genomeAnnots='/home/josh/working/141117_working_newGTF/Caenorhabditis_elegans.WBcel215.70.sansBJA7_40_77.gtf'
@@ -72,7 +100,7 @@ def main(args):
     #genomeAnnots='/data12/joshua/genomes/180402_clone_160110_Celegans_rel83/160110_Celegans_rel83/Caenorhabditis_elegans.WBcel235.83.gtf'
     #genomeAnnots='/data12/joshua/genomes/171218_historicalGenomeT2A/170612_genomeWithUnc-54ChrAsItAppearsInPD4092.gtf'
     #genomeAnnots='/data12/joshua/genomes/191125_srf0788FromParissa/191122_genomeWithUnc-54AsItAppearsInWJA0788.gtf'
-    genomeAnnots='/data15/joshua/genomes/200329_cerevisiae/Saccharomyces_cerevisiae.R64-1-1.99.gtf'
+    #genomeAnnots='/data15/joshua/genomes/200329_cerevisiae/Saccharomyces_cerevisiae.R64-1-1.99.gtf'
     
     cores = 10  #groundcontrol has 16 cores total: cat /proc/cpuinfo | grep processor | wc -l
     misMatchMax = 0
@@ -97,9 +125,6 @@ def main(args):
     umi3=int(umi3)
     print('read length restriction does not include %sNs and %sNs.'%(umi5,umi3))
     print('to accomodate UMI length, this program will add %snts to acceptable length.'%(umi5+umi3))
-    #print('read length restriction does not include 6Ns. This program will NOT add 6')
-    #print('read length restriction does not include 6Ns and 4Ns. This program WILL add 10')
-    #print('read length restriction does not include 6Ns. This program WILL add 6')
     
     os.system(f'cutadapt -a {adaptorSeq} '
               f'-m {minimumReadLength+umi5+umi3} '
@@ -238,14 +263,15 @@ def main(args):
     ############################################################################################################
     """Make a metagene plot of start/stop codon"""
     ############################################################################################################
-    # print('skipping the output metagene plot...')
+    print('skipping the output metagene plot...')
+    """
     print('Plotting metagene...')
     metaStartStop.main([genomeAnnots,
                         f'{outPrefix}.plot',
                         f'{outPrefix}.joshSAM.filtered_{minimumReadLength}-{maximumReadLength}nt',
                         'Library'])
     print(f'Done! {outPrefix}')
-
+    """
 if __name__ == '__main__':
     Tee()
     main(sys.argv[1:])
