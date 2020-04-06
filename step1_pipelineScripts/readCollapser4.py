@@ -39,7 +39,7 @@ def main(args):
                         if reads[currRead[1][x:]][UMI]==0:
                             g.write('%s\n%s\n%s\n%s\n'%(currRead[0].replace(' ','-'),currRead[1][x:],currRead[2],currRead[3][x:]))
                             if len(currRead[1])!=len(currRead[3]):
-                                print(currRead, sys.exit())
+                                print(currRead), sys.exit()
                         reads[currRead[1][x:]][UMI]+=1
                         currRead=[]
                         currRead.append(line)
@@ -48,7 +48,7 @@ def main(args):
                         if reads[currRead[1][x:y]][UMI]==0:                #check if we've seen this read+UMI before
                             g.write('%s\n%s\n%s\n%s\n'%(currRead[0].replace(' ','-'),currRead[1][x:y],currRead[2],currRead[3][x:y]))
                             if len(currRead[1])!=len(currRead[3]):         #only want reads the same length as quality score
-                                print(currRead, sys.exit())
+                                print(currRead), sys.exit()
                         reads[currRead[1][x:y]][UMI]+=1                    #mark this one as done
                         currRead=[]                                        #clear list
                         currRead.append(line)                              #add line to list
