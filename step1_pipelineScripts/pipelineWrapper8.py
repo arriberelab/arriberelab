@@ -13,6 +13,13 @@ Input: settings.txt - a line-delimited settings file in the format:
     UMI3 (3' UMI length in nts)
     genomeDir (full path to genome directory)
     genomeAnnots (full path to genome annotation file in gtf format)
+    cores (number of cores to use--ground control has 16 cores total)
+    misMatchMax (number of allowed mismatches)
+    optString (parameters for STAR run)
+    optional:
+        genomeDir2 (full path to genome directory for filter round of mapping)
+        genomeAnnots2 (full path to genome annotation file for filter mapping)
+        optString2 (parameters for filter mapping STAR run)
 
     inputReads.fastq - a fastq file of reads
 
@@ -20,7 +27,7 @@ run as python3 pipelineWrapper8.py settings.txt inputReads.fastq outPrefix
 """
 
 import sys, common, os, assignReadsToGenes4, readCollapser4, filterJoshSAMByReadLength
-#import metaStartStop, 
+#import metaStartStop
 from logJosh import Tee
 
 def main(args):
@@ -39,6 +46,16 @@ def main(args):
     umi3=setList[4]
     genomeDir=setList[5]
     genomeAnnots=setList[6]
+    cores=setList[7]
+    misMatchMax=setList[8]
+    optString=setList[9]
+    
+    #Uncomment the following for filter round of mapping:
+    """
+    genomeDir2=setList[10]
+    genomeAnnots2=setList[11]
+    optString2=setList[12]
+    """
     
     minimumReadLength = int(minimumReadLength)
     maximumReadLength = int(maximumReadLength)
@@ -98,10 +115,10 @@ def main(args):
     #genomeAnnots='/data12/joshua/genomes/191125_srf0788FromParissa/191122_genomeWithUnc-54AsItAppearsInWJA0788.gtf'
     #genomeAnnots='/data15/joshua/genomes/200329_cerevisiae/Saccharomyces_cerevisiae.R64-1-1.99.gtf'
     
-    ############################################################################################################
+    #cores = 10  #groundcontrol has 16 cores total: cat /proc/cpuinfo | grep processor | wc -l
+    #misMatchMax = 0
     
-    cores = 10  #groundcontrol has 16 cores total: cat /proc/cpuinfo | grep processor | wc -l
-    misMatchMax = 0
+    ############################################################################################################
     
     print(f'adaptorseq: {adaptorSeq}\n'
           f'minimumReadLength (not including UMI): {minimumReadLength}\n'
@@ -151,7 +168,9 @@ def main(args):
     ############################################################################################################
     """Perform a filter round of mapping. e.g. to rDNA or RNAi trigger"""
     ############################################################################################################
+    print('skipping filter round of mapping...')
     
+    #Can delete this if we're good:
     #genomeDir2='/data1/genomes/170320_unc-54GFPNonStop/'
     #genomeAnnots2='/data1/genomes/170320_unc-54GFPNonStop/170320_unc-54GFPNonStop.gtf'
     #genomeDir2='/data1/genomes/170320_unc-54BJA40TriggerChr/'
@@ -168,22 +187,24 @@ def main(args):
     #genomeDir2='/data4/genomes/180331_triggerChr_pJA7_pJA40_pJA77/'
     #genomeDir2='/data4/genomes/180514_triggerChr_pJA7_pJA77_pJA151_pJA153/'
     #genomeAnnots2=genomeDir2+'blah.gtf'
+    #genomeDir2='/data8/genomes/181106_pMPmismatchFeeding/'
+    #genomeAnnots2=genomeDir2+'blah.gtf'
+    
+    #Uncomment the following to commence filter round of mapping:
     """
-    genomeDir2='/data8/genomes/181106_pMPmismatchFeeding/'
-    genomeAnnots2=genomeDir2+'blah.gtf'
     misMatchMax2=0
     print(f'performing filter round of mapping to {genomeDir2}')
     print(f'Only running on {cores} cores.')
     print(f'{misMatchMax2} mismatch max!')
-    optString= f'--outFilterScoreMin 14 ' \
+    optString2= f'--outFilterScoreMin 14 ' \
         f'--outFilterScoreMinOverLread 0.3 ' \
         f'--outFilterMatchNmin 14 ' \
         f'--outFilterMatchNminOverLread 0.3 ' \
         f'--outReadsUnmapped Fastx ' \
         f'--outFilterMismatchNmax {misMatchMax2} ' \
         f'--outSJfilterOverhangMin 1000 1000 1000 1000 '
-    print(f'Length/Score parameters: {optString}')
-    os.system(f'STAR {optString} '
+    print(f'Length/Score parameters: {optString2}')
+    os.system(f'STAR {optString2} '
               f'--alignIntronMax 1 '
               f'--sjdbGTFfile {genomeAnnots2} '
               f'--genomeDir {genomeDir2} '
@@ -191,16 +212,16 @@ def main(args):
               f'--runThreadN {cores} '
               f'--outFileNamePrefix {outPrefix}.trimmed.collapsed.mapped.filter'
               )
-    """
-    #"""Now rewrite the read file to map from the unmapped reads"""
-    print('skipping filter round of mapping...')
+    #Now rewrite the read file to map from the unmapped reads
     #readFile=outPrefix+'.trimmed.collapsed.mapped.filterUnmapped.out.mate1'
+    """
     
     ############################################################################################################
     """Commence read mapping"""
     ############################################################################################################
     print(f'Only running on {cores} cores.')
     print(f'{misMatchMax} mismatch max!')
+    #Can delete these/put in other settings files:
     # optString= f'--outFilterScoreMin 14 ' \
     #     f'--outFilterScoreMinOverLread 0.3 ' \
     #     f'--outFilterMatchNmin 14 ' \
@@ -220,6 +241,8 @@ def main(args):
         #f'--outSJfilterOverhangMin 6 6 6 6'
     
     #Use the next optString for the normal pipeline
+    #Can delete this bc it is now in the settings file:
+    """
     optString= f'--outFilterScoreMin 14 ' \
         f'--outFilterScoreMinOverLread 0.3 ' \
         f'--outFilterMatchNmin 14 ' \
@@ -227,6 +250,7 @@ def main(args):
         f'--outReadsUnmapped Fastx ' \
         f'--outFilterMismatchNmax {misMatchMax} ' \
         f'--outSJfilterOverhangMin 6 6 6 6'
+    """
     print(f'Length/Score parameters: {optString}')
     os.system(f'STAR {optString} '
               f'--alignIntronMax 1 '
