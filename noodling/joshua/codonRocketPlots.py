@@ -18,6 +18,7 @@ run as python codonRocketPlots.py inFile.joshSAM 15 34 outPrefix
 """
 import sys, common, pickle
 import pandas as pd
+import seaborn
 from logJosh import Tee
 
 def passed(txtList):
@@ -64,9 +65,13 @@ def getCodonCounts(inFile,X,Y):
         names=['readLength','offset','codon'])
     #now make the DataFrame using the multiindexes
     df=pd.DataFrame(data={'counts':0},index=index)
+    #not sure if the next line is necessary, but adding it
+    #df.sort_index(inplace=True)
     #make a txtome codon count DataFrame
+    idx=pd.Index(codons,name='codon')
     codonTotalsDF=pd.DataFrame(data={'counts':0},
-                                    index=codons)
+                                    index=idx)
+    #codonTotalsDF.sort_index(inplace=True)
     #############################################################
     #ok should now have a blank dataframe with multiindex column.
     #the indexes are in order readLength, offset, codon.
@@ -95,19 +100,65 @@ def getCodonCounts(inFile,X,Y):
     
     return df, codonTotalsDF
 
+def combine(df,df2):
+    """
+    For the life of me I cannot figure out the syntax to do this, so I'm
+    going to write a function to do it.
+    """
+    df2.index.name='codon'
+    df3=df+df2
+    df.insert(1,'control',df3)
+
+def mkScatterPlots(df,outPrefix):
+    """
+    df is a pandas.DataFrame with index columns
+    'readLength','offset','codon'. It also has a 'counts' column and a
+    'control' column. Will tile plots s.t. different rows are read lengths
+    and different columns are offsets. Each plot within that grid will be
+    a scatter plot where points are codons. The position of each codon
+    will be determined by its 'control' value (x-axis) and 'counts' value
+    (y-axis)
+    """
+    ##df has MultiIndex, which does not work with seaborn. So have to do a
+    ##few changes to df. The next line will convert the MultiIndex names
+    ##to column names.
+    df.reset_index(inplace=True)
+    ##plot the data
+    fig=seaborn.lmplot(x='control',y='counts',
+                            row='readLength',col='offset',
+                            data=df,sharey=False)
+    ##change x,y scaling
+    fig.set(xscale="log")
+    fig.set(yscale="log")
+    fig.set(xlim=(1,None),ylim=(1,None))
+    ##write output
+    fig.savefig(f'{outPrefix}.png')
+
 def main(args):
-    #parse the input
+    ##parse the input
     inFile,readLengthLower,readLengthUpper,outPrefix=args[0:]
-    #convert strings to ints
+    ##convert strings to ints
     readLengthLower=int(readLengthLower)
     readLengthUpper=int(readLengthUpper)
-    #now parse the joshSAM file
-    df,codonTotalsDF=getCodonCounts(inFile,readLengthLower,readLengthUpper)
-    #pickle the output
+    
+    ##now parse the joshSAM file
+    df,codonTotalsDF=getCodonCounts(inFile,readLengthLower,\
+                                    readLengthUpper)
+    ##pickle the output
     with open(outPrefix+'.p','wb') as f:
         pickle.dump(df,f)
     with open(outPrefix+'.control.p','wb') as f:
         pickle.dump(codonTotalsDF,f)
+    ##unpickle the output
+    
+    with open(outPrefix+'.p','rb') as f:
+        df=pickle.load(f)
+    with open(outPrefix+'.control.p','rb') as f:
+        codonTotalsDF=pickle.load(f)
+    ##first combine the df and codonTotalsDF objects into one
+    combine(df,codonTotalsDF)
+    ##
+    mkScatterPlots(df,outPrefix)
 
 if __name__=='__main__':
     Tee()
