@@ -2,66 +2,41 @@
 
 """
 Joshua Arribere, July 25, 2014
-Mar 23, 2020: Converted to python 3
-April 2, 2020: Now accepts settings via a line-delimited txt file
+Converted to python 3: Mar 23, 2020
 
-Input: settings.txt - a line-delimited settings file in the format:
-    adaptorSeq (raw sequence of adaptor)
-    minReadLength (min length after adaptor and UMI trimming)
-    maxReadLength (max length after adaptor and UMI trimming)
-    UMI5 (5' UMI length in nts)
-    UMI3 (3' UMI length in nts)
-    genomeDir (full path to genome directory)
-    genomeAnnots (full path to genome annotation file in gtf format)
-    cores (number of cores to use--ground control has 16 cores total)
-    misMatchMax (number of allowed mismatches)
-    optString (parameters for STAR run)
-    optional:
-        genomeDir2 (full path to genome directory for filter round of mapping)
-        genomeAnnots2 (full path to genome annotation file for filter mapping)
-        optString2 (parameters for filter mapping STAR run)
+Parissa edited to make use of UMI lengths given in command line and revised readCollapser.
 
-    inputReads.fastq - a fastq file of reads
-
-run as python3 pipelineWrapper8.py settings.txt inputReads.fastq outPrefix
+run as python3 pipelineWrapper8.py inputReads.fastq outPrefix --options
 """
 
-import sys, common, os, assignReadsToGenes4, readCollapser4, filterJoshSAMByReadLength
-#import metaStartStop
+import sys, common, os, assignReadsToGenes4, metaStartStop, readCollapser4, filterJoshSAMByReadLength, argparse
 from logJosh import Tee
-
-def main(args):
-    settings, fastqFile, outPrefix = args[0:]
-    
-    with open (settings,'r') as s:
-        setList=[]
+parser = argparse.ArgumentParser(description='Wrapper for the handling of libraries starting from fastq files.')
+parser.add_argument('fastqFile', help='The fastq file input')
+parser.add_argument('settings', help='A text file containing a line-delimited input of adaptorSeq, genomeDir, and genomeAnnots.')
+parser.add_argument('outPrefix', type=str, help='The outPrefix that all files produced will be named as.')
+parser.add_argument('--umi5', type=int, default=0, help='The number of nucleotides to be trimmed from the 5prime end of reads.')
+parser.add_argument('--umi3', type=int, default=6, help='The number of nucleotides to be trimmed from the 3prime end of reads.')
+parser.add_argument('--minimumReadLength','--min', type=int, default=15, help='The shortest reads to be mapped to the genome.')
+parser.add_argument('--maximumReadLength','--max', type=int, default=30, help='The longest reads to be mapped to the genome.')
+args = parser.parse_args()
+def parser(fastqFile,settings,outPrefix,umi5,umi3,minimumReadLength,maximumReadLength):
+    with open(settings, 'r') as s:
+        p=[]
         for line in s:
             line=line.strip()
             if not line.startswith("#"):
-                setList.append(line)
-    adaptorSeq=setList[0]
-    minimumReadLength=setList[1]
-    maximumReadLength=setList[2]
-    umi5=setList[3]
-    umi3=setList[4]
-    genomeDir=setList[5]
-    genomeAnnots=setList[6]
-    cores=setList[7]
-    misMatchMax=setList[8]
-    optString=setList[9]
+                p.append(line)
+        adaptorSeq=p[0]
+        genomeDir=p[1]
+        genomeAnnots=p[2]
+    main(fastqFile,outPrefix,umi5,umi3,minimumReadLength,maximumReadLength,adaptorSeq,genomeDir,genomeAnnots)
+def main(fastqFile,outPrefix,umi5,umi3,minimumReadLength,maximumReadLength,adaptorSeq,genomeDir,genomeAnnots):
     
-    #Uncomment the following for filter round of mapping:
-    """
-    genomeDir2=setList[10]
-    genomeAnnots2=setList[11]
-    optString2=setList[12]
-    """
-    
-    minimumReadLength = int(minimumReadLength)
-    maximumReadLength = int(maximumReadLength)
+    #fastqFile, minimumReadLength, maximumReadLength, umi5, umi3, outPrefix = args[0:]
     
     ############################################################################################################
-    """First set some parameters-- all of this can be deleted if we're good""" 
+    """First set some parameters"""
     ############################################################################################################
     #adaptorSeq='CTGTAGGCACCATCAAT'#adaptor for Komili loc1 dataset (looks same as rachel's adaptor)
     #adaptorSeq='AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'#oJA126
@@ -75,11 +50,14 @@ def main(args):
     #adaptorSeq='AAAAAAAAAAAAAAAAAA'
     #adaptorSeq='CTGTAGGCACCATCAA'#this is rachel's adaptor
     
+    #minimumReadLength = int(minimumReadLength)
+    #maximumReadLength = int(maximumReadLength)
+    
     #genomeDir='/data3/genomes/170622_yeastWithUTRs/'
     #genomeDir='/data1/genomes/161002_yeast/'
     #genomeDir='/data1/genomes/160212_Celegans_Ce10with_unc-54Degenerate/'
     #genomeDir='/home/josh/genomes/150226_Scer/'
-    #genomeDir='/home/josh/genomes/150321_GFP_with_Ce_Chr/150325_PD8362/'
+    #genomeDir='/homAGATCGGAAGAGCACACGTCTGAACTCCAGTCACe/josh/genomes/150321_GFP_with_Ce_Chr/150325_PD8362/'
     #genomeDir='/home/josh/genomes/131217_Ty1/140127_Ty1/'
     #genomeDir='/home/josh/genomes/150518_Celegans/'
     #genomeDir='/data3/genomes/170620_unc-54GFPwithT2A/'
@@ -115,12 +93,10 @@ def main(args):
     #genomeAnnots='/data12/joshua/genomes/191125_srf0788FromParissa/191122_genomeWithUnc-54AsItAppearsInWJA0788.gtf'
     #genomeAnnots='/data15/joshua/genomes/200329_cerevisiae/Saccharomyces_cerevisiae.R64-1-1.99.gtf'
     
-    #cores = 10  #groundcontrol has 16 cores total: cat /proc/cpuinfo | grep processor | wc -l
-    #misMatchMax = 0
+    cores = 10  #groundcontrol has 16 cores total: cat /proc/cpuinfo | grep processor | wc -l
+    misMatchMax = 0
     
-    ############################################################################################################
-    
-    print(f'adaptorseq: {adaptorSeq}\n'
+    print(f'adaptorSeq: {adaptorSeq}\n'
           f'minimumReadLength (not including UMI): {minimumReadLength}\n'
           f'maximumReadLength (not including UMI): {maximumReadLength}\n'
           f'5\' UMI length: {umi5}\n'
@@ -140,6 +116,9 @@ def main(args):
     umi3=int(umi3)
     print('read length restriction does not include %sNs and %sNs.'%(umi5,umi3))
     print('to accomodate UMI length, this program will add %snts to acceptable length.'%(umi5+umi3))
+    #print('read length restriction does not include 6Ns. This program will NOT add 6')
+    #print('read length restriction does not include 6Ns and 4Ns. This program WILL add 10')
+    #print('read length restriction does not include 6Ns. This program WILL add 6')
     
     os.system(f'cutadapt -a {adaptorSeq} '
               f'-m {minimumReadLength+umi5+umi3} '
@@ -168,9 +147,7 @@ def main(args):
     ############################################################################################################
     """Perform a filter round of mapping. e.g. to rDNA or RNAi trigger"""
     ############################################################################################################
-    print('skipping filter round of mapping...')
     
-    #Can delete this if we're good:
     #genomeDir2='/data1/genomes/170320_unc-54GFPNonStop/'
     #genomeAnnots2='/data1/genomes/170320_unc-54GFPNonStop/170320_unc-54GFPNonStop.gtf'
     #genomeDir2='/data1/genomes/170320_unc-54BJA40TriggerChr/'
@@ -187,24 +164,22 @@ def main(args):
     #genomeDir2='/data4/genomes/180331_triggerChr_pJA7_pJA40_pJA77/'
     #genomeDir2='/data4/genomes/180514_triggerChr_pJA7_pJA77_pJA151_pJA153/'
     #genomeAnnots2=genomeDir2+'blah.gtf'
-    #genomeDir2='/data8/genomes/181106_pMPmismatchFeeding/'
-    #genomeAnnots2=genomeDir2+'blah.gtf'
-    
-    #Uncomment the following to commence filter round of mapping:
     """
+    genomeDir2='/data8/genomes/181106_pMPmismatchFeeding/'
+    genomeAnnots2=genomeDir2+'blah.gtf'
     misMatchMax2=0
     print(f'performing filter round of mapping to {genomeDir2}')
     print(f'Only running on {cores} cores.')
     print(f'{misMatchMax2} mismatch max!')
-    optString2= f'--outFilterScoreMin 14 ' \
+    optString= f'--outFilterScoreMin 14 ' \
         f'--outFilterScoreMinOverLread 0.3 ' \
         f'--outFilterMatchNmin 14 ' \
-        f'--outFilterMatchNminOverLread 0.3 ' \
+        f'--outFilterMatchNminOverLADAPTORSEQread 0.3 ' \
         f'--outReadsUnmapped Fastx ' \
         f'--outFilterMismatchNmax {misMatchMax2} ' \
         f'--outSJfilterOverhangMin 1000 1000 1000 1000 '
-    print(f'Length/Score parameters: {optString2}')
-    os.system(f'STAR {optString2} '
+    print(f'Length/Score parameters: {optString}')
+    os.system(f'STAR {optString} '
               f'--alignIntronMax 1 '
               f'--sjdbGTFfile {genomeAnnots2} '
               f'--genomeDir {genomeDir2} '
@@ -212,16 +187,16 @@ def main(args):
               f'--runThreadN {cores} '
               f'--outFileNamePrefix {outPrefix}.trimmed.collapsed.mapped.filter'
               )
-    #Now rewrite the read file to map from the unmapped reads
-    #readFile=outPrefix+'.trimmed.collapsed.mapped.filterUnmapped.out.mate1'
     """
+    #"""Now rewrite the read file to map from the unmapped reads"""
+    print('skipping filter round of mapping...')
+    #readFile=outPrefix+'.trimmed.collapsed.mapped.filterUnmapped.out.mate1'
     
     ############################################################################################################
     """Commence read mapping"""
     ############################################################################################################
     print(f'Only running on {cores} cores.')
     print(f'{misMatchMax} mismatch max!')
-    #Can delete these/put in other settings files:
     # optString= f'--outFilterScoreMin 14 ' \
     #     f'--outFilterScoreMinOverLread 0.3 ' \
     #     f'--outFilterMatchNmin 14 ' \
@@ -232,7 +207,7 @@ def main(args):
     #           f'--alignIntronMax 1 '
     #           f'--sjdbGTFfile {genomeAnnots} '
     #           f'--genomeDir {genomeDir} '
-    #           f'--readFilesIn {readFile} '
+    #     AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC      f'--readFilesIn {readFile} '
     #           f'--runThreadN {cores} '
     #           f'--outFileNamePrefix {outPrefix}.finalMapped.')
     #optString = f'--outFilterMatchNmin 70 ' \
@@ -241,8 +216,6 @@ def main(args):
         #f'--outSJfilterOverhangMin 6 6 6 6'
     
     #Use the next optString for the normal pipeline
-    #Can delete this bc it is now in the settings file:
-    """
     optString= f'--outFilterScoreMin 14 ' \
         f'--outFilterScoreMinOverLread 0.3 ' \
         f'--outFilterMatchNmin 14 ' \
@@ -250,7 +223,6 @@ def main(args):
         f'--outReadsUnmapped Fastx ' \
         f'--outFilterMismatchNmax {misMatchMax} ' \
         f'--outSJfilterOverhangMin 6 6 6 6'
-    """
     print(f'Length/Score parameters: {optString}')
     os.system(f'STAR {optString} '
               f'--alignIntronMax 1 '
@@ -274,26 +246,25 @@ def main(args):
     ############################################################################################################
     """Additional filtering of reads by length"""
     ############################################################################################################
-    # print('Quitting early!!!'), sys.exit()
-    print('filtering read lengths again...')
+    # print('Quitting early!!!', sys.exit())
+    print('Filtering read lengths again...')
     filterJoshSAMByReadLength.main([outPrefix+'.joshSAM',
                                 minimumReadLength,
                                 maximumReadLength,
                                 outPrefix+'.joshSAM.filtered_%s-%snt'%(minimumReadLength,maximumReadLength)])
-    #print('Quitting early!!!'), sys.exit()
+    print('Quitting early!!!', sys.exit())
     
     ############################################################################################################
     """Make a metagene plot of start/stop codon"""
     ############################################################################################################
-    print('skipping the output metagene plot...')
-    """
+    # print('skipping the output metagene plot...')
     print('Plotting metagene...')
     metaStartStop.main([genomeAnnots,
                         f'{outPrefix}.plot',
                         f'{outPrefix}.joshSAM.filtered_{minimumReadLength}-{maximumReadLength}nt',
                         'Library'])
     print(f'Done! {outPrefix}')
-    """
+
 if __name__ == '__main__':
     Tee()
-    main(sys.argv[1:])
+    parser(**vars(args))
