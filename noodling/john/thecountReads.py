@@ -1,6 +1,6 @@
 import os
 OUTPUT_FILE = ".summary.txt"
-# import thecountReads as jkim
+# import theREALcountReads as jkim
 # jkim.main(outPrefix, fastqFile)
 
 def countTrimmed(filename):
@@ -20,15 +20,13 @@ def countSAMS(filename):
 
 
 def main(outPrefix, fastq):
-    try:
-        os.remove(outPrefix+OUTPUT_FILE) #remove file to rewrite
-    except Exception as e: #if no file exists then exception occurs instead
-        print(f'ERROR: {e}')
-        print('Running now')
+    # try:
+    #     os.remove(outPrefix+OUTPUT_FILE) #remove file to rewrite
+    # except Exception as e: #if no file exists then exception occurs instead
+    #     print(f'ERROR: {e}')
+    #     print('Running now')
     input_files = {}
-    #print(input_files)
-
-    l = ['.trimmed.collapsed', '.trimmed.tooShort', '.trimmed.tooLong', '.joshSAM'] #list of filenames
+    l = ['.trimmed.collapsed.fastq', '.trimmed.tooShort.fastq', '.trimmed.tooLong.fastq', '.joshSAM'] #list of filenames
     input_files[outPrefix] = {} #dictionary of outPrefixes
     fastqCount = countTrimmed(fastq) #passing fastq through countTrimmed and assign to variable fastq
     input_files[outPrefix]['.fastq'] = fastqCount #save fastqcount to '.fastq' key in outPrefix dictionary
@@ -38,7 +36,7 @@ def main(outPrefix, fastq):
 
         if i == '.joshSAM':
             readCount = countSAMS(filename)
-        elif i == '.trimmed.tooLong' or '.trimmed.tooShort' or '.trimmed.collapsed':
+        elif i == '.trimmed.tooLong.fastq' or '.trimmed.tooShort.fastq' or '.trimmed.collapsed.fastq':
             readCount = countTrimmed(filename)
         # else:
         #     print('u thought')
@@ -46,7 +44,7 @@ def main(outPrefix, fastq):
         input_files[outPrefix][i]= readCount #update with readCount
     #print(input_files)
     #print(input_files[outPrefix])
-    with open(outPrefix+OUTPUT_FILE, 'a') as f:
+    with open(outPrefix+OUTPUT_FILE, 'w+') as f:
         for key in input_files.keys():
             f.write(f'{key}: \n')
             for keyprime in input_files[key].keys():
