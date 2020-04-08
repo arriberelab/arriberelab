@@ -1,6 +1,6 @@
 import os
 OUTPUT_FILE = ".summary.txt"
-# import theREALcountReads as jkim
+# import thecountReads as jkim
 # jkim.main(outPrefix, fastqFile)
 
 def countTrimmed(filename):
