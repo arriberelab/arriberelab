@@ -90,6 +90,12 @@ def timed_csv_write_multirun_and_plot():
     plt.show()
 
 
+def large_fake_df(random_number_limit, dataframe_length):
+    df = pd.DataFrame()
+    df.insert(0, 'Numbers',
+              [x[0] for x in np.random.randint(0, random_number_limit, size=(dataframe_length, 1))])
+    return df
+
 # This will be the major tool to parallelize (in a simple way)
 def parallelize_dataframe(df, func, n_cores=4):
     """Parallelize a function call on a dataframe"""
@@ -101,7 +107,27 @@ def parallelize_dataframe(df, func, n_cores=4):
     return df
 
 
+def fake_single_line_func(df):
+    df['Numbers'] = df['Numbers'].apply(lambda x:x**2)
+    return df
+
+
 def vectorized_processing():
+    """
+    So what we are looking to "vectorize" is the process of assigning reads to the associated genes.
+
+    Currently assignReadsToGenes4.assignReads does this by stepping through the reads file, identifying the '@' at the
+    beginning of a new read, orienting itself with that, and than looking to see if there are any annotations at the
+    STAR assigned site.
+
+    The aim for this should be to separate the parsing step (reading file and orienting to '@') and the annotation
+    searching step. This should allow us to utilize multiprocessing a bit more efficiently (I think?), under the
+    assumption that the time intensive step is the search rather than the parse.
+
+    Another option would be to simply cut the reads file into n_cores number of groups, and allow a Pool to handle both
+    the parsing and the searching for each group.
+
+    """
     pass
 
 
@@ -124,5 +150,24 @@ def main(number_of_repititions: int):
 
 
 if __name__ == '__main__':
-    timed_csv_write('blah.csv', 10**3, group_write=False)
-    # timed_csv_write_multirun_and_plot()
+
+    print("Making fake df")
+    df = large_fake_df(1000, 10**5)
+    print("done\n")
+    print("Starting non-parallel process")
+    start = timeit.default_timer()
+    new_df = fake_single_line_func(df)
+    end = timeit.default_timer()
+    print('done\n')
+    no_multi = end - start
+    print("Starting parallel process")
+    start = timeit.default_timer()
+    parallelize_dataframe(df, fake_single_line_func, n_cores=2)
+    end = timeit.default_timer()
+    multi = end - start
+    print(f"No multiprocessing: {no_multi}secs\nMultiprocessing: {multi}secs")
+
+
+    ## timed_csv_write('blah.csv', 10**3, group_write=False)
+    ## timed_csv_write_multirun_and_plot()
+
