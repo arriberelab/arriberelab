@@ -295,9 +295,9 @@ def main(args):
 	print(f'Done! {outPrefix}')
 	
 	############################################################################################################
-	"""Run number and percentages of reads/riboinforgraphic"""
+	"""Creating riboinforgraphic"""
 	############################################################################################################
-	print('Calculating read percentages')
+	print('Making riboinforgraphic')
 	thecountReads.main(fastq, outPrefix)
 	"""
 if __name__ == '__main__':
