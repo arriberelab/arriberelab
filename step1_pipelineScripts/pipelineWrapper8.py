@@ -292,14 +292,14 @@ def main(args):
                         f'{outPrefix}.plot',
                         f'{outPrefix}.joshSAM.filtered_{minimumReadLength}-{maximumReadLength}nt',
                         'Library'])
-	print(f'Done! {outPrefix}')
-	
-	############################################################################################################
-	"""Creating riboinforgraphic"""
-	############################################################################################################
-	print('Making riboinforgraphic')
-	thecountReads.main(fastq, outPrefix)
-	"""
+    print(f'Done! {outPrefix}')
+    
+    ############################################################################################################
+    """Creating riboinfographic"""
+    ############################################################################################################
+    print('Making riboinfographic')
+    thecountReads.main(fastq, outPrefix)
+    """
 if __name__ == '__main__':
     Tee()
     main(sys.argv[1:])
