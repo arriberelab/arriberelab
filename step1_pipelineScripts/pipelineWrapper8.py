@@ -293,7 +293,7 @@ def main(args):
                         f'{outPrefix}.joshSAM.filtered_{minimumReadLength}-{maximumReadLength}nt',
                         'Library'])
     print(f'Done! {outPrefix}')
-
+	
 	############################################################################################################
 	"""Run number and percentages of reads/riboinforgraphic"""
 	############################################################################################################
