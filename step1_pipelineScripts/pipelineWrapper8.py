@@ -294,10 +294,10 @@ def main(args):
                         'Library'])
     print(f'Done! {outPrefix}')
 
-    ############################################################################################################
-    """Run number and percentages of reads/riboinfographic"""
-    ############################################################################################################
-	print('Calculating reads percentages')
+	############################################################################################################
+	"""Run number and percentages of reads/riboinforgraphic"""
+	############################################################################################################
+	print('Calculating read percentages')
 	thecountReads.main(fastq, outPrefix)
     """
 if __name__ == '__main__':
