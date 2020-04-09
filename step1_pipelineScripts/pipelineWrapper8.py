@@ -292,14 +292,14 @@ def main(args):
                         f'{outPrefix}.plot',
                         f'{outPrefix}.joshSAM.filtered_{minimumReadLength}-{maximumReadLength}nt',
                         'Library'])
-    print(f'Done! {outPrefix}')
+	print(f'Done! {outPrefix}')
 	
 	############################################################################################################
 	"""Run number and percentages of reads/riboinforgraphic"""
 	############################################################################################################
 	print('Calculating read percentages')
 	thecountReads.main(fastq, outPrefix)
-    """
+	"""
 if __name__ == '__main__':
     Tee()
     main(sys.argv[1:])
