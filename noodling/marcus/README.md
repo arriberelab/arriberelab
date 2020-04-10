@@ -2,6 +2,7 @@
 A directory full of half-baked scripts and programing ideas
 
 ##Table of Contents:
+
 1\. *assignReadsToGenesMultiprocessing*
 > Trying various forms of [multiprocessing](https://docs.python.org/3.8/library/multiprocessing.html) in an effort to 
 speed up read assignment
