@@ -293,13 +293,13 @@ def main(args):
                         f'{outPrefix}.joshSAM.filtered_{minimumReadLength}-{maximumReadLength}nt',
                         'Library'])
     print(f'Done! {outPrefix}')
-    
+    """
     ############################################################################################################
     """Creating riboinfographic"""
     ############################################################################################################
     print('Making riboinfographic')
-    thecountReads.main(fastq, outPrefix)
-    """
+    thecountReads.main(fastqFile, outPrefix)
+    
 if __name__ == '__main__':
     Tee()
     main(sys.argv[1:])

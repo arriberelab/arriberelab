@@ -64,7 +64,7 @@ def main(fastq, outPrefix):
                 f.write(f'{keyprime}:{input_files[key][keyprime]} "reads", {percentage}%\n')
 
 
-if __name__ == "__main__":
-    fastq = sys.argv[1]
-    outPrefix = sys.argv[2]
-    main(fastq, outPrefix)
+#if __name__ == "__main__":
+#    fastq = sys.argv[1]
+#    outPrefix = sys.argv[2]
+#    main(fastq, outPrefix)
