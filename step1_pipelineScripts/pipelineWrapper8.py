@@ -26,28 +26,62 @@ run as python3 pipelineWrapper8.py settings.txt inputReads.fastq outPrefix
 """
 
 import sys, common, os, assignReadsToGenes4, readCollapser4, filterJoshSAMByReadLength
+import argparse
 #import metaStartStop
 from logJosh import Tee
 
-def main(args):
-    settings, fastqFile, outPrefix = args[0:]
-    
-    with open (settings,'r') as s:
-        setList=[]
-        for line in s:
-            line=line.strip()
-            if not line.startswith("#"):
-                setList.append(line)
-    adaptorSeq=setList[0]
-    minimumReadLength=setList[1]
-    maximumReadLength=setList[2]
-    umi5=setList[3]
-    umi3=setList[4]
-    genomeDir=setList[5]
-    genomeAnnots=setList[6]
-    cores=setList[7]
-    misMatchMax=setList[8]
-    optString=setList[9]
+def parseSettings(settingsFile,adaptorSeq,minimumReadLength,\
+        maximumReadLength,genomeDir,genomeAnnots,cores,\
+        misMatchMax,umi5,umi3):
+    """
+    Will loop through and replace variables that are None
+    """
+    ##first, parse the settings file to a dictionary called settingsDict
+    settingsDict={}
+    with open(settingsFile,'r') as f:
+        for line in f:
+            if not line.startswith('#'):
+                line=line.strip()
+                if line!='':
+                    line=line.split()
+                    ##the next line is to allow for the optString
+                    ##parameter. You could also do this by
+                    #changing the delimiter. May revisit this.
+                    settingsDict[line[0]]=' '.join(line[1:])
+    ##now loop through the variables and update any that are not None
+    if adaptorSeq==None:
+        adaptorSeq=settingsDict['adaptorSeq']
+    if minimumReadLength==None:
+        minimumReadLength=int(settingsDict['minimumReadLength'])
+    if maximumReadLength==None:
+        maximumReadLength=int(settingsDict['maximumReadLength'])
+    if genomeDir==None:
+        genomeDir=settingsDict['genomeDir']
+    if genomeAnnots==None:
+        genomeAnnots=settingsDict['genomeAnnots']
+    if cores==None:
+        cores=int(settingsDict['cores'])
+    if misMatchMax==None:
+        misMatchMax=int(settingsDict['misMatchMax'])
+    if umi5==None:
+        umi5=int(settingsDict['umi5'])
+    if umi3==None:
+        umi3=int(settingsDict['umi3'])
+    ##
+    return adaptorSeq,minimumReadLength,maximumReadLength,\
+        genomeDir,genomeAnnots,cores,misMatchMax,umi5,umi3,\
+        settingsDict['optString']
+
+def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
+    maximumReadLength,genomeDir,genomeAnnots,cores,misMatchMax,
+    umi5,umi3):
+    ##parse the settings file w/ override from the command line
+    adaptorSeq,minimumReadLength,maximumReadLength,genomeDir,\
+        genomeAnnots,cores,misMatchMax,umi5,umi3,optString=\
+        parseSettings(settings,adaptorSeq,minimumReadLength,\
+        maximumReadLength,genomeDir,genomeAnnots,cores,\
+        misMatchMax,umi5,umi3)
+    ##
     
     #Uncomment the following for filter round of mapping:
     """
@@ -55,10 +89,6 @@ def main(args):
     genomeAnnots2=setList[11]
     optString2=setList[12]
     """
-    
-    minimumReadLength = int(minimumReadLength)
-    maximumReadLength = int(maximumReadLength)
-    
     ############################################################################################################
     """First set some parameters-- all of this can be deleted if we're good""" 
     ############################################################################################################
@@ -92,8 +122,6 @@ def main(args):
     ############################################################################################################
     # print('skipping trimming of any kind, so min/maximumReadLength restrictions ignored.')
     # os.system(f'cp {fastqFile} {outPrefix}.trimmed')
-    umi5=int(umi5)
-    umi3=int(umi3)
     print('read length restriction does not include %sNs and %sNs.'%(umi5,umi3))
     print('to accomodate UMI length, this program will add %snts to acceptable length.'%(umi5+umi3))
     
@@ -111,17 +139,16 @@ def main(args):
     ############################################################################################################
     ##it doesn't make sense to run readCollapser if there's no UMI
     if 0<umi5+umi3<=6:
-        print(f'Your combined UMI length is {umi5+umi3}, which is pretty low.\
+        print(f'Your combined UMI length is {umi5+umi3}, which is pretty short.\
             I\'m going to try and collapse based on it, assuming you know what \
-            you are doing...')
-    if umi5+umi3!=0:
+            you are doing. But if you do not understand this message, please \
+            go find someone who can help you.')
+    elif umi5+umi3!=0:
         readCollapser4.main([outPrefix+'.trimmed', 
                          umi5, umi3, 
                          outPrefix+'.trimmed.collapsed.fastq'])
     else:
         print('Skipping collapsing...')
-        #os.system(f'cp {outPrefix}.trimmed '
-        #          f'{outPrefix}.trimmed.collapsed.fastq')
         ##the next line creates a symbolic link for the .collapsed file location
         ##instead of the above lines, which copied them.
         os.system(f'ln -s {outPrefix}.trimmed '
@@ -261,6 +288,27 @@ def main(args):
                         'Library'])
     print(f'Done! {outPrefix}')
     """
+
+def parseArguments():
+    """
+    Still learning how to do argparse.
+    """
+    parser=argparse.ArgumentParser(description='Wrapper for the handling of libraries starting from fastq files.')
+    parser.add_argument('fastqFile', help='The fastq file input')
+    parser.add_argument('settings', help='A text file containing a line-delimited input of adaptorSeq, genomeDir, and genomeAnnots.')
+    parser.add_argument('outPrefix', type=str, help='The outPrefix that all files produced will be named as.')
+    parser.add_argument('--umi5', type=int, default=None, help='The number of nucleotides to be trimmed from the 5prime end of reads.')
+    parser.add_argument('--umi3', type=int, default=None, help='The number of nucleotides to be trimmed from the 3prime end of reads.')
+    parser.add_argument('--minimumReadLength','--min', type=int, default=None, help='The shortest reads to be mapped to the genome.')
+    parser.add_argument('--maximumReadLength','--max', type=int, default=None, help='The longest reads to be mapped to the genome.')
+    parser.add_argument('--adaptorSeq','--adaptor', type=str, default=None, help='3\' adaptor to be trimmed off.')
+    parser.add_argument('--genomeDir', type=str, default=None, help='Genome directory where STAR index can be found.')
+    parser.add_argument('--genomeAnnots', type=str, default=None, help='Genome annotations (gtf format).')
+    parser.add_argument('--cores', type=int, default=2, help='Number of cores to use.')
+    parser.add_argument('--misMatchMax', type=int, default=0, help='Number of mismatches to tolerate during mapping.')
+    return parser.parse_args()
+
 if __name__ == '__main__':
     Tee()
-    main(sys.argv[1:])
+    arguments=parseArguments()
+    main(**vars(arguments))
