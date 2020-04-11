@@ -9,8 +9,10 @@ Parissa edited to make use of UMI lengths given in command line and revised read
 run as python3 pipelineWrapper8.py inputReads.fastq outPrefix --options
 """
 
-import sys, common, os, assignReadsToGenes4, metaStartStop, readCollapser4, filterJoshSAMByReadLength, argparse
+import sys, common, os, assignReadsToGenes4, readCollapser4, filterJoshSAMByReadLength, argparse
+#import metaStartStop
 from logJosh import Tee
+
 parser = argparse.ArgumentParser(description='Wrapper for the handling of libraries starting from fastq files.')
 parser.add_argument('fastqFile', help='The fastq file input')
 parser.add_argument('settings', help='A text file containing a line-delimited input of adaptorSeq, genomeDir, and genomeAnnots.')
@@ -20,7 +22,9 @@ parser.add_argument('--umi3', type=int, default=6, help='The number of nucleotid
 parser.add_argument('--minimumReadLength','--min', type=int, default=15, help='The shortest reads to be mapped to the genome.')
 parser.add_argument('--maximumReadLength','--max', type=int, default=30, help='The longest reads to be mapped to the genome.')
 args = parser.parse_args()
+
 def parser(fastqFile,settings,outPrefix,umi5,umi3,minimumReadLength,maximumReadLength):
+    print(settings),sys.exit()
     with open(settings, 'r') as s:
         p=[]
         for line in s:
@@ -31,9 +35,11 @@ def parser(fastqFile,settings,outPrefix,umi5,umi3,minimumReadLength,maximumReadL
         genomeDir=p[1]
         genomeAnnots=p[2]
     main(fastqFile,outPrefix,umi5,umi3,minimumReadLength,maximumReadLength,adaptorSeq,genomeDir,genomeAnnots)
+
 def main(fastqFile,outPrefix,umi5,umi3,minimumReadLength,maximumReadLength,adaptorSeq,genomeDir,genomeAnnots):
     
     #fastqFile, minimumReadLength, maximumReadLength, umi5, umi3, outPrefix = args[0:]
+    parser=initOptions(OptionParser())
     
     ############################################################################################################
     """First set some parameters"""
@@ -267,4 +273,5 @@ def main(fastqFile,outPrefix,umi5,umi3,minimumReadLength,maximumReadLength,adapt
 
 if __name__ == '__main__':
     Tee()
-    parser(**vars(args))
+    main(sys.argv[1:])
+    #parser(**vars(args))

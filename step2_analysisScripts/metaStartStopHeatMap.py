@@ -108,6 +108,7 @@ def mkHeatMaps(dfStart,dfStop,outPrefix):
     #fig=axs.get_figure()
     #write output
     fig.savefig(f'{outPrefix}.png')
+    fig.savefig(f'{outPrefix}.svg')
 
 def main(args):
     #parse the in file

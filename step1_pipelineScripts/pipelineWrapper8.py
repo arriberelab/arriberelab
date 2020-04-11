@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 """
 Joshua Arribere, July 25, 2014
 Mar 23, 2020: Converted to python 3
@@ -75,49 +74,6 @@ def main(args):
     #adaptorSeq='AAAAAAAAAAAAAAAAAA'
     #adaptorSeq='CTGTAGGCACCATCAA'#this is rachel's adaptor
     
-    #genomeDir='/data3/genomes/170622_yeastWithUTRs/'
-    #genomeDir='/data1/genomes/161002_yeast/'
-    #genomeDir='/data1/genomes/160212_Celegans_Ce10with_unc-54Degenerate/'
-    #genomeDir='/home/josh/genomes/150226_Scer/'
-    #genomeDir='/home/josh/genomes/150321_GFP_with_Ce_Chr/150325_PD8362/'
-    #genomeDir='/home/josh/genomes/131217_Ty1/140127_Ty1/'
-    #genomeDir='/home/josh/genomes/150518_Celegans/'
-    #genomeDir='/data3/genomes/170620_unc-54GFPwithT2A/'
-    #genomeDir='/data3/genomes/170719_unc-54e1092/'
-    #genomeDir='/data4/genomes/171207_Celegans_release90/'
-    #genomeDir='/data5/marissa/180411_genomes/180417_ensembl/'
-    #genomeDir='/data4/genomes/171218_historicalGenomeT2A/'
-    #genomeDir='/data1/genomes/170322_genomeWithUnc-54GFPNonStopDegenerate2/'
-    #genomeDir='/data1/genomes/160110_Celegans_rel83/'
-    #genomeDir='/data7/180330_backups/160520_joshGallifreyBackup/data1/genomes/161002_yeast/'
-    #genomeDir='/data12/joshua/genomes/180402_clone_160110_Celegans_rel83/160110_Celegans_rel83/'
-    #genomeDir='/data12/joshua/genomes/171218_historicalGenomeT2A/'
-    #genomeDir='/data12/joshua/genomes/191125_srf0788FromParissa/'
-    #genomeDir='/data15/joshua/genomes/200329_cerevisiae/'
-    
-    #genomeAnnots='/home/josh/genomes/131217_Ty1/140127_Ty1/131217_M18706_revised.gtf'
-    #genomeAnnots='/home/josh/working/141117_working_newGTF/Caenorhabditis_elegans.WBcel215.70.sansBJA7_40_77.gtf'
-    #genomeAnnots='/data3/genomes/170622_yeastWithUTRs/170622_Saccharomyces_cerevisiae.R64-1-1.85.gtf'
-    #genomeAnnots='/data1/genomes/161002_yeast/Saccharomyces_cerevisiae.R64-1-1.85.gtf'
-    #genomeAnnots='/data1/genomes/160212_Celegans_Ce10with_unc-54Degenerate/Caenorhabditis_elegans.WBcel235.83.gtf'
-    #genomeAnnots='/home/josh/genomes/150226_Scer/Saccharomyces_cerevisiae.R64-1-1.78.gtf'
-    #genomeAnnots='/home/josh/genomes/150321_GFP_with_Ce_Chr/150325_WBcel215.70_chrPD2874-2876and8362.gtf'
-    #genomeAnnots='/data1/genomes/160110_Celegans_rel83/Caenorhabditis_elegans.WBcel235.83.gtf'
-    #genomeAnnots='/data1/genomes/170322_genomeWithUnc-54GFPNonStopDegenerate2/170322_genomeWithExtraUnc-54Chr.gtf'
-    #genomeAnnots='/data3/genomes/170620_unc-54GFPwithT2A/170612_genomeWithUnc-54ChrAsItAppearsInPD4092.gtf'
-    #genomeAnnots='/data3/genomes/170719_unc-54e1092/Caenorhabditis_elegans.WBcel235.83.gtf'
-    #genomeAnnots='/data4/genomes/171207_Celegans_release90/Caenorhabditis_elegans.WBcel235.90.gtf'
-    #genomeAnnots='/data5/marissa/180411_genomes/180417_ensembl/Schizosaccharomyces_pombe.ASM294v2.22.gtf'
-    #genomeAnnots='/data4/genomes/171218_historicalGenomeT2A/170612_genomeWithUnc-54ChrAsItAppearsInPD4092.gtf'
-    #genomeAnnots='/data7/180330_backups/160520_joshGallifreyBackup/data1/genomes/161002_yeast/Saccharomyces_cerevisiae.R64-1-1.85.gtf'
-    #genomeAnnots='/data12/joshua/genomes/180402_clone_160110_Celegans_rel83/160110_Celegans_rel83/Caenorhabditis_elegans.WBcel235.83.gtf'
-    #genomeAnnots='/data12/joshua/genomes/171218_historicalGenomeT2A/170612_genomeWithUnc-54ChrAsItAppearsInPD4092.gtf'
-    #genomeAnnots='/data12/joshua/genomes/191125_srf0788FromParissa/191122_genomeWithUnc-54AsItAppearsInWJA0788.gtf'
-    #genomeAnnots='/data15/joshua/genomes/200329_cerevisiae/Saccharomyces_cerevisiae.R64-1-1.99.gtf'
-    
-    #cores = 10  #groundcontrol has 16 cores total: cat /proc/cpuinfo | grep processor | wc -l
-    #misMatchMax = 0
-    
     ############################################################################################################
     
     print(f'adaptorseq: {adaptorSeq}\n'
@@ -153,12 +109,23 @@ def main(args):
     ############################################################################################################
     """Collapse reads and trim off UMIs"""
     ############################################################################################################
-    readCollapser4.main([outPrefix+'.trimmed', 
+    ##it doesn't make sense to run readCollapser if there's no UMI
+    if 0<umi5+umi3<=6:
+        print(f'Your combined UMI length is {umi5+umi3}, which is pretty low.\
+            I\'m going to try and collapse based on it, assuming you know what \
+            you are doing...')
+    if umi5+umi3!=0:
+        readCollapser4.main([outPrefix+'.trimmed', 
                          umi5, umi3, 
                          outPrefix+'.trimmed.collapsed.fastq'])
-    ##print('skipping collapsing...')
-    #os.system(f'cp {outPrefix}.trimmed '
-    #          f'{outPrefix}.trimmed.collapsed.fastq')
+    else:
+        print('Skipping collapsing...')
+        #os.system(f'cp {outPrefix}.trimmed '
+        #          f'{outPrefix}.trimmed.collapsed.fastq')
+        ##the next line creates a symbolic link for the .collapsed file location
+        ##instead of the above lines, which copied them.
+        os.system(f'ln -s {outPrefix}.trimmed '
+                    f'{outPrefix}.trimmed.collapsed.fastq')
     
     ############################################################################################################
     """Introduce a variable to make reading code easier"""
