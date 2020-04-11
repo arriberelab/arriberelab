@@ -29,6 +29,7 @@ from multiprocessing import Pool
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from pandarallel import pandarallel
 
 
 def timed_csv_write(file, iterations, group_write=True):
@@ -96,6 +97,7 @@ def large_fake_df(random_number_limit, dataframe_length):
               [x[0] for x in np.random.randint(0, random_number_limit, size=(dataframe_length, 1))])
     return df
 
+
 # This will be the major tool to parallelize (in a simple way)
 def parallelize_dataframe(df, func, n_cores=4):
     """Parallelize a function call on a dataframe"""
@@ -112,9 +114,13 @@ def fake_single_line_func(df):
     return df
 
 
+def fake_apply_func(x):
+    return x**2
+
+
 def vectorized_processing():
     """
-    So what we are looking to "vectorize" is the process of assigning reads to the associated genes.
+    So what I am looking to "vectorize" is the process of assigning reads to the associated genes.
 
     Currently assignReadsToGenes4.assignReads does this by stepping through the reads file, identifying the '@' at the
     beginning of a new read, orienting itself with that, and than looking to see if there are any annotations at the
@@ -151,21 +157,42 @@ def main(number_of_repititions: int):
 
 if __name__ == '__main__':
 
-    print("Making fake df")
-    df = large_fake_df(1000, 10**5)
+    dataframe_length = 10**7
+    print(f"Making fake df, {10**7} values long")
+    df = large_fake_df(1000, dataframe_length)
     print("done\n")
+
+    # Apply
     print("Starting non-parallel process")
     start = timeit.default_timer()
-    new_df = fake_single_line_func(df)
+    # Work step
+    apply_df = df.apply(fake_apply_func, axis=0)
     end = timeit.default_timer()
     print('done\n')
     no_multi = end - start
+
+    # Pool Apply
     print("Starting parallel process")
     start = timeit.default_timer()
-    parallelize_dataframe(df, fake_single_line_func, n_cores=2)
+    # Work step
+    number_of_processes = 12
+    print(f"--Pool running with {number_of_processes} processes--")
+    pool_df = parallelize_dataframe(df, fake_single_line_func, n_cores=number_of_processes)
     end = timeit.default_timer()
-    multi = end - start
-    print(f"No multiprocessing: {no_multi}secs\nMultiprocessing: {multi}secs")
+    print('done\n')
+    pool = end - start
+
+    # Pandarallel Apply
+    print("Starting parallel process")
+    pandarallel.initialize()
+    start = timeit.default_timer()
+    # Work step
+    pandal_df = df.parallel_apply(fake_apply_func, axis=0)
+    end = timeit.default_timer()
+    print('done\n')
+    parallel = end - start
+
+    print(f"No multiprocessing: {no_multi:.2f}secs\nPool: {pool:.2f}secs\nPandarallel: {parallel:.2f}secs")
 
 
     ## timed_csv_write('blah.csv', 10**3, group_write=False)
