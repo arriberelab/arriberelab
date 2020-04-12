@@ -47,6 +47,8 @@ def parseArgs():
     print("Given Arguments:")
     for arg in vars(args):
         print('\t', arg, '=', vars(args)[arg])
+    arg_dict = {arg: vars(args)[arg] for arg in vars(args)}
+    print(arg_dict)
     return file
 
 
@@ -73,6 +75,7 @@ def parseFastqToDataframe(file):
 if __name__ == '__main__':
     try:
         file_path = parseArgs()
+    # If no file is given it will run on the example yeastTestRun in the github directory
     except:
         file_path = "../../../yeastTestRun/SRR4050180TestFile.fastq"
     df = parseFastqToDataframe(file_path)
