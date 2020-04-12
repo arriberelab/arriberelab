@@ -40,10 +40,17 @@ def parseArgs():
 
 
 def parseSamToDataframe(arg_dict: dict):
+
+    o = 'object'
+    i = 'int64'
+    sam_dtypes_list = [o, i, o, i, i, o, o, i, i, o, o, o, o, o, o]
+    sam_dtypes_dict = {i: sam_dtypes_list[i] for i in range(15)}
+
     SAM_df = pd.read_csv(arg_dict['filename'],
                          sep="\t",
                          header=arg_dict['headerlines'],
-                         names=range(14))
+                         names=range(15),
+                         dtype=sam_dtypes_dict)  # The hope is this allows pandas to skip the type calling step
     print(SAM_df.head(10))
     print(SAM_df.info(memory_usage='deep'))
     return SAM_df

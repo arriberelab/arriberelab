@@ -11,7 +11,7 @@ Further down the line it would be even better to be able to parse SAM files into
     for acceleration of the assignReadsToGenes functionality
 
 April 11, 2020:
-    Success with utilizing pandas dataframe to parse and hold a fastq file. Had little issue paring a fastq of
+    Success with utilizing pandas dataframe to parse and hold a fastq file. Had no issue paring a fastq of
     14,533,400 lines with my personal desktop, utilizing 1.3GB of RAM once stored as a dataframe. When attempting to
     read in 145,334,000 lines, the memory (16GB) maxed out - but this didn't crash the script. Pandas.read_csv() has a
     memory_low functionality that seems to be acting to somehow avoid crashing. Watching TaskManager, I could see RAM
