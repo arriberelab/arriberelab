@@ -28,3 +28,5 @@ if __name__ == '__main__':
         sys.exit()
     else:
         print(f"Parsing file @: {file}")
+    for arg in vars(args):
+        print(arg, vars(args)[arg])
