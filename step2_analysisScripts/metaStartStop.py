@@ -33,7 +33,7 @@ def getLengths(annots):
                     if transcript_id not in a:
                         a[transcript_id] = {'strand': row[6], 'exon': [], 'CDS': []}
                     a[transcript_id][featureType].append([int(row[3]), int(row[4])])
-
+                    
                     gene_id = row[8].split('"')[1]
                     b[gene_id].append(transcript_id)
 
@@ -84,10 +84,10 @@ def getMetaStartStop(inFile, txtLengths, txtGroups, readLengthRestriction=None):
     """
     # Get read counts/gene
     geneReadCts = getGeneReadCts(inFile)
-
+    
     # Get normalization factor
     normFactors = getNormFactor(geneReadCts, txtLengths, txtGroups)
-
+    
     totalCt = {}
     # Apply the normalization factor and record read positions
     metaStart, metaStop = {'S': collections.defaultdict(list), 'AS': collections.defaultdict(list)}, \
@@ -110,7 +110,7 @@ def getMetaStartStop(inFile, txtLengths, txtGroups, readLengthRestriction=None):
                         passed = False
                 else:
                     passed = True
-
+                    
                 for txt in assocTxts:
                     curr = txt.split(':')
                     relStart = int(curr[1])
@@ -121,7 +121,7 @@ def getMetaStartStop(inFile, txtLengths, txtGroups, readLengthRestriction=None):
                             inFrame += 1
                         else:
                             outOfFrame += 1
-
+                            
                     if passed:
                         # EDIT: Mar 30, 2015 Josh changed from plotting over entire read length to just 5' most end
 
@@ -132,13 +132,13 @@ def getMetaStartStop(inFile, txtLengths, txtGroups, readLengthRestriction=None):
                         metaStart[SorAS][relStart].append(1./normFactors[gene_id]/numMapped)
                         metaStop[SorAS][relStop].append(1./normFactors[gene_id]/numMapped)
                         """
-
+                        
     print('For metaORF, averaged over whole read')
     print(inFrame, outOfFrame)
     print(inFrame / (outOfFrame + inFrame))
     metaAverage(metaStart, len(totalCt))
     metaAverage(metaStop, len(totalCt))
-
+    
     return metaStart, metaStop
 
 
@@ -164,7 +164,7 @@ def mkStartStopPlot(names, metaData, outPrefix):
                              x=pyx.graph.axis.linear(min=-200, max=200,
                                                      title='Position Relative to Stop Codon'),
                              y=pyx.graph.axis.linkedaxis(start.axes["y"]))
-
+    
     for ii in range(len(names)):
         name = names[ii]
         metaStartSense = processMeta(metaData[name][0]['S'])
@@ -173,14 +173,14 @@ def mkStartStopPlot(names, metaData, outPrefix):
         metaStartAS = processMeta(metaData[name][0]['AS'], flip=1)
         start.plot(pyx.graph.data.points(metaStartAS, x=1, y=2),
                    [pyx.graph.style.line([common.colors(ii)])])
-
+        
         metaStopSense = processMeta(metaData[name][1]['S'])
         stop.plot(pyx.graph.data.points(metaStopSense, x=1, y=2, title=name),
                   [pyx.graph.style.line([common.colors(ii)])])
         metaStopAS = processMeta(metaData[name][1]['AS'], flip=1)
         stop.plot(pyx.graph.data.points(metaStopAS, x=1, y=2, title=name),
                   [pyx.graph.style.line([common.colors(ii)])])
-
+        
     c = pyx.canvas.canvas()
     c.insert(start)
     c.insert(stop)
@@ -196,20 +196,19 @@ def main(args):
     # exactLength=[28,29,30]
     # exactLength=[15,16,17,18]
     print(f'Length restriction on reads: {exactLength}')
-
+    
     txtLengths, cdsLengths, txtGroups = getLengths(annots)
-
+    
     metaData = {}
     for i in range(len(names)):
         name = names[i]
         inFile = inFiles[i]
-
+        
         metaData[name] = getMetaStartStop(inFile, txtLengths, txtGroups, readLengthRestriction=exactLength)
-
+        
     mkStartStopPlot(names, metaData, outPrefix)
 
 
 if __name__ == '__main__':
     Tee()
     main(sys.argv[1:])
-    #
