@@ -36,7 +36,7 @@ def getLengths(annots):
                     
                     gene_id = row[8].split('"')[1]
                     b[gene_id].append(transcript_id)
-
+                    
     exon, cds = {}, {}
     for txt in a:
         exon[txt] = sum([entry[1] - entry[0] for entry in a[txt]['exon']])
