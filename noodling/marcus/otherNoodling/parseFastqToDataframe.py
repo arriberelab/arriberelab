@@ -20,10 +20,8 @@ April 11, 2020:
 """
 
 import pandas as pd
-import numpy as np
 import argparse
 import os, sys
-from time import sleep
 
 # Pandas default would cut off basically all the columns so:
 pd.set_option('display.max_rows', 500)
@@ -34,16 +32,16 @@ pd.set_option('display.width', 300)
 def parseArgs():
     parser = argparse.ArgumentParser(description="Parse a fastq file into a pandas dataframe")
     parser.add_argument('filename', metavar='filename', type=str, help="Path to .fastq file")
-
+    
     args = parser.parse_args()
     file = args.filename
-
+    
     if not os.path.isfile(file):
         print("This is not a file path\n\n\nTERMINATING\n\n")
         sys.exit()
     else:
         print(f"Parsing file @: {file}")
-
+        
     print("Given Arguments:")
     for arg in vars(args):
         print('\t', arg, '=', vars(args)[arg])
@@ -61,7 +59,7 @@ def parseFastqToDataframe(file):
     read_info = stacked_series.iloc[0::4]
     sequence = stacked_series.iloc[1::4]
     confidence = stacked_series.iloc[3::4]
-
+    
     df = pd.concat([read_info.reset_index().Values,
                     sequence.reset_index().Values,
                     confidence.reset_index().Values],
@@ -79,4 +77,3 @@ if __name__ == '__main__':
     except:
         file_path = "../../../yeastTestRun/SRR4050180TestFile.fastq"
     df = parseFastqToDataframe(file_path)
-
