@@ -27,6 +27,8 @@ def parseArgs():
                         type=int, help="Number of header lines before data")
     parser.add_argument('-n', '--num_lines', metavar='num_lines', type=int,
                         default=None, help="Option to only read N number of lines of file")
+    parser.add_argument('-p', '--print_rows', metavar='print_rows', type=int,
+                        default=None, help="Option to print number of lines of final dataframe")
     
     args = parser.parse_args()
 
@@ -47,7 +49,7 @@ def parseArgs():
     return arg_dict
 
 
-def parseSamToDataframe(filename, headerlines, num_lines=None):
+def parseSamToDataframe(filename, headerlines, num_lines=None, print_rows=None):
     
     # Quick check to ensure the passed file path exists
     if not os.path.isfile(filename):
@@ -59,7 +61,13 @@ def parseSamToDataframe(filename, headerlines, num_lines=None):
     # Assign known order of datatypes for .SAM file, this helps speed up parsing
     o = 'object'
     i = 'int64'
-    sam_dtypes_list = [o, i, o, i, i, o, o, i, i, o, o, o, o, o, o]
+    # I can't find a clean way to do this quickly but not explicitly
+    yeast_chr_datatype = pd.api.types.CategoricalDtype(categories=['I', 'II', 'III', 'IV', 'V',
+                                                                   'VI', 'VII', 'VIII', 'IX', 'X',
+                                                                   'XI', 'XII', 'XIII', 'XIV', 'XV',
+                                                                   'XVI'], ordered=True)
+    chr_cat = yeast_chr_datatype
+    sam_dtypes_list = [o, i, chr_cat, i, i, o, o, i, i, o, o, o, o, o, o]
     sam_dtypes_dict = {i: sam_dtypes_list[i] for i in range(15)}
     
     if num_lines:
@@ -78,10 +86,13 @@ def parseSamToDataframe(filename, headerlines, num_lines=None):
                              dtype=sam_dtypes_dict,
                              )
     
-    print("\nFirst 5 rows of dataframe:\n", SAM_df.head(5), "\n")
+    SAM_df = SAM_df.sort_values(by=[2, 3])
+    
+    if print_rows:
+        print(f"\nFirst {print_rows} rows of dataframe:\n", SAM_df.head(print_rows), "\n")
     # Print dataframe info. This is currently really intensive with the deep memory usage call.
     # Remove the df.info print for speed as needed
-    # print(SAM_df.info(memory_usage='deep'))
+    print(SAM_df.info(memory_usage='deep'))
     return SAM_df
 
 
