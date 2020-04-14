@@ -25,7 +25,7 @@ Input: settings.txt - a line-delimited settings file in the format:
 run as python3 pipelineWrapper8.py settings.txt inputReads.fastq outPrefix
 """
 
-import sys, common, os, assignReadsToGenes4, readCollapser4, filterJoshSAMByReadLength
+import sys, common, os, assignReadsToGenes4, readCollapser4, filterJoshSAMByReadLength, thecountReads
 import argparse
 #import metaStartStop
 from logJosh import Tee
@@ -124,8 +124,8 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     os.system(f'cutadapt -a {adaptorSeq} '
               f'-m {minimumReadLength+umi5+umi3} '
               f'-M {maximumReadLength+umi5+umi3} '
-              f'--too-short-output {outPrefix + ".trimmed.tooShort"} '
-              f'--too-long-output {outPrefix + ".trimmed.tooLong"} '
+              f'--too-short-output {outPrefix + ".trimmed.tooShort.fastq"} '
+              f'--too-long-output {outPrefix + ".trimmed.tooLong.fastq"} '
               f'{fastqFile} > {outPrefix + ".trimmed"} '
               f'2>/dev/null'
               )
@@ -284,6 +284,11 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
                         'Library'])
     print(f'Done! {outPrefix}')
     """
+    ############################################################################################################
+    """Creating riboinfographic"""
+    ############################################################################################################
+    print('Making riboinfographic')
+    thecountReads.main(fastqFile, outPrefix)
 
 def parseArguments():
     """
