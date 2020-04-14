@@ -77,7 +77,7 @@ def parseSamToDataframe(filename, headerlines, num_lines=None, print_rows=None, 
         SAM_df = pd.read_csv(filename,
                              sep="\t",
                              header=headerlines,
-                             nrows=num_lines,
+                             nrows=num_lines,  # If the CLI user specifies a number of lines to use, it comes in here
                              names=range(15),  # Just name columns by an index, maybe better naming in the future?
                              dtype=sam_dtypes_dict,  # The hope is this allows pandas to skip the type calling step
                              )
