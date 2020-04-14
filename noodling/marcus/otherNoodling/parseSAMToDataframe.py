@@ -26,9 +26,12 @@ def parseArgs():
     parser.add_argument('headerlines', metavar='headerlines',
                         type=int, help="Number of header lines before data")
     parser.add_argument('-n', '--num_lines', metavar='num_lines', type=int,
-                        default=None, help="Option to only read N number of lines of file")
+                        default=None, help="Option to only read 'n' number of lines of file")
     parser.add_argument('-p', '--print_rows', metavar='print_rows', type=int,
-                        default=None, help="Option to print number of lines of final dataframe")
+                        default=None, help="Option to print 'n' number of lines of final dataframe")
+    parser.add_argument('-m', '--deep_memory', action='store_true',
+                        help="Boolean flag to print dataframe deep memory info\n"
+                             "(this can be very CPU/time intensive)")
     
     args = parser.parse_args()
 
@@ -49,7 +52,7 @@ def parseArgs():
     return arg_dict
 
 
-def parseSamToDataframe(filename, headerlines, num_lines=None, print_rows=None):
+def parseSamToDataframe(filename, headerlines, num_lines=None, print_rows=None, deep_memory=False):
     
     # Quick check to ensure the passed file path exists
     if not os.path.isfile(filename):
@@ -86,13 +89,19 @@ def parseSamToDataframe(filename, headerlines, num_lines=None, print_rows=None):
                              dtype=sam_dtypes_dict,
                              )
     
-    SAM_df = SAM_df.sort_values(by=[2, 3])
+    SAM_df = SAM_df.sort_values(by=[2, 3],
+                                ignore_index=True)
+    # This sort_values with the ignore_index option on will currently reset the indexes
+    # to the new sorted order, I don't know if this is good or bad...
+    
+    print(f'Finished parsing and sorting of file at: {filename}\n')
     
     if print_rows:
         print(f"\nFirst {print_rows} rows of dataframe:\n", SAM_df.head(print_rows), "\n")
-    # Print dataframe info. This is currently really intensive with the deep memory usage call.
-    # Remove the df.info print for speed as needed
-    print(SAM_df.info(memory_usage='deep'))
+    if deep_memory:
+        # Print dataframe info. This is currently really intensive with the deep memory usage call.
+        # Remove the df.info print for speed as needed
+        print(SAM_df.info(memory_usage='deep'))
     return SAM_df
 
 
