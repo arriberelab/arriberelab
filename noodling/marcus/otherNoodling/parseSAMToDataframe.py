@@ -89,8 +89,7 @@ def parseSamToDataframe(filename, headerlines, num_lines=None, print_rows=None, 
                              dtype=sam_dtypes_dict,
                              )
     
-    SAM_df = SAM_df.sort_values(by=[2, 3],
-                                ignore_index=True)
+    SAM_df = SAM_df.sort_values(by=[2, 3], ignore_index=True)
     # This sort_values with the ignore_index option on will currently reset the indexes
     # to the new sorted order, I don't know if this is good or bad...
     
