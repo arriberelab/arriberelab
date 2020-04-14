@@ -59,10 +59,6 @@ def parseSettings(settingsFile,adaptorSeq,minimumReadLength,\
         genomeDir=settingsDict['genomeDir']
     if genomeAnnots==None:
         genomeAnnots=settingsDict['genomeAnnots']
-    if cores==None:
-        cores=int(settingsDict['cores'])
-    if misMatchMax==None:
-        misMatchMax=int(settingsDict['misMatchMax'])
     if umi5==None:
         umi5=int(settingsDict['umi5'])
     if umi3==None:
@@ -304,7 +300,7 @@ def parseArguments():
     parser.add_argument('--adaptorSeq','--adaptor', type=str, default=None, help='3\' adaptor to be trimmed off.')
     parser.add_argument('--genomeDir', type=str, default=None, help='Genome directory where STAR index can be found.')
     parser.add_argument('--genomeAnnots', type=str, default=None, help='Genome annotations (gtf format).')
-    parser.add_argument('--cores', type=int, default=2, help='Number of cores to use.')
+    parser.add_argument('--cores', type=int, default=7, help='Number of cores to use.')
     parser.add_argument('--misMatchMax', type=int, default=0, help='Number of mismatches to tolerate during mapping.')
     return parser.parse_args()
 
