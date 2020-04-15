@@ -113,8 +113,8 @@ def parseSamToDataframe(filename, headerlines, num_lines=None, print_rows=None, 
         SAM_df_dict = dict(tuple(SAM_df.groupby(2)))
         if print_rows:
             for chr, df in SAM_df_dict.items():
-                print(f"\nFirst {print_rows} rows of Chr{chr}:\n", df.head(print_rows))
-        print(f"Split dataframe into {len(SAM_df_dict.keys())} separate df's:\n{SAM_df_dict.keys()}")
+                print(f"\nFirst {print_rows} rows of Chromosome-{chr}:\n", df.head(print_rows))
+        print(f"\nSplit dataframe into {len(SAM_df_dict.keys())} separate df's:\n{SAM_df_dict.keys()}")
         return SAM_df_dict
     else:
         return SAM_df
