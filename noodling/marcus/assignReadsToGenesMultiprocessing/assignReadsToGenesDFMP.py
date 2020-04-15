@@ -64,7 +64,12 @@ def parseAllChrsToDF(annot_file, num_lines=None, print_rows=None, deep_memory=Fa
                                                               print_rows=print_rows, deep_memory=deep_memory)
 
 
+def assignReadsToGenes(sam_file, annot_file, **kwargs):
+    sam_df_dict = parseSamToDF(sam_file, **kwargs)
+    annot_df_dict = parseAllChrsToDF(annot_file, **kwargs)
+    
+    print("\n\nDone?")
+
 if __name__ == '__main__':
     arg_dict = parseArgs()
-    SAM_df = parseSamToDF(**arg_dict)
-    annot_df = parseAllChrsToDF(**arg_dict)
+    assignReadsToGenes(**arg_dict)
