@@ -18,6 +18,9 @@ pd.set_option('display.max_rows', 50)
 pd.set_option('display.max_columns', 20)
 pd.set_option('display.width', 300)
 
+# TODO: name read.SAM df columns for ease of writing code, as well as reading code. Currently column indexes just make
+#       the applied df functions harder to follow.
+
 
 def parseArgs():
     parser = argparse.ArgumentParser(description="Take reads.SAM file + *.allChrs.txt"
@@ -98,10 +101,13 @@ def assignReadsToGenes(sam_file, annot_file, **kwargs):
     annot_df_dict = parseAllChrsToDF(annot_file, **kwargs)
     
     # Lets try to apply the recoverMappedPortion() to dataframe to see how it does
+    # >>>> Print functions currently for debugging >>>>
     for chr, df in sam_df_dict.items():
         df[[15, 16]] = pd.DataFrame(df.apply(lambda x: recoverMappedPortion(x[5], x[9]),
                                              axis=1).tolist(), index=df.index)
         print('', f'Chromosome-{chr}', df[[9, 15]], sep='\n')
+    # <<<< Print functions currently for debugging <<<<
+    
     print("\n\nDone?")
 
 
