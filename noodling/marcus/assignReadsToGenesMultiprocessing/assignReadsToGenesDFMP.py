@@ -9,11 +9,12 @@ Basically just rewriting Josh's assignReadsToGenes4.py, with the major change of
 import sys, os
 import argparse
 import multiprocessing
+import re
 import parseAllChrstxtToDataframe
 import parseSAMToDataframe
 import pandas as pd
 # Pandas default would cut off any columns beyond 5 so:
-pd.set_option('display.max_rows', 500)
+pd.set_option('display.max_rows', 50)
 pd.set_option('display.max_columns', 20)
 pd.set_option('display.width', 300)
 
@@ -64,11 +65,45 @@ def parseAllChrsToDF(annot_file, num_lines=None, print_rows=None, deep_memory=Fa
                                                               print_rows=print_rows, deep_memory=deep_memory)
 
 
+def recoverMappedPortion(Cigar, Read):
+    # April 15, 2020: Stolen verbatim from assignReadsToGenes4.py
+    
+    """Given a Cigar string and a Read, will return the sequence of the read that mapped to the genome."""
+    # Edit Oct 10, 2013 to include skipped portions of reference sequence (introns)
+    
+    # first process the CIGAR string
+    cigarSplit = re.findall('(\d+|[a-zA-Z]+)', Cigar)
+    cigarSplit = [[int(cigarSplit[ii]), cigarSplit[ii + 1]] for ii in range(0, len(cigarSplit), 2)]
+    
+    # Then use that information to parse out nts of the read sequence
+    mappedRead = ''
+    ii = 0
+    N = 0
+    for entry in cigarSplit:
+        if entry[1] in ['M', 'I']:  # then it's either aligned to the genomic sequence or has an insert relative to it
+            mappedRead += Read[ii:ii + entry[0]]
+            ii += entry[0]
+        elif entry[1] == 'S':
+            ii += entry[0]
+        elif entry[1] == 'N':
+            N += entry[0]
+            # N is used for "skipped region from the reference". I keep track of Ns and
+            #  return them for calculation of position on the - strand
+    
+    return mappedRead, N
+
+
 def assignReadsToGenes(sam_file, annot_file, **kwargs):
     sam_df_dict = parseSamToDF(sam_file, **kwargs)
     annot_df_dict = parseAllChrsToDF(annot_file, **kwargs)
     
+    # Lets try to apply the recoverMappedPortion() to dataframe to see how it does
+    for chr, df in sam_df_dict.items():
+        df[[15, 16]] = pd.DataFrame(df.apply(lambda x: recoverMappedPortion(x[5], x[9]),
+                                             axis=1).tolist(), index=df.index)
+        print('', f'Chromosome-{chr}', df[[9, 15]], sep='\n')
     print("\n\nDone?")
+
 
 if __name__ == '__main__':
     arg_dict = parseArgs()
