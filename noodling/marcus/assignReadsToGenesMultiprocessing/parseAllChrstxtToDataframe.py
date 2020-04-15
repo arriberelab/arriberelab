@@ -78,8 +78,8 @@ def parseAllChrsToDataframe(filename, num_lines=None, split_chrs=False, print_ro
                                                 index=annot_df.index)
     # Sort by Chromosome and index on chromosome
     annot_df = annot_df.sort_values(by=['chr', 'chr_pos'])
+    
     # TODO: Reorganize DF columns
-    # TODO: Add a lot of the functionality of the parseSAMToDataframe
     
     print(f'Finished parsing and sorting of file at: {filename}\n')
     
