@@ -53,12 +53,12 @@ def parseArgs():
 
 
 def parseSamToDF(sam_file, num_lines=None, print_rows=None, deep_memory=False, **kwargs):
-    return parseSAMToDataframe.parseSamToDataframe(sam_file, 20, num_lines=num_lines,
+    return parseSAMToDataframe.parseSamToDataframe(sam_file, 20, num_lines=num_lines, split_chrs=True,
                                                    print_rows=print_rows, deep_memory=deep_memory)
 
 
-def parseAllChrsToDF(annot_file, num_lines=None, print_rows=None, split_chrs=False, deep_memory=False, **keywargs):
-    return parseAllChrstxtToDataframe.parseAllChrsToDataframe(annot_file, num_lines=num_lines, split_chrs=split_chrs,
+def parseAllChrsToDF(annot_file, num_lines=None, print_rows=None, deep_memory=False, **kwargs):
+    return parseAllChrstxtToDataframe.parseAllChrsToDataframe(annot_file, num_lines=num_lines, split_chrs=True,
                                                               print_rows=print_rows, deep_memory=deep_memory)
 
 
