@@ -26,12 +26,14 @@ def parseArgs():
     parser.add_argument('annot_file', metavar='annot_file',
                         type=str, help="Path to .allChrs.txt file")
     parser.add_argument('-n', '--num_lines', metavar='num_lines', type=int,
-                        default=None, help="Option to only read 'n' number of lines of file")
+                        default=None, help="Option to only read 'n' number of lines of each file,"
+                                           "mostly if you're doing a quick test")
     parser.add_argument('-p', '--print_rows', metavar='print_rows', type=int,
-                        default=None, help="Option to print 'n' number of lines of final dataframe")
+                        default=None, help="Option to print 'n' number of lines of final dataframe,"
+                                           "can get lengthy fast as each split chromosome will print this many lines")
     parser.add_argument('-m', '--deep_memory', action='store_true',
                         help="Boolean flag to print dataframe deep memory info\n"
-                             "(this can be very CPU/time intensive)")
+                             "(this can be very CPU/time intensive, but informative)")
     
     args = parser.parse_args()
     
