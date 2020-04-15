@@ -1,5 +1,5 @@
 """
-parseAllChrs.txtToDataframe.py
+parseAllChrstxtToDataframe.py
 Marcus Viscardi     April 13, 2020
 
 Josh already has a fully functional version of this parser within assignReadsToGenes4.py
