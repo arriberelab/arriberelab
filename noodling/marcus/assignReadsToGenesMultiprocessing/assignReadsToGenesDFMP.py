@@ -114,9 +114,12 @@ def assignReadsToGenes(sam_file, annot_file, **kwargs):
     
     # Going for the df.merge() function!
     for chr, df in sam_df_dict.items():
-        print(f"\nPreforming alignment for Chr-{chr} containing {df.shape[0]} reads")
-        df = df.merge(annot_df_dict[chr], left_on=3, right_on='chr_pos')
-        print(df[[0, 2, 'chr', 3, 'chr_pos', 5, 9, 'genes']].head(5))
+        try:
+            print(f"\nPreforming alignment for Chr-{chr} containing {df.shape[0]} reads")
+            df = df.merge(annot_df_dict[chr], left_on=3, right_on='chr_pos')
+            print(df[[0, 2, 'chr', 3, 'chr_pos', 5, 9, 'genes']].head(5))
+        except KeyError:
+            print(f"Chr-{chr} not found in annotations!")
     
     print("\n\nDone?")
 
