@@ -14,7 +14,7 @@ import sys, os
 import argparse
 import pandas as pd
 # Pandas default would cut off basically all the columns so:
-pd.set_option('display.max_rows', 500)
+pd.set_option('display.max_rows', 30)
 pd.set_option('display.max_columns', 20)
 pd.set_option('display.width', 300)
 
@@ -25,6 +25,8 @@ def parseArgs():
                         type=str, help="Path to .sam file")
     parser.add_argument('headerlines', metavar='headerlines',
                         type=int, help="Number of header lines before data")
+    parser.add_argument('-s', '--split_chrs', action='store_true',
+                        help="Boolean flag to split chromosomes and return a dict of dataframes")
     parser.add_argument('-n', '--num_lines', metavar='num_lines', type=int,
                         default=None, help="Option to only read 'n' number of lines of file")
     parser.add_argument('-p', '--print_rows', metavar='print_rows', type=int,
@@ -52,24 +54,28 @@ def parseArgs():
     return arg_dict
 
 
-def parseSamToDataframe(filename, headerlines, num_lines=None, print_rows=None, deep_memory=False):
+def parseSamToDataframe(filename, headerlines, num_lines=None, print_rows=None, deep_memory=False, split_chrs=False):
     
     # Quick check to ensure the passed file path exists
     if not os.path.isfile(filename):
-        print(f"File does not exist at: {filename}, Terminating Script\n")
+        print(f"\nFile does not exist at: {filename}, Terminating Script\n")
         sys.exit()
     else:
-        print(f"Parsing identified file at: {filename}\n")
+        print(f"\nParsing identified file at: {filename}")
     
     # Assign known order of datatypes for .SAM file, this helps speed up parsing
     o = 'object'
     i = 'int64'
-    # I can't find a clean way to do this quickly but not explicitly
-    yeast_chr_datatype = pd.api.types.CategoricalDtype(categories=['I', 'II', 'III', 'IV', 'V',
-                                                                   'VI', 'VII', 'VIII', 'IX', 'X',
-                                                                   'XI', 'XII', 'XIII', 'XIV', 'XV',
-                                                                   'XVI'], ordered=True)
-    chr_cat = yeast_chr_datatype
+    # # I can't find a clean way to do this quickly but not explicitly
+    # yeast_chr_datatype = pd.api.types.CategoricalDtype(categories=['I', 'II', 'III', 'IV', 'V',
+    #                                                                'VI', 'VII', 'VIII', 'IX', 'X',
+    #                                                                'XI', 'XII', 'XIII', 'XIV', 'XV',
+    #                                                                'XVI'], ordered=True)
+    # chr_cat = yeast_chr_datatype
+    
+    # NEVERMIND: This works very very well and is not organism specific,
+    #   but it sadly lacks the ability to force an order:
+    chr_cat = 'category'
     sam_dtypes_list = [o, i, chr_cat, i, i, o, o, i, i, o, o, o, o, o, o]
     sam_dtypes_dict = {i: sam_dtypes_list[i] for i in range(15)}
     
@@ -101,7 +107,17 @@ def parseSamToDataframe(filename, headerlines, num_lines=None, print_rows=None, 
         # Print dataframe info. This is currently really intensive with the deep memory usage call.
         # Remove the df.info print for speed as needed
         print(SAM_df.info(memory_usage='deep'))
-    return SAM_df
+    
+    # Attempting to split chromosomes
+    if split_chrs:
+        SAM_df_dict = dict(tuple(SAM_df.groupby(2)))
+        if print_rows:
+            for chr, df in SAM_df_dict.items():
+                print(f"\nFirst {print_rows} rows of Chr{chr}:\n", df.head(print_rows))
+        print(f"Split dataframe into {len(SAM_df_dict.keys())} separate df's:\n{SAM_df_dict.keys()}")
+        return SAM_df_dict
+    else:
+        return SAM_df
 
 
 if __name__ == '__main__':
