@@ -19,9 +19,12 @@ pd.set_option('display.width', 300)
 
 
 def parseArgs():
-    parser = argparse.ArgumentParser(description="SAM file path containing reads to assign")
+    parser = argparse.ArgumentParser(description="Take reads.SAM file + *.allChrs.txt"
+                                                 "file and assign genes to the reads")
     parser.add_argument('sam_file', metavar='sam_file',
                         type=str, help="Path to .sam file")
+    parser.add_argument('annot_file', metavar='annot_file',
+                        type=str, help="Path to .allChrs.txt file")
     parser.add_argument('-n', '--num_lines', metavar='num_lines', type=int,
                         default=None, help="Option to only read 'n' number of lines of file")
     parser.add_argument('-p', '--print_rows', metavar='print_rows', type=int,
@@ -49,11 +52,17 @@ def parseArgs():
     return arg_dict
 
 
-def parseSamToDataframe(sam_file, num_lines=None, print_rows=None, deep_memory=False):
+def parseSamToDF(sam_file, num_lines=None, print_rows=None, deep_memory=False, **kwargs):
     return parseSAMToDataframe.parseSamToDataframe(sam_file, 20, num_lines=num_lines,
                                                    print_rows=print_rows, deep_memory=deep_memory)
 
 
+def parseAllChrsToDF(annot_file, num_lines=None, print_rows=None, split_chrs=False, deep_memory=False, **keywargs):
+    return parseAllChrstxtToDataframe.parseAllChrsToDataframe(annot_file, num_lines=num_lines, split_chrs=split_chrs,
+                                                              print_rows=print_rows, deep_memory=deep_memory)
+
+
 if __name__ == '__main__':
     arg_dict = parseArgs()
-    parseSamToDataframe(**arg_dict)
+    SAM_df = parseSamToDF(**arg_dict)
+    annot_df = parseAllChrsToDF(**arg_dict)
