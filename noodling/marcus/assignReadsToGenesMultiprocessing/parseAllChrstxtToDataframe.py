@@ -32,6 +32,9 @@ def parseArgs():  # Adapted from parseFastqToDataframe.py
                         default=None, help="Option to only read N number of lines of file")
     parser.add_argument('-p', '--print_rows', metavar='print_rows', type=int,
                         default=None, help="Option to print 'n' number of lines of final dataframe")
+    parser.add_argument('-m', '--deep_memory', action='store_true',
+                        help="Boolean flag to print dataframe deep memory info\n"
+                             "(this can be very CPU/time intensive)")
 
     args = parser.parse_args()
 
@@ -78,6 +81,9 @@ def parseAllChrsToDataframe(filename, num_lines=None, split_chrs=False, print_ro
                                                 index=annot_df.index)
     # Sort by Chromosome and index on chromosome
     annot_df = annot_df.sort_values(by=['chr', 'chr_pos'])
+    
+    # Change dtypes:
+    annot_df = annot_df.astype({'chr': 'category', 'chr_pos': 'int64', 'genes': 'object'})
     
     # Quickly reorder columns... might be completely superficial
     annot_df = annot_df[['chr', 'chr_pos', 'genes']]

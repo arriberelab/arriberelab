@@ -19,7 +19,8 @@ pd.set_option('display.max_columns', 20)
 pd.set_option('display.width', 300)
 
 # TODO: name read.SAM df columns for ease of writing code, as well as reading code. Currently column indexes just make
-#       the applied df functions harder to follow.
+#       the applied df functions harder to follow. How far down this path do we want to go? Name all columns? Relevant
+#       ones only? Just add comments to clarify?
 
 
 def parseArgs():
@@ -69,13 +70,13 @@ def parseAllChrsToDF(annot_file, num_lines=None, print_rows=None, deep_memory=Fa
 
 
 def recoverMappedPortion(Cigar, Read):
-    # April 15, 2020: Stolen verbatim from assignReadsToGenes4.py
+    # April 15, 2020: Stolen verbatim (+ my comments) from assignReadsToGenes4.py
     
     """Given a Cigar string and a Read, will return the sequence of the read that mapped to the genome."""
     # Edit Oct 10, 2013 to include skipped portions of reference sequence (introns)
     
     # first process the CIGAR string
-    cigarSplit = re.findall('(\d+|[a-zA-Z]+)', Cigar)
+    cigarSplit = re.findall('(\d+|[a-zA-Z]+)', Cigar)  # RE func: matches sets of digits or letters
     cigarSplit = [[int(cigarSplit[ii]), cigarSplit[ii + 1]] for ii in range(0, len(cigarSplit), 2)]
     
     # Then use that information to parse out nts of the read sequence
@@ -92,21 +93,30 @@ def recoverMappedPortion(Cigar, Read):
             N += entry[0]
             # N is used for "skipped region from the reference". I keep track of Ns and
             #  return them for calculation of position on the - strand
-    
+        # else:
+        #     print(entry[1], end='')
     return mappedRead, N
 
 
 def assignReadsToGenes(sam_file, annot_file, **kwargs):
     sam_df_dict = parseSamToDF(sam_file, **kwargs)
     annot_df_dict = parseAllChrsToDF(annot_file, **kwargs)
-    
+    print()
     # Lets try to apply the recoverMappedPortion() to dataframe to see how it does
     # >>>> Print functions currently for debugging >>>>
     for chr, df in sam_df_dict.items():
+        # print(f"Chr-{chr} recovery started:\nnon-MISN code seen in CIGAR reads:", end='')
         df[[15, 16]] = pd.DataFrame(df.apply(lambda x: recoverMappedPortion(x[5], x[9]),
                                              axis=1).tolist(), index=df.index)
-        print('', f'Chromosome-{chr}', df[[9, 15]], sep='\n')
+        print(f'Recovery of mapped portion complete for chromosome-{chr:<4}')
+        #print('', f'Chromosome-{chr}', df[[9, 15]], sep='\n')
     # <<<< Print functions currently for debugging <<<<
+    
+    # Going for the df.merge() function!
+    for chr, df in sam_df_dict.items():
+        print(f"\nPreforming alignment for Chr-{chr} containing {df.shape[0]} reads")
+        df = df.merge(annot_df_dict[chr], left_on=3, right_on='chr_pos')
+        print(df[[0, 2, 'chr', 3, 'chr_pos', 5, 9, 'genes']].head(5))
     
     print("\n\nDone?")
 
