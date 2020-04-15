@@ -79,7 +79,8 @@ def parseAllChrsToDataframe(filename, num_lines=None, split_chrs=False, print_ro
     # Sort by Chromosome and index on chromosome
     annot_df = annot_df.sort_values(by=['chr', 'chr_pos'])
     
-    # TODO: Reorganize DF columns
+    # Quickly reorder columns... might be completely superficial
+    annot_df = annot_df[['chr', 'chr_pos', 'genes']]
     
     print(f'Finished parsing and sorting of file at: {filename}\n')
     
@@ -92,9 +93,11 @@ def parseAllChrsToDataframe(filename, num_lines=None, split_chrs=False, print_ro
         # Right now this is the only hardcoded piece which will cause major issues, the column containing the chrs
         #  has to be explicitly passed into this. Besides that it is extremely reusable
         annot_df_dict = dict(tuple(annot_df.groupby('chr')))
+        # Print for each chromosome if the user asked for print_rows
         if print_rows:
             for chr, df in annot_df_dict.items():
                 print(f"\nFirst {print_rows} rows of Chromosome-{chr}:\n", df.head(print_rows))
+        # Short print to show how the dataframe was split up
         print(f"\nSplit dataframe into {len(annot_df_dict.keys())} separate df's:\n{annot_df_dict.keys()}")
         return annot_df_dict
     else:
@@ -103,4 +106,4 @@ def parseAllChrsToDataframe(filename, num_lines=None, split_chrs=False, print_ro
 
 if __name__ == '__main__':
     arg_dict = parseArgs()
-    parseAllChrsToDataframe(**arg_dict)
+    df = parseAllChrsToDataframe(**arg_dict)
