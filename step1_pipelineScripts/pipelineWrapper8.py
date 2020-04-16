@@ -139,14 +139,15 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
             I\'m going to try and collapse based on it, assuming you know what \
             you are doing. But if you do not understand this message, please \
             go find someone who can help you.')
-    elif umi5+umi3!=0:
+    ##
+    if umi5+umi3!=0:
         readCollapser4.main([outPrefix+'.trimmed', 
                          umi5, umi3, 
                          outPrefix+'.trimmed.collapsed.fastq'])
     else:
         print('Skipping collapsing...')
         ##the next line creates a symbolic link for the .collapsed file location
-        ##instead of the above lines, which copied them.
+        ##instead of the prior way, which copied them.
         os.system(f'ln -s {outPrefix}.trimmed '
                     f'{outPrefix}.trimmed.collapsed.fastq')
     
@@ -160,27 +161,7 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     ############################################################################################################
     print('skipping filter round of mapping...')
     
-    #Can delete this if we're good:
-    #genomeDir2='/data1/genomes/170320_unc-54GFPNonStop/'
-    #genomeAnnots2='/data1/genomes/170320_unc-54GFPNonStop/170320_unc-54GFPNonStop.gtf'
-    #genomeDir2='/data1/genomes/170320_unc-54BJA40TriggerChr/'
-    #genomeAnnots2='/data1/genomes/170320_unc-54BJA40TriggerChr/170320_dummyGTF.gtf'
-    #genomeDir2='/data1/genomes/161031_Ty1/'
-    #genomeAnnots2='/data1/genomes/161031_Ty1/131217_M18706_revised.gtf'
-    #genomeDir2='/home/josh/genomes/150519_triggerChr4/'
-    #genomeDir2='/home/josh/genomes/150608_triggerChr5_onlyunc-22andunc-54/'
-    #genomeDir2='/data3/genomes/170626_rDNAcerevisiae/'
-    #genomeAnnots2='/data3/genomes/170626_rDNAcerevisiae/blah.gtf'
-    #genomeDir2='/data4/genomes/171207_BJA40BJA7chr/'
-    #genomeDir2='/data4/genomes/180103_BJA7_40_77_chr/'
-    #genomeAnnots2=genomeDir2+'blah.gtf'
-    #genomeDir2='/data4/genomes/180331_triggerChr_pJA7_pJA40_pJA77/'
-    #genomeDir2='/data4/genomes/180514_triggerChr_pJA7_pJA77_pJA151_pJA153/'
-    #genomeAnnots2=genomeDir2+'blah.gtf'
-    #genomeDir2='/data8/genomes/181106_pMPmismatchFeeding/'
-    #genomeAnnots2=genomeDir2+'blah.gtf'
-    
-    #Uncomment the following to commence filter round of mapping:
+    ##uncomment to do filter round of mapping
     """
     misMatchMax2=0
     print(f'performing filter round of mapping to {genomeDir2}')
@@ -211,27 +192,6 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     ############################################################################################################
     print(f'Only running on {cores} cores.')
     print(f'{misMatchMax} mismatch max!')
-    #Can delete these/put in other settings files:
-    # optString= f'--outFilterScoreMin 14 ' \
-    #     f'--outFilterScoreMinOverLread 0.3 ' \
-    #     f'--outFilterMatchNmin 14 ' \
-    #     f'--outFilterMatchNminOverLread 0.3 ' \
-    #     f'--outFilterMismatchNmax {misMatchMax} ' \
-    #     f'--outSJfilterOverhangMin 20 10 10 10'
-    # os.system(f'STAR {optString} '
-    #           f'--alignIntronMax 1 '
-    #           f'--sjdbGTFfile {genomeAnnots} '
-    #           f'--genomeDir {genomeDir} '
-    #           f'--readFilesIn {readFile} '
-    #           f'--runThreadN {cores} '
-    #           f'--outFileNamePrefix {outPrefix}.finalMapped.')
-    #optString = f'--outFilterMatchNmin 70 ' \
-        #f'--outReadsUnmapped Fastx ' \
-        #f'--outFilterMismatchNmax {misMatchMax} ' \
-        #f'--outSJfilterOverhangMin 6 6 6 6'
-    
-    #Use the next optString for the normal pipeline
-    #Can delete this bc it is now in the settings file:
     """
     optString= f'--outFilterScoreMin 14 ' \
         f'--outFilterScoreMinOverLread 0.3 ' \
@@ -260,30 +220,22 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     assignReadsToGenes4.main([genomeAnnotProcessed,
                              outPrefix+'.finalMapped.Aligned.out.sam',
                              outPrefix])
-    
+    print('Assigning reads to genes allowing for multiply-mapping reads...')
+    assignReadsToGenes5.main([genomeAnnotProcessed,
+                             outPrefix+'.finalMapped.Aligned.out.sam',
+                             outPrefix+'.redundantAndUnique'])
+    print('Done with read assignment!')
     ############################################################################################################
     """Additional filtering of reads by length"""
     ############################################################################################################
     # print('Quitting early!!!'), sys.exit()
     print('filtering read lengths again...')
-    filterJoshSAMByReadLength.main([outPrefix+'.joshSAM',
+    filterJoshSAMByReadLength.main([outPrefix+'.jam',
                                 minimumReadLength,
                                 maximumReadLength,
-                                outPrefix+'.joshSAM.filtered_%s-%snt'%(minimumReadLength,maximumReadLength)])
+                                outPrefix+'.jam.filtered_%s-%snt'%(minimumReadLength,maximumReadLength)])
     #print('Quitting early!!!'), sys.exit()
     
-    ############################################################################################################
-    """Make a metagene plot of start/stop codon"""
-    ############################################################################################################
-    print('skipping the output metagene plot...')
-    """
-    print('Plotting metagene...')
-    metaStartStop.main([genomeAnnots,
-                        f'{outPrefix}.plot',
-                        f'{outPrefix}.joshSAM.filtered_{minimumReadLength}-{maximumReadLength}nt',
-                        'Library'])
-    print(f'Done! {outPrefix}')
-    """
     ############################################################################################################
     """Creating riboinfographic"""
     ############################################################################################################

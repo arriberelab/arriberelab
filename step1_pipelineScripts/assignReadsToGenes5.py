@@ -8,7 +8,7 @@ Input: annots.allChrs.txt - output of prepareReadAssignmentFile2.py
     reads.sam - as output from STAR
     BOTH OF THESE FILES ARE ASSUMED TO BE 1-INDEXED
 
-Output: outPrefix.jam - Output will be just like input, but will include a
+Output: outPrefix.joshSAM - Output will be just like input, but will include a
     last column with the gene at that position, if applicable.
 
 run as python assignReadsToGenes.py annots.gtf reads.sam outPrefix
@@ -110,7 +110,7 @@ def parseAnnots(annots,readPositions):
 def assignReads(reads,annotDF,outPrefix):
     """Given annotDF, a pandas DataFrame with indexes as chr_position and
     first (and only column) as the txt information,
-    and a reads file (from STAR, sam format), will make a jam file,
+    and a reads file (from STAR, sam format), will make a joshSAM file,
     which contains all the info in the samFile along with the txt information
     """
     
@@ -119,7 +119,7 @@ def assignReads(reads,annotDF,outPrefix):
     readCt=0.
     unassignedCt=0
     with open(reads,'r') as f:
-        with open(outPrefix+'.jam','w') as g:
+        with open(outPrefix+'.joshSAM','w') as g:
             freader=csv.reader(f,delimiter='\t')
             gwriter=csv.writer(g,delimiter='\t')
             for row in freader:
@@ -151,7 +151,10 @@ def assignReads(reads,annotDF,outPrefix):
                         annotFileLine=txtInfo.strip().split('\t')
                         
                         if len(annotFileLine)>1:
-                            if row[11].split(':')[-1]=='1':#restriction for uniquely mapping#added July 27, 2014
+                            numHits=int(row[11].split(':')[-1])
+                            hitNumber=(row[12].split(':')[-1])
+                            ##the next line is useless. It used to be "if numHits==1" to check for uniquely mapping
+                            if True:#restriction for uniquely mapping#added July 27, 2014
                                 geneInfo=copy.copy(annotFileLine)
                                 ######using pop below makes the above copy necessary
                                 gene,geneStrand=geneInfo.pop().split(':')
@@ -160,6 +163,7 @@ def assignReads(reads,annotDF,outPrefix):
                                 else:
                                     SorAS='AS'
                                 
+                                readInfo.append(f'{hitNumber}:{numHits}')
                                 readInfo.append(gene)
                                 for txt in geneInfo:
                                     readInfo.append(':'.join([txt,SorAS]))
