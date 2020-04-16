@@ -133,24 +133,11 @@ def assignReadsToGenes(sam_file, annot_file, print_rows=None, **kwargs):
                 sam_df_dict[chr]['gene'], sam_df_dict[chr]['gene_string'] = np.nan, np.nan
             else:
                 print(f"\tOther KeyError pertaining to:", str(key), chr)
-    
-    # Use df.dropna() to remove rows which did not map in previous step
-    print("\nCleaning unassigned rows...\n")
-    for chr, df in sam_df_dict.items():
-        if unassigned_df.empty:
-            unassigned_df = pd.DataFrame(columns=df.columns)
-        rows_to_drop = sam_df_dict[chr][sam_df_dict[chr]['gene'].isna()]
-        unassigned_df = pd.concat([unassigned_df, rows_to_drop])
-        sam_df_dict[chr] = df.dropna(axis=0, how='any')
-        print(f"Chr-{chr:->4}, Rows:{len(sam_df_dict[chr].index):>6}, Columns:{len(sam_df_dict[chr].columns):>3}, "
-              f"Dropped Rows: {len(rows_to_drop.index)}")
-    
+
     # Lets try to apply the recoverMappedPortion() to dataframe to see how it does
     #  Currently doing this after dropping unassigned reads as this is a more time intensive step.
     recoverMappedPortion_dfWrapper(sam_df_dict, print_rows=print_rows, **kwargs)
-    
-    
-    print(unassigned_df)
+
     print("\n\nDone?")
 
 
