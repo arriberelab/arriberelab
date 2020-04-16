@@ -8,7 +8,7 @@ Input: annots.allChrs.txt - output of prepareReadAssignmentFile2.py
     reads.sam - as output from STAR
     BOTH OF THESE FILES ARE ASSUMED TO BE 1-INDEXED
 
-Output: outPrefix.joshSAM - Output will be just like input, but will include a
+Output: outPrefix.jam - Output will be just like input, but will include a
     last column with the gene at that position, if applicable.
 
 run as python assignReadsToGenes.py annots.gtf reads.sam outPrefix
@@ -110,7 +110,7 @@ def parseAnnots(annots,readPositions):
 def assignReads(reads,annotDF,outPrefix):
     """Given annotDF, a pandas DataFrame with indexes as chr_position and
     first (and only column) as the txt information,
-    and a reads file (from STAR, sam format), will make a joshSAM file,
+    and a reads file (from STAR, sam format), will make a jam file,
     which contains all the info in the samFile along with the txt information
     """
     
@@ -119,7 +119,7 @@ def assignReads(reads,annotDF,outPrefix):
     readCt=0.
     unassignedCt=0
     with open(reads,'r') as f:
-        with open(outPrefix+'.joshSAM','w') as g:
+        with open(outPrefix+'.jam','w') as g:
             freader=csv.reader(f,delimiter='\t')
             gwriter=csv.writer(g,delimiter='\t')
             for row in freader:
