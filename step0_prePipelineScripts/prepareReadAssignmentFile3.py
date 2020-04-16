@@ -27,7 +27,18 @@ run as python prepareReadAssignmentFile.py annots.gtf
 """
 import sys, common, time, collections, csv, subprocess, pickle
 from logJosh import Tee
-import assignReadsToGenes4, multiprocessing
+import multiprocessing
+
+def getDist(exon_list,position):
+    """Will return distance from the first position of the first exon to position, in mRNA space"""
+    dist=0
+    for exon in exon_list:
+        if position in range(exon[0],exon[1]+1):
+            return dist+position-exon[0]
+        else:
+            dist+=exon[1]-exon[0]+1#Edit July 28, 2014 added +1.
+    print(exon_list, position, dist)
+    print('Error: position not found in txt'), sys.exit()
 
 def parseAnnots(annots):#borrowed and adapted from parseAnnots
     """Will output readPositions, a dictionary of {chr:position:{}} where the innermost dictionary
@@ -91,13 +102,13 @@ def getTxtRelPositions(transcript_id,txt_annot,readPosition):#modified so that i
     exons=[(exonStarts[ii],exonEnds[ii]) for ii in range(len(exonStarts))]
     #Edit: Apparently the exons are not necessarily orderd in the gtf file.
     
-    txtStart_cdsStart_dist=assignReadsToGenes4.getDist(exons,cdsStart)
-    txtStart_readPosition_dist=assignReadsToGenes4.getDist(exons,readPosition)
+    txtStart_cdsStart_dist=getDist(exons,cdsStart)
+    txtStart_readPosition_dist=getDist(exons,readPosition)
     readPosition_rel_to_CDSstart=txtStart_readPosition_dist-txtStart_cdsStart_dist
     
     #now do the same thing with the cdsEnd
     cdsEnd=max([entry[1] for entry in txt_annot['CDS']])
-    txtStart_cdsEnd_dist=assignReadsToGenes4.getDist(exons,cdsEnd)
+    txtStart_cdsEnd_dist=getDist(exons,cdsEnd)
     #already determined txtStart_readPosition_dist
     readPosition_rel_to_CDSend=txtStart_readPosition_dist-txtStart_cdsEnd_dist
     
