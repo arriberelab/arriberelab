@@ -12,6 +12,7 @@ import multiprocessing
 import re
 import parseAllChrstxtToDataframe
 import parseSAMToDataframe
+import numpy as np
 import pandas as pd
 # Pandas default would cut off any columns beyond 5 so:
 pd.set_option('display.max_rows', 50)
@@ -98,36 +99,58 @@ def recoverMappedPortion(Cigar, Read):
     return mappedRead, N
 
 
-def assignReadsToGenes(sam_file, annot_file, **kwargs):
-    sam_df_dict = parseSamToDF(sam_file, **kwargs)
-    annot_df_dict = parseAllChrsToDF(annot_file, **kwargs)
-    print()
-    
-    # Going for the df.merge() function for mapping annotations onto reads
-    for chr, df in sam_df_dict.items():
-        try:
-            print(f"\nPreforming alignment for Chr-{chr} containing {len(df.index)} reads")
-            sam_df_dict[chr] = df.merge(annot_df_dict[chr], left_on=3, right_on='chr_pos')
-            print(sam_df_dict[chr][[0, 2, 'chr', 3, 'chr_pos', 5, 9, 'gene', 'gene_string']].head(5))
-            # print(sam_df_dict[chr].head(5))
-        except KeyError as key:
-            print(f"Chr-{chr:<4} not found in annotations!\n {key}")
-    
-    # Use df.dropna() to remove rows which did not map in previous step
-    print("\nCleaning unmapped rows...\n")
-    for chr, df in sam_df_dict.items():
-        sam_df_dict[chr] = df.dropna(axis=0, how='any')
-        print(f'Chr-{chr:<4}, Rows:{len(sam_df_dict[chr].index):>5}, Columns:{len(sam_df_dict[chr].columns):>3}')
-    
-    # Lets try to apply the recoverMappedPortion() to dataframe to see how it does
+def recoverMappedPortion_dfWrapper(sam_df_dict, print_rows=False, **kwargs):
     for chr, df in sam_df_dict.items():
         try:
             sam_df_dict[chr][[15, 16]] = pd.DataFrame(df.apply(lambda x: recoverMappedPortion(x[5], x[9]),
-                                                 axis=1).tolist(), index=df.index)
+                                                               axis=1).tolist(), index=df.index)
             print(f'Recovery of mapped portion complete for Chr-{chr:->4}, read count={len(sam_df_dict[chr].index)}')
+            if print_rows:
+                print(sam_df_dict[chr].head(print_rows))
         except AttributeError:
             print(f'No reads for mapped portion recovery in Chr-{chr:->4}, read count={len(sam_df_dict[chr].index)}')
+    return sam_df_dict
+
+
+def assignReadsToGenes(sam_file, annot_file, print_rows=None, **kwargs):
+    sam_df_dict = parseSamToDF(sam_file, **kwargs)
+    annot_df_dict = parseAllChrsToDF(annot_file, **kwargs)
+    unassigned_df = pd.DataFrame()
     
+    # Going for the df.merge() function for mapping annotations onto reads
+    print(f"\nAnnotation alignment for {len(sam_df_dict.keys())} chromosomes:")
+    for chr, df in sam_df_dict.items():
+        try:
+            print(f"\tPreforming alignment for Chr-{chr:->4} containing {len(df.index)} reads")
+            sam_df_dict[chr] = df.merge(annot_df_dict[chr], left_on=3, right_on='chr_pos')
+            print(f"\t\tSuccess, {len(sam_df_dict[chr][sam_df_dict[chr]['gene'] != np.nan].index):>7} "
+                  f"reads assigned to genes in Chr-{chr:->4}\n")
+            if print_rows:
+                print(sam_df_dict[chr][[0, 2, 'chr', 3, 'chr_pos', 5, 9, 'gene', 'gene_string']].head(print_rows))
+        except KeyError as key:
+            if str(key).strip("'") == chr:
+                print(f"\t\tChr-{chr:->4} not found in annotations! -> Adding empty columns to compensate\n")
+                sam_df_dict[chr]['gene'], sam_df_dict[chr]['gene_string'] = np.nan, np.nan
+            else:
+                print(f"\tOther KeyError pertaining to:", str(key), chr)
+    
+    # Use df.dropna() to remove rows which did not map in previous step
+    print("\nCleaning unassigned rows...\n")
+    for chr, df in sam_df_dict.items():
+        if unassigned_df.empty:
+            unassigned_df = pd.DataFrame(columns=df.columns)
+        rows_to_drop = sam_df_dict[chr][sam_df_dict[chr]['gene'].isna()]
+        unassigned_df = pd.concat([unassigned_df, rows_to_drop])
+        sam_df_dict[chr] = df.dropna(axis=0, how='any')
+        print(f"Chr-{chr:->4}, Rows:{len(sam_df_dict[chr].index):>6}, Columns:{len(sam_df_dict[chr].columns):>3}, "
+              f"Dropped Rows: {len(rows_to_drop.index)}")
+    
+    # Lets try to apply the recoverMappedPortion() to dataframe to see how it does
+    #  Currently doing this after dropping unassigned reads as this is a more time intensive step.
+    recoverMappedPortion_dfWrapper(sam_df_dict, print_rows=print_rows, **kwargs)
+    
+    
+    print(unassigned_df)
     print("\n\nDone?")
 
 

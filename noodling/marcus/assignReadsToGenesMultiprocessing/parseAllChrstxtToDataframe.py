@@ -96,7 +96,7 @@ def parseAllChrsToDataframe(filename, num_lines=None, split_chrs=False, print_ro
     # Quickly reorder columns... might be completely superficial
     annot_df = annot_df[['chr', 'chr_pos', 'gene', 'gene_string']]
     
-    print(f'Finished parsing and sorting of file at: {filename}\n')
+    print(f'Finished parsing and sorting of file at: {filename}')
     
     if print_rows:
         print(f"\nFirst {print_rows} rows of dataframe:\n",
@@ -114,7 +114,7 @@ def parseAllChrsToDataframe(filename, num_lines=None, split_chrs=False, print_ro
             for chr, df in annot_df_dict.items():
                 print(f"\nFirst {print_rows} rows of Chromosome-{chr}:\n", df.head(print_rows))
         # Short print to show how the dataframe was split up
-        print(f"\nSplit dataframe into {len(annot_df_dict.keys())} separate df's:\n{annot_df_dict.keys()}")
+        print(f"Split annotations dataframe into {len(annot_df_dict.keys())} separate df's:\n{annot_df_dict.keys()}")
         return annot_df_dict
     else:
         return annot_df
