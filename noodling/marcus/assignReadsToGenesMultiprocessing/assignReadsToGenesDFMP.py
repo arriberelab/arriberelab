@@ -102,24 +102,31 @@ def assignReadsToGenes(sam_file, annot_file, **kwargs):
     sam_df_dict = parseSamToDF(sam_file, **kwargs)
     annot_df_dict = parseAllChrsToDF(annot_file, **kwargs)
     print()
-    # Lets try to apply the recoverMappedPortion() to dataframe to see how it does
-    # >>>> Print functions currently for debugging >>>>
-    for chr, df in sam_df_dict.items():
-        # print(f"Chr-{chr} recovery started:\nnon-MISN code seen in CIGAR reads:", end='')
-        df[[15, 16]] = pd.DataFrame(df.apply(lambda x: recoverMappedPortion(x[5], x[9]),
-                                             axis=1).tolist(), index=df.index)
-        print(f'Recovery of mapped portion complete for chromosome-{chr:<4}')
-        #print('', f'Chromosome-{chr}', df[[9, 15]], sep='\n')
-    # <<<< Print functions currently for debugging <<<<
     
-    # Going for the df.merge() function!
+    # Going for the df.merge() function for mapping annotations onto reads
     for chr, df in sam_df_dict.items():
         try:
-            print(f"\nPreforming alignment for Chr-{chr} containing {df.shape[0]} reads")
-            df = df.merge(annot_df_dict[chr], left_on=3, right_on='chr_pos')
-            print(df[[0, 2, 'chr', 3, 'chr_pos', 5, 9, 'genes']].head(5))
-        except KeyError:
-            print(f"Chr-{chr} not found in annotations!")
+            print(f"\nPreforming alignment for Chr-{chr} containing {len(df.index)} reads")
+            sam_df_dict[chr] = df.merge(annot_df_dict[chr], left_on=3, right_on='chr_pos')
+            print(sam_df_dict[chr][[0, 2, 'chr', 3, 'chr_pos', 5, 9, 'gene', 'gene_string']].head(5))
+            # print(sam_df_dict[chr].head(5))
+        except KeyError as key:
+            print(f"Chr-{chr:<4} not found in annotations!\n {key}")
+    
+    # Use df.dropna() to remove rows which did not map in previous step
+    print("\nCleaning unmapped rows...\n")
+    for chr, df in sam_df_dict.items():
+        sam_df_dict[chr] = df.dropna(axis=0, how='any')
+        print(f'Chr-{chr:<4}, Rows:{len(sam_df_dict[chr].index):>5}, Columns:{len(sam_df_dict[chr].columns):>3}')
+    
+    # Lets try to apply the recoverMappedPortion() to dataframe to see how it does
+    for chr, df in sam_df_dict.items():
+        try:
+            sam_df_dict[chr][[15, 16]] = pd.DataFrame(df.apply(lambda x: recoverMappedPortion(x[5], x[9]),
+                                                 axis=1).tolist(), index=df.index)
+            print(f'Recovery of mapped portion complete for Chr-{chr:->4}, read count={len(sam_df_dict[chr].index)}')
+        except AttributeError:
+            print(f'No reads for mapped portion recovery in Chr-{chr:->4}, read count={len(sam_df_dict[chr].index)}')
     
     print("\n\nDone?")
 
