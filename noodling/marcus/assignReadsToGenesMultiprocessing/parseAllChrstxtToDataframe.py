@@ -67,31 +67,41 @@ def parseAllChrsToDataframe(filename, num_lines=None, split_chrs=False, print_ro
         annot_df = pd.read_csv(filename,
                                # index_col=0,
                                delimiter='|',
-                               names=['chr', 'genes'],
+                               names=['chr', 'gene_string'],
                                nrows=num_lines,
                                )
     else:
         annot_df = pd.read_csv(filename,
                                # index_col=0,
                                delimiter='|',
-                               names=['chr', 'genes'],
+                               names=['chr', 'gene_string'],
                                )
     # Split the chr_index column into two
     annot_df[['chr', 'chr_pos']] = pd.DataFrame(annot_df['chr'].str.split('_').values.tolist(),
                                                 index=annot_df.index)
+    
+    # Reorganize gene info for final .JAM file:
+    annot_df[['gene_string', 'genes']] = pd.DataFrame(annot_df['gene_string'].str.strip().str.split('\t').values.tolist(),
+                                                 index=annot_df.index)
+    annot_df[['gene', 'sense']] = pd.DataFrame(annot_df['genes'].str.strip().str.split(':').values.tolist(),
+                                               index=annot_df.index)
+    annot_df['gene_string'] = annot_df['gene_string'] + ':' + annot_df['sense']
+    
     # Sort by Chromosome and index on chromosome
     annot_df = annot_df.sort_values(by=['chr', 'chr_pos'])
     
     # Change dtypes:
-    annot_df = annot_df.astype({'chr': 'category', 'chr_pos': 'int64', 'genes': 'object'})
+    annot_df = annot_df.astype({'chr': 'category', 'chr_pos': 'int64', 'gene': 'object', 'gene_string': 'object'})
     
     # Quickly reorder columns... might be completely superficial
-    annot_df = annot_df[['chr', 'chr_pos', 'genes']]
+    annot_df = annot_df[['chr', 'chr_pos', 'gene', 'gene_string']]
     
     print(f'Finished parsing and sorting of file at: {filename}\n')
     
     if print_rows:
-        print(f"\nFirst {print_rows} rows of dataframe:\n", annot_df.head(print_rows), '\n')
+        print(f"\nFirst {print_rows} rows of dataframe:\n",
+              annot_df.sort_values(by=['chr', 'chr_pos']).head(print_rows), '\n')
+        # print(annot_df[len(annot_df['genes']) == 2])
     if deep_memory:
         print(annot_df.info(memory_usage='deep'))
         
