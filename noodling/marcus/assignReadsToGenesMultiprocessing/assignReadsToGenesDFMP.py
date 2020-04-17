@@ -41,6 +41,8 @@ def parseArgs():
                              "(this can be very CPU/time intensive, but informative)")
     parser.add_argument('-o', '--concatenate_output', action='store_true',
                         help="Boolean flag to output a single file for all chromosomes")
+    parser.add_argument('-u', '--keep_non_unique', action='store_true',
+                        help="Boolean flag to allow non-unique reads through the assignment process")
     
     args = parser.parse_args()
     
@@ -122,13 +124,14 @@ def recoverMappedPortion_dfWrapper(sam_df_dict, print_rows=None, **kwargs):
     return sam_df_dict
 
 
-def assignReadsToGenes(sam_df_dict, annot_df_dict, print_rows=None, **kwargs):
+def assignReadsToGenes(sam_df_dict, annot_df_dict, print_rows=None, keep_non_unique=False, **kwargs):
     # Going for the df.merge() function for mapping annotations onto reads
     print(f"\nAnnotation alignment for {len(sam_df_dict.keys())} chromosomes:")
     for chr_key, df in sam_df_dict.items():
         try:
             # ONLY KEEP UNIQUELY MAPPING READS: >>
-            df = sam_df_dict[chr_key][sam_df_dict[chr_key]['NH'].str.endswith('1')]
+            if not keep_non_unique:
+                df = sam_df_dict[chr_key][sam_df_dict[chr_key]['NH'].str.endswith(':1')]
             # << ONLY KEEP UNIQUELY MAPPING READS
             
             print(f"\tPreforming alignment for Chr-{chr_key:->4} containing {len(df.index)} reads")
@@ -195,13 +198,15 @@ def outputToCSV(jam_file ):
     pass
 
 
-def main(sam_file, annot_file, output_prefix, print_rows=None, concatenate_output=False, **kwargs):
+def main(sam_file, annot_file, output_prefix, print_rows=None,
+         concatenate_output=False, keep_non_unique=False, **kwargs):
     sam_df_dict = parseSamToDF(sam_file, **kwargs)
     annot_df_dict = parseAllChrsToDF(annot_file, **kwargs)
     unassigned_df = pd.DataFrame()
     
     # Going for the df.merge() function for mapping annotations onto reads
-    sam_df_dict = assignReadsToGenes(sam_df_dict, annot_df_dict, print_rows=print_rows, **kwargs)
+    sam_df_dict = assignReadsToGenes(sam_df_dict, annot_df_dict,
+                                     print_rows=print_rows, keep_non_unique=keep_non_unique, **kwargs)
     
     # Lets try to apply the recoverMappedPortion() to dataframe to see how it does
     #  Currently doing this after dropping unassigned reads as this is a more time intensive step.
