@@ -95,7 +95,7 @@ def recoverMappedPortion(Cigar, Read):
     return mappedRead, N
 
 
-def recoverMappedPortion_dfWrapper(sam_df_dict, print_rows=False, **kwargs):
+def recoverMappedPortion_dfWrapper(sam_df_dict, print_rows=None, **kwargs):
     for chr_key, df in sam_df_dict.items():
         try:
             sam_df_dict[chr_key][['map_read_seq', 'N']] = pd.DataFrame(df.apply(lambda x:
@@ -120,7 +120,13 @@ def assignReadsToGenes(sam_df_dict, annot_df_dict, print_rows=None, **kwargs):
             print(f"\t\tSuccess, {len(sam_df_dict[chr_key][sam_df_dict[chr_key]['gene'] != np.nan].index):>7} "
                   f"reads assigned to genes in Chr-{chr_key:->4}\n")
             if print_rows:
-                print(sam_df_dict[chr_key][['read_id', 'chr', 'chr_pos', 'cigar', 'read_seq']].head(print_rows))
+                print(sam_df_dict[chr_key][['read_id',
+                                            'chr',
+                                            'chr_pos',
+                                            'cigar',
+                                            'read_seq',
+                                            'gene',
+                                            'gene_string']].head(print_rows))
             
             # TODO: some functionality to drop full df if nothing is assigned at all
         except KeyError as key:
@@ -132,6 +138,43 @@ def assignReadsToGenes(sam_df_dict, annot_df_dict, print_rows=None, **kwargs):
     return sam_df_dict
 
 
+def fixSenseNonsense(sam_df_dict, print_rows=None, **kwargs):
+    def revCompl(seq):
+        """Will return the reverse complement of a sequence"""
+        a = {'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G',
+             'a': 't', 't': 'a', 'g': 'c', 'c': 'g',
+             'N': 'N', 'n': 'n', '.': '.', '-': '-'}
+        return ''.join([a[seq[-i]] for i in range(1, len(seq) + 1)])
+    
+    def S_AS_flag_rework(S_AS, chr_pos, read_seq, map_read_seq, N, gene_string):
+        if S_AS & 16 != 0:  # check strand
+            chr_pos += len(map_read_seq) + N - 1
+            read_strand = '-'
+            map_read_seq = revCompl(map_read_seq)
+            read_seq = revCompl(read_seq)
+        else:
+            read_strand = '+'
+        # THIS DOESN'T WORK >>>>
+        if str(gene_string)[-1] == read_strand:
+            gene_string = str(gene_string)[:-1] + 'S'
+        else:
+            gene_string = str(gene_string)[:-1] + 'AS'
+        # <<<< END OF NOT WORKING STUFF
+        return read_strand, read_seq, map_read_seq, chr_pos, gene_string
+    
+    for chr_key, df in sam_df_dict.items():
+        sam_df_dict[chr_key][['S_AS', 'read_seq', 'map_read_seq', 'chr_pos', 'gene_string']] =\
+            pd.DataFrame(df.apply(lambda x: S_AS_flag_rework(x['S_AS'],
+                                                             x['chr_pos'],
+                                                             x['read_seq'],
+                                                             x['map_read_seq'],
+                                                             x['N'],
+                                                             x['gene_string']),
+                                  axis=1).tolist(), index=df.index)
+        print(chr_key, sam_df_dict[chr_key].head(5), sep='\n')
+    return sam_df_dict
+
+
 def main(sam_file, annot_file, print_rows=None, **kwargs):
     sam_df_dict = parseSamToDF(sam_file, **kwargs)
     annot_df_dict = parseAllChrsToDF(annot_file, **kwargs)
@@ -139,11 +182,13 @@ def main(sam_file, annot_file, print_rows=None, **kwargs):
     
     # Going for the df.merge() function for mapping annotations onto reads
     sam_df_dict = assignReadsToGenes(sam_df_dict, annot_df_dict, print_rows=print_rows, **kwargs)
-
+    
     # Lets try to apply the recoverMappedPortion() to dataframe to see how it does
     #  Currently doing this after dropping unassigned reads as this is a more time intensive step.
-    recoverMappedPortion_dfWrapper(sam_df_dict, print_rows=print_rows, **kwargs)
-
+    sam_df_dict = recoverMappedPortion_dfWrapper(sam_df_dict, print_rows=print_rows, **kwargs)
+    
+    jam_df_dict = fixSenseNonsense(sam_df_dict, print_rows=print_rows, **kwargs)
+    
     print("\n\nDone?")
 
 
