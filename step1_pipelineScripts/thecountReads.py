@@ -2,8 +2,7 @@
 John Kim April 8, 2020
 
 Script will return number of reads and percentages relative to the raw .fastq file that enters pipelineWrapper8.py
- 
-Input: reads.fastq, reads.trimmed.collapsed.fastq, reads.trimmed.tooShort.fastq, reads.trimmed.tooLong.fastq, reads.joshSAM  
+Input: reads.fastq, reads.trimmed.collapsed.fastq, reads.trimmed.tooShort.fastq, reads.trimmed.tooLong.fastq, reads.jam  
 
 Output: outPrefix.summary.txt
  
@@ -30,25 +29,25 @@ def countSAMS(filename):
             samcount+=1
     return samcount
 
-
-def main(fastq, outPrefix):
+def main(args):
+    fastq,outPrefix=args[0:]
     # try:
     #     os.remove(outPrefix+OUTPUT_FILE) #remove file to rewrite
     # except Exception as e: #if no file exists then exception occurs instead
     #     print(f'ERROR: {e}')
     #     print('Running now')
     input_files = {}
-    l = ['.trimmed.collapsed.fastq', '.trimmed.tooShort.fastq', '.trimmed.tooLong.fastq', '.joshSAM'] #list of filenames
+    l = ['.trimmed.collapsed.selfDestruct.fastq', '.trimmed.selfDestruct.tooShort.fastq', '.trimmed.selfDestruct.tooLong.fastq', '.jam'] #list of filenames
     input_files[outPrefix] = {} #dictionary of outPrefixes
     fastqCount = countTrimmed(fastq) #passing fastq through countTrimmed and assign to variable fastq
     input_files[outPrefix]['.fastq'] = fastqCount #save fastqcount to '.fastq' key in outPrefix dictionary
     for i in l:
         input_files[outPrefix][i] = 0 #initialize to 0
         filename = outPrefix+i
-
-        if i == '.joshSAM':
+        
+        if i == '.jam':
             readCount = countSAMS(filename)
-        elif i == '.trimmed.tooLong.fastq' or '.trimmed.tooShort.fastq' or '.trimmed.collapsed.fastq':
+        elif i == '.trimmed.tooLong.selfDestruct.fastq' or '.trimmed.tooShort.selfDestruct.fastq' or '.trimmed.collapsed.selfDestruct.fastq':
             readCount = countTrimmed(filename)
         # else:
         #     print('u thought')
@@ -64,7 +63,5 @@ def main(fastq, outPrefix):
                 f.write(f'{keyprime}:{input_files[key][keyprime]} "reads", {percentage}%\n')
 
 
-#if __name__ == "__main__":
-#    fastq = sys.argv[1]
-#    outPrefix = sys.argv[2]
-#    main(fastq, outPrefix)
+if __name__ == "__main__":
+    main(sys.argv[1:])

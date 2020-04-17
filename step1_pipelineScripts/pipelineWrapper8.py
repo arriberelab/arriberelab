@@ -27,6 +27,8 @@ run as python3 pipelineWrapper8.py settings.txt inputReads.fastq outPrefix
 
 import sys, common, os, assignReadsToGenes4, readCollapser4, filterJoshSAMByReadLength, thecountReads
 import argparse
+import assignReadsToGenes5
+import infoGraphQC
 #import metaStartStop
 from logJosh import Tee
 
@@ -124,9 +126,9 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     os.system(f'cutadapt -a {adaptorSeq} '
               f'-m {minimumReadLength+umi5+umi3} '
               f'-M {maximumReadLength+umi5+umi3} '
-              f'--too-short-output {outPrefix + ".trimmed.tooShort.fastq"} '
-              f'--too-long-output {outPrefix + ".trimmed.tooLong.fastq"} '
-              f'{fastqFile} > {outPrefix + ".trimmed"} '
+              f'--too-short-output {outPrefix + ".trimmed.selfDestruct.tooShort.fastq"} '
+              f'--too-long-output {outPrefix + ".trimmed.selfDestruct.tooLong.fastq"} '
+              f'{fastqFile} > {outPrefix + ".trimmed.selfDestruct.fastq"} '
               f'2>/dev/null'
               )
     
@@ -141,20 +143,20 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
             go find someone who can help you.')
     ##
     if umi5+umi3!=0:
-        readCollapser4.main([outPrefix+'.trimmed', 
+        readCollapser4.main([outPrefix+'.trimmed.selfDestruct.fastq', 
                          umi5, umi3, 
-                         outPrefix+'.trimmed.collapsed.fastq'])
+                         outPrefix+'.trimmed.collapsed.selfDestruct.fastq'])
     else:
         print('Skipping collapsing...')
         ##the next line creates a symbolic link for the .collapsed file location
         ##instead of the prior way, which copied them.
-        os.system(f'ln -s {outPrefix}.trimmed '
-                    f'{outPrefix}.trimmed.collapsed.fastq')
+        os.system(f'ln -s {outPrefix}.trimmed.selfDestruct.fastq '
+                    f'{outPrefix}.trimmed.collapsed.selfDestruct.fastq')
     
     ############################################################################################################
     """Introduce a variable to make reading code easier"""
     ############################################################################################################
-    readFile = f'{outPrefix}.trimmed.collapsed.fastq'
+    readFile = f'{outPrefix}.trimmed.collapsed.selfDestruct.fastq'
     
     ############################################################################################################
     """Perform a filter round of mapping. e.g. to rDNA or RNAi trigger"""
@@ -233,14 +235,15 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     filterJoshSAMByReadLength.main([outPrefix+'.jam',
                                 minimumReadLength,
                                 maximumReadLength,
-                                outPrefix+'.jam.filtered_%s-%snt'%(minimumReadLength,maximumReadLength)])
+                                outPrefix+'.filtered_%s-%snt.jam'%(minimumReadLength,maximumReadLength)])
     #print('Quitting early!!!'), sys.exit()
     
     ############################################################################################################
-    """Creating riboinfographic"""
+    """Creating infographic"""
     ############################################################################################################
-    print('Making riboinfographic')
-    thecountReads.main(fastqFile, outPrefix)
+    print('Making infographic')
+    infoGraphQC.main([outPrefix+'.jam',minimumReadLength,maximumReadLength,-21,21,-30,12,outPrefix+'.qc'])
+    thecountReads.main([fastqFile, outPrefix])
 
 def parseArguments():
     """
