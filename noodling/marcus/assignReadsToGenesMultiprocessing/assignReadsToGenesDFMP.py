@@ -211,7 +211,7 @@ def main(sam_file, annot_file, output_prefix, print_rows=None, concatenate_outpu
     
     if not concatenate_output:
         for chr_key, df in jam_df_dict.items():
-            jam_df_dict[chr_key].sort_values(by=['chr', 'chr_pos', 'read_id'])
+            jam_df_dict[chr_key].sort_values(by=['read_id', 'chr', 'chr_pos'])
             jam_df_dict[chr_key].to_csv(f"{output_prefix}.chr{chr_key}.jam",
                                         index=False, sep='\t',
                                         columns=['read_id',
@@ -222,12 +222,11 @@ def main(sam_file, annot_file, output_prefix, print_rows=None, concatenate_outpu
                                                  'cigar',
                                                  'gene',
                                                  'gene_string',
-                                                 'read_seq',
                                                  'map_read_seq',
-                                                 'NH'])
+                                                 'NH', 'HI'])
     else:
         jam_all_chrs = pd.concat(jam_df_dict.values(), ignore_index=True)
-        jam_all_chrs.sort_values(by=['chr', 'chr_pos', 'read_id'])
+        jam_all_chrs.sort_values(by=['read_id', 'chr', 'chr_pos'])
         jam_all_chrs.to_csv(f"{output_prefix}.allChrs.jam",
                             index=False, sep='\t',
                             columns=['read_id',
@@ -238,7 +237,6 @@ def main(sam_file, annot_file, output_prefix, print_rows=None, concatenate_outpu
                                      'cigar',
                                      'gene',
                                      'gene_string',
-                                     'read_seq',
                                      'map_read_seq',
                                      'NH'])
     
