@@ -120,14 +120,16 @@ def main(args):
     ##extract the read length and fraction in frame info
     df=getReadLengthAndFrameInfo(inFile,lowerBound,upperBound)
     ##pickle the output to save it
-    with open(outPrefix+'.p','wb') as f:
-        pickle.dump(df,f)
+    #with open(outPrefix+'.p','wb') as f:
+    #    pickle.dump(df,f)
     
     ##unpickle the output to load it
-    with open(outPrefix+'.p','rb') as f:
-        df=pickle.load(f)
+    #with open(outPrefix+'.p','rb') as f:
+    #    df=pickle.load(f)
     ##make the plots save
-    mkPlots(df,outPrefix)
+    #mkPlots(df,outPrefix)
+    ##return the df instead of plotting it
+    return df
 
 if __name__=='__main__':
     Tee()

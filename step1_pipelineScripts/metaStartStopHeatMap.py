@@ -134,7 +134,9 @@ def main(args):
     #and grab the output file name
     outPrefix=args[7]
     #make the heatmap
-    mkHeatMaps(dfStart,dfStop,outPrefix)
+    #mkHeatMaps(dfStart,dfStop,outPrefix)
+    ##return the df instead of plotting it
+    return dfStart,dfStop
 
 if __name__=='__main__':
     Tee()
