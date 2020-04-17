@@ -109,11 +109,7 @@ def recoverMappedPortion_dfWrapper(sam_df_dict, print_rows=False, **kwargs):
     return sam_df_dict
 
 
-def assignReadsToGenes(sam_file, annot_file, print_rows=None, **kwargs):
-    sam_df_dict = parseSamToDF(sam_file, **kwargs)
-    annot_df_dict = parseAllChrsToDF(annot_file, **kwargs)
-    unassigned_df = pd.DataFrame()
-    
+def assignReadsToGenes(sam_df_dict, annot_df_dict, print_rows=None, **kwargs):
     # Going for the df.merge() function for mapping annotations onto reads
     print(f"\nAnnotation alignment for {len(sam_df_dict.keys())} chromosomes:")
     print(sam_df_dict.keys())
@@ -125,12 +121,24 @@ def assignReadsToGenes(sam_file, annot_file, print_rows=None, **kwargs):
                   f"reads assigned to genes in Chr-{chr_key:->4}\n")
             if print_rows:
                 print(sam_df_dict[chr_key][['read_id', 'chr', 'chr_pos', 'cigar', 'read_seq']].head(print_rows))
+            
+            # TODO: some functionality to drop full df if nothing is assigned at all
         except KeyError as key:
             if str(key).strip("'") == chr_key:
                 print(f"\t\tChr-{chr_key:->4} not found in annotations! -> Adding empty columns to compensate\n")
                 sam_df_dict[chr_key]['gene'], sam_df_dict[chr_key]['gene_string'] = np.nan, np.nan
             else:
                 print(f"\tOther KeyError pertaining to:", str(key), chr_key)
+    return sam_df_dict
+
+
+def main(sam_file, annot_file, print_rows=None, **kwargs):
+    sam_df_dict = parseSamToDF(sam_file, **kwargs)
+    annot_df_dict = parseAllChrsToDF(annot_file, **kwargs)
+    unassigned_df = pd.DataFrame()
+    
+    # Going for the df.merge() function for mapping annotations onto reads
+    sam_df_dict = assignReadsToGenes(sam_df_dict, annot_df_dict, print_rows=print_rows, **kwargs)
 
     # Lets try to apply the recoverMappedPortion() to dataframe to see how it does
     #  Currently doing this after dropping unassigned reads as this is a more time intensive step.
@@ -141,4 +149,4 @@ def assignReadsToGenes(sam_file, annot_file, print_rows=None, **kwargs):
 
 if __name__ == '__main__':
     arg_dict = parseArgs()
-    assignReadsToGenes(**arg_dict)
+    main(**arg_dict)
