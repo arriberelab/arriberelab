@@ -14,6 +14,7 @@ import parseAllChrstxtToDataframe
 import parseSAMToDataframe
 import numpy as np
 import pandas as pd
+
 # Pandas default would cut off any columns beyond 5 so:
 pd.set_option('display.max_rows', 50)
 pd.set_option('display.max_columns', 20)
@@ -27,6 +28,8 @@ def parseArgs():
                         type=str, help="Path to .sam file")
     parser.add_argument('annot_file', metavar='annot_file',
                         type=str, help="Path to .allChrs.txt file")
+    parser.add_argument('output_prefix', metavar='output_prefix',
+                        type=str, help="Prefix for output file names")
     parser.add_argument('-n', '--num_lines', metavar='num_lines', type=int,
                         default=None, help="Option to only read 'n' number of lines of each file,"
                                            "mostly if you're doing a quick test")
@@ -36,6 +39,8 @@ def parseArgs():
     parser.add_argument('-m', '--deep_memory', action='store_true',
                         help="Boolean flag to print dataframe deep memory info\n"
                              "(this can be very CPU/time intensive, but informative)")
+    parser.add_argument('-o', '--concatenate_output', action='store_true',
+                        help="Boolean flag to output a single file for all chromosomes")
     
     args = parser.parse_args()
     
@@ -99,22 +104,33 @@ def recoverMappedPortion_dfWrapper(sam_df_dict, print_rows=None, **kwargs):
     for chr_key, df in sam_df_dict.items():
         try:
             sam_df_dict[chr_key][['map_read_seq', 'N']] = pd.DataFrame(df.apply(lambda x:
-                                                               recoverMappedPortion(x['cigar'], x['read_seq']),
+                                                                                recoverMappedPortion(x['cigar'],
+                                                                                                     x['read_seq']),
                                                                                 axis=1).tolist(), index=df.index)
-            print(f'Recovery of mapped portion complete for Chr-{chr_key:->4}, read count={len(sam_df_dict[chr_key].index)}')
+            print(f'Recovery of mapped portion complete for Chr-{chr_key:->4}, '
+                  f'read count={len(sam_df_dict[chr_key].index)}')
             if print_rows:
-                print(sam_df_dict[chr_key][['read_id', 'chr', 'chr_pos', 'cigar', 'read_seq', 'map_read_seq']].head(print_rows))
+                print(sam_df_dict[chr_key][['read_id',
+                                            'chr',
+                                            'chr_pos',
+                                            'cigar',
+                                            'read_seq',
+                                            'map_read_seq']].head(print_rows))
         except AttributeError:
-            print(f'No reads for mapped portion recovery in Chr-{chr_key:->4}, read count={len(sam_df_dict[chr_key].index)}')
+            print(f'No reads for mapped portion recovery in Chr-{chr_key:->4}, '
+                  f'read count={len(sam_df_dict[chr_key].index)}')
     return sam_df_dict
 
 
 def assignReadsToGenes(sam_df_dict, annot_df_dict, print_rows=None, **kwargs):
     # Going for the df.merge() function for mapping annotations onto reads
     print(f"\nAnnotation alignment for {len(sam_df_dict.keys())} chromosomes:")
-    print(sam_df_dict.keys())
     for chr_key, df in sam_df_dict.items():
         try:
+            # ONLY KEEP UNIQUELY MAPPING READS: >>
+            sam_df_dict[chr_key] = sam_df_dict[chr_key][sam_df_dict[chr_key]['NH'].str.endswith('1')]
+            # << ONLY KEEP UNIQUELY MAPPING READS
+            
             print(f"\tPreforming alignment for Chr-{chr_key:->4} containing {len(df.index)} reads")
             sam_df_dict[chr_key] = df.merge(annot_df_dict[chr_key], on=['chr_pos', 'chr'])
             print(f"\t\tSuccess, {len(sam_df_dict[chr_key][sam_df_dict[chr_key]['gene'] != np.nan].index):>7} "
@@ -139,6 +155,7 @@ def assignReadsToGenes(sam_df_dict, annot_df_dict, print_rows=None, **kwargs):
 
 
 def fixSenseNonsense(sam_df_dict, print_rows=None, **kwargs):
+    """Check for strand and sense/antisense, create rev-compliment as needed, and edits gene_string"""
     def revCompl(seq):
         """Will return the reverse complement of a sequence"""
         a = {'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G',
@@ -154,28 +171,31 @@ def fixSenseNonsense(sam_df_dict, print_rows=None, **kwargs):
             read_seq = revCompl(read_seq)
         else:
             read_strand = '+'
-        # THIS DOESN'T WORK >>>>
+        # This has some issues if reads without annotations get through >>>
         if str(gene_string)[-1] == read_strand:
             gene_string = str(gene_string)[:-1] + 'S'
         else:
             gene_string = str(gene_string)[:-1] + 'AS'
-        # <<<< END OF NOT WORKING STUFF
+        # <<< This has some issues if reads without annotations get through
         return read_strand, read_seq, map_read_seq, chr_pos, gene_string
     
     for chr_key, df in sam_df_dict.items():
-        sam_df_dict[chr_key][['S_AS', 'read_seq', 'map_read_seq', 'chr_pos', 'gene_string']] =\
-            pd.DataFrame(df.apply(lambda x: S_AS_flag_rework(x['S_AS'],
+        sam_df_dict[chr_key][['strand', 'read_seq', 'map_read_seq', 'chr_pos', 'gene_string']] = \
+            pd.DataFrame(df.apply(lambda x: S_AS_flag_rework(x['strand'],
                                                              x['chr_pos'],
                                                              x['read_seq'],
                                                              x['map_read_seq'],
                                                              x['N'],
                                                              x['gene_string']),
                                   axis=1).tolist(), index=df.index)
-        print(chr_key, sam_df_dict[chr_key].head(5), sep='\n')
     return sam_df_dict
 
 
-def main(sam_file, annot_file, print_rows=None, **kwargs):
+def outputToCSV(jam_file ):
+    pass
+
+
+def main(sam_file, annot_file, output_prefix, print_rows=None, concatenate_output=False, **kwargs):
     sam_df_dict = parseSamToDF(sam_file, **kwargs)
     annot_df_dict = parseAllChrsToDF(annot_file, **kwargs)
     unassigned_df = pd.DataFrame()
@@ -188,6 +208,37 @@ def main(sam_file, annot_file, print_rows=None, **kwargs):
     sam_df_dict = recoverMappedPortion_dfWrapper(sam_df_dict, print_rows=print_rows, **kwargs)
     
     jam_df_dict = fixSenseNonsense(sam_df_dict, print_rows=print_rows, **kwargs)
+    
+    if not concatenate_output:
+        for chr_key, df in jam_df_dict.items():
+            jam_df_dict[chr_key].sort_values(by=['chr', 'chr_pos', 'read_id'])
+            jam_df_dict[chr_key].to_csv(f"{output_prefix}.chr{chr_key}.jam",
+                                        index=False, sep='\t',
+                                        columns=['read_id',
+                                                 'chr',
+                                                 'chr_pos',
+                                                 'mapq',
+                                                 'cigar',
+                                                 'gene',
+                                                 'gene_string',
+                                                 'read_seq',
+                                                 'map_read_seq',
+                                                 'NH'])
+    else:
+        jam_all_chrs = pd.concat(jam_df_dict.values(), ignore_index=True)
+        jam_all_chrs.sort_values(by=['chr', 'chr_pos', 'read_id'])
+        jam_all_chrs.to_csv(f"{output_prefix}.allChrs.jam",
+                            index=False, sep='\t',
+                            columns=['read_id',
+                                     'chr',
+                                     'chr_pos',
+                                     'mapq',
+                                     'cigar',
+                                     'gene',
+                                     'gene_string',
+                                     'read_seq',
+                                     'map_read_seq',
+                                     'NH'])
     
     print("\n\nDone?")
 

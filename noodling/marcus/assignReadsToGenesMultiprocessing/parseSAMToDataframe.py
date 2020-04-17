@@ -101,7 +101,7 @@ def parseSamToDataframe(filename, headerlines, num_lines=None, print_rows=None, 
     
     # Rename columns
     SAM_df = SAM_df.rename(columns={0: 'read_id',
-                                    1: 'S_AS',
+                                    1: 'strand',
                                     2: 'chr',
                                     3: 'chr_pos',
                                     4: 'mapq',
