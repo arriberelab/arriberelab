@@ -220,10 +220,10 @@ def main(sam_file, annot_file, output_prefix, print_rows=None, concatenate_outpu
                                                  'strand',
                                                  'mapq',
                                                  'cigar',
-                                                 'gene',
-                                                 'gene_string',
                                                  'map_read_seq',
-                                                 'NH', 'HI'])
+                                                 'NH', 'HI',
+                                                 'gene',
+                                                 'gene_string'])
     else:
         jam_all_chrs = pd.concat(jam_df_dict.values(), ignore_index=True)
         jam_all_chrs.sort_values(by=['read_id', 'chr', 'chr_pos'])
@@ -235,10 +235,10 @@ def main(sam_file, annot_file, output_prefix, print_rows=None, concatenate_outpu
                                      'strand',
                                      'mapq',
                                      'cigar',
-                                     'gene',
-                                     'gene_string',
                                      'map_read_seq',
-                                     'NH'])
+                                     'NH', 'HI',
+                                     'gene',
+                                     'gene_string'])
     
     print("\n\nDone?")
 
