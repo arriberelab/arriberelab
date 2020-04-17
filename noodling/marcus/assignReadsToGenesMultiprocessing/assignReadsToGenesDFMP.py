@@ -12,15 +12,12 @@ import multiprocessing
 import re
 import parseAllChrstxtToDataframe
 import parseSAMToDataframe
+import numpy as np
 import pandas as pd
 # Pandas default would cut off any columns beyond 5 so:
 pd.set_option('display.max_rows', 50)
 pd.set_option('display.max_columns', 20)
 pd.set_option('display.width', 300)
-
-# TODO: name read.SAM df columns for ease of writing code, as well as reading code. Currently column indexes just make
-#       the applied df functions harder to follow. How far down this path do we want to go? Name all columns? Relevant
-#       ones only? Just add comments to clarify?
 
 
 def parseArgs():
@@ -98,32 +95,103 @@ def recoverMappedPortion(Cigar, Read):
     return mappedRead, N
 
 
-def assignReadsToGenes(sam_file, annot_file, **kwargs):
+def recoverMappedPortion_dfWrapper(sam_df_dict, print_rows=None, **kwargs):
+    for chr_key, df in sam_df_dict.items():
+        try:
+            sam_df_dict[chr_key][['map_read_seq', 'N']] = pd.DataFrame(df.apply(lambda x:
+                                                               recoverMappedPortion(x['cigar'], x['read_seq']),
+                                                                                axis=1).tolist(), index=df.index)
+            print(f'Recovery of mapped portion complete for Chr-{chr_key:->4}, read count={len(sam_df_dict[chr_key].index)}')
+            if print_rows:
+                print(sam_df_dict[chr_key][['read_id', 'chr', 'chr_pos', 'cigar', 'read_seq', 'map_read_seq']].head(print_rows))
+        except AttributeError:
+            print(f'No reads for mapped portion recovery in Chr-{chr_key:->4}, read count={len(sam_df_dict[chr_key].index)}')
+    return sam_df_dict
+
+
+def assignReadsToGenes(sam_df_dict, annot_df_dict, print_rows=None, **kwargs):
+    # Going for the df.merge() function for mapping annotations onto reads
+    print(f"\nAnnotation alignment for {len(sam_df_dict.keys())} chromosomes:")
+    print(sam_df_dict.keys())
+    for chr_key, df in sam_df_dict.items():
+        try:
+            print(f"\tPreforming alignment for Chr-{chr_key:->4} containing {len(df.index)} reads")
+            sam_df_dict[chr_key] = df.merge(annot_df_dict[chr_key], on=['chr_pos', 'chr'])
+            print(f"\t\tSuccess, {len(sam_df_dict[chr_key][sam_df_dict[chr_key]['gene'] != np.nan].index):>7} "
+                  f"reads assigned to genes in Chr-{chr_key:->4}\n")
+            if print_rows:
+                print(sam_df_dict[chr_key][['read_id',
+                                            'chr',
+                                            'chr_pos',
+                                            'cigar',
+                                            'read_seq',
+                                            'gene',
+                                            'gene_string']].head(print_rows))
+            
+            # TODO: some functionality to drop full df if nothing is assigned at all
+        except KeyError as key:
+            if str(key).strip("'") == chr_key:
+                print(f"\t\tChr-{chr_key:->4} not found in annotations! -> Adding empty columns to compensate\n")
+                sam_df_dict[chr_key]['gene'], sam_df_dict[chr_key]['gene_string'] = np.nan, np.nan
+            else:
+                print(f"\tOther KeyError pertaining to:", str(key), chr_key)
+    return sam_df_dict
+
+
+def fixSenseNonsense(sam_df_dict, print_rows=None, **kwargs):
+    def revCompl(seq):
+        """Will return the reverse complement of a sequence"""
+        a = {'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G',
+             'a': 't', 't': 'a', 'g': 'c', 'c': 'g',
+             'N': 'N', 'n': 'n', '.': '.', '-': '-'}
+        return ''.join([a[seq[-i]] for i in range(1, len(seq) + 1)])
+    
+    def S_AS_flag_rework(S_AS, chr_pos, read_seq, map_read_seq, N, gene_string):
+        if S_AS & 16 != 0:  # check strand
+            chr_pos += len(map_read_seq) + N - 1
+            read_strand = '-'
+            map_read_seq = revCompl(map_read_seq)
+            read_seq = revCompl(read_seq)
+        else:
+            read_strand = '+'
+        # THIS DOESN'T WORK >>>>
+        if str(gene_string)[-1] == read_strand:
+            gene_string = str(gene_string)[:-1] + 'S'
+        else:
+            gene_string = str(gene_string)[:-1] + 'AS'
+        # <<<< END OF NOT WORKING STUFF
+        return read_strand, read_seq, map_read_seq, chr_pos, gene_string
+    
+    for chr_key, df in sam_df_dict.items():
+        sam_df_dict[chr_key][['S_AS', 'read_seq', 'map_read_seq', 'chr_pos', 'gene_string']] =\
+            pd.DataFrame(df.apply(lambda x: S_AS_flag_rework(x['S_AS'],
+                                                             x['chr_pos'],
+                                                             x['read_seq'],
+                                                             x['map_read_seq'],
+                                                             x['N'],
+                                                             x['gene_string']),
+                                  axis=1).tolist(), index=df.index)
+        print(chr_key, sam_df_dict[chr_key].head(5), sep='\n')
+    return sam_df_dict
+
+
+def main(sam_file, annot_file, print_rows=None, **kwargs):
     sam_df_dict = parseSamToDF(sam_file, **kwargs)
     annot_df_dict = parseAllChrsToDF(annot_file, **kwargs)
-    print()
-    # Lets try to apply the recoverMappedPortion() to dataframe to see how it does
-    # >>>> Print functions currently for debugging >>>>
-    for chr, df in sam_df_dict.items():
-        # print(f"Chr-{chr} recovery started:\nnon-MISN code seen in CIGAR reads:", end='')
-        df[[15, 16]] = pd.DataFrame(df.apply(lambda x: recoverMappedPortion(x[5], x[9]),
-                                             axis=1).tolist(), index=df.index)
-        print(f'Recovery of mapped portion complete for chromosome-{chr:<4}')
-        #print('', f'Chromosome-{chr}', df[[9, 15]], sep='\n')
-    # <<<< Print functions currently for debugging <<<<
+    unassigned_df = pd.DataFrame()
     
-    # Going for the df.merge() function!
-    for chr, df in sam_df_dict.items():
-        try:
-            print(f"\nPreforming alignment for Chr-{chr} containing {df.shape[0]} reads")
-            df = df.merge(annot_df_dict[chr], left_on=3, right_on='chr_pos')
-            print(df[[0, 2, 'chr', 3, 'chr_pos', 5, 9, 'genes']].head(5))
-        except KeyError:
-            print(f"Chr-{chr} not found in annotations!")
+    # Going for the df.merge() function for mapping annotations onto reads
+    sam_df_dict = assignReadsToGenes(sam_df_dict, annot_df_dict, print_rows=print_rows, **kwargs)
+    
+    # Lets try to apply the recoverMappedPortion() to dataframe to see how it does
+    #  Currently doing this after dropping unassigned reads as this is a more time intensive step.
+    sam_df_dict = recoverMappedPortion_dfWrapper(sam_df_dict, print_rows=print_rows, **kwargs)
+    
+    jam_df_dict = fixSenseNonsense(sam_df_dict, print_rows=print_rows, **kwargs)
     
     print("\n\nDone?")
 
 
 if __name__ == '__main__':
     arg_dict = parseArgs()
-    assignReadsToGenes(**arg_dict)
+    main(**arg_dict)

@@ -99,7 +99,24 @@ def parseSamToDataframe(filename, headerlines, num_lines=None, print_rows=None, 
     # This sort_values with the ignore_index option on will currently reset the indexes
     # to the new sorted order, I don't know if this is good or bad...
     
-    print(f'Finished parsing and sorting of file at: {filename}\n')
+    # Rename columns
+    SAM_df = SAM_df.rename(columns={0: 'read_id',
+                                    1: 'S_AS',
+                                    2: 'chr',
+                                    3: 'chr_pos',
+                                    4: 'mapq',
+                                    5: 'cigar',
+                                    6: 'rnext',
+                                    7: 'pnext',
+                                    8: 'tlen',
+                                    9: 'read_seq',
+                                    10: 'phred_qual',
+                                    11: 'NH',
+                                    12: 'HI',
+                                    13: 'AS',
+                                    14: 'nM'})
+    
+    print(f'Finished parsing and sorting of file at: {filename}')
     
     if print_rows:
         print(f"\nFirst {print_rows} rows of dataframe:\n", SAM_df.head(print_rows), "\n")
@@ -110,11 +127,11 @@ def parseSamToDataframe(filename, headerlines, num_lines=None, print_rows=None, 
     
     # Attempting to split chromosomes
     if split_chrs:
-        SAM_df_dict = dict(tuple(SAM_df.groupby(2)))
+        SAM_df_dict = dict(tuple(SAM_df.groupby('chr')))
         if print_rows:
             for chr, df in SAM_df_dict.items():
                 print(f"\nFirst {print_rows} rows of Chromosome-{chr}:\n", df.head(print_rows))
-        print(f"\nSplit dataframe into {len(SAM_df_dict.keys())} separate df's:\n{SAM_df_dict.keys()}")
+        print(f"Split -reads.SAM- dataframe into {len(SAM_df_dict.keys())} separate df's:\n{SAM_df_dict.keys()}")
         return SAM_df_dict
     else:
         return SAM_df
