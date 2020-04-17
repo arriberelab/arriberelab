@@ -128,7 +128,7 @@ def assignReadsToGenes(sam_df_dict, annot_df_dict, print_rows=None, **kwargs):
     for chr_key, df in sam_df_dict.items():
         try:
             # ONLY KEEP UNIQUELY MAPPING READS: >>
-            sam_df_dict[chr_key] = sam_df_dict[chr_key][sam_df_dict[chr_key]['NH'].str.endswith('1')]
+            df = sam_df_dict[chr_key][sam_df_dict[chr_key]['NH'].str.endswith('1')]
             # << ONLY KEEP UNIQUELY MAPPING READS
             
             print(f"\tPreforming alignment for Chr-{chr_key:->4} containing {len(df.index)} reads")
@@ -217,6 +217,7 @@ def main(sam_file, annot_file, output_prefix, print_rows=None, concatenate_outpu
                                         columns=['read_id',
                                                  'chr',
                                                  'chr_pos',
+                                                 'strand',
                                                  'mapq',
                                                  'cigar',
                                                  'gene',
@@ -232,6 +233,7 @@ def main(sam_file, annot_file, output_prefix, print_rows=None, concatenate_outpu
                             columns=['read_id',
                                      'chr',
                                      'chr_pos',
+                                     'strand',
                                      'mapq',
                                      'cigar',
                                      'gene',
