@@ -19,10 +19,6 @@ pd.set_option('display.max_rows', 50)
 pd.set_option('display.max_columns', 20)
 pd.set_option('display.width', 300)
 
-# TODO: name read.SAM df columns for ease of writing code, as well as reading code. Currently column indexes just make
-#       the applied df functions harder to follow. How far down this path do we want to go? Name all columns? Relevant
-#       ones only? Just add comments to clarify?
-
 
 def parseArgs():
     parser = argparse.ArgumentParser(description="Take reads.SAM file + *.allChrs.txt"
@@ -100,15 +96,16 @@ def recoverMappedPortion(Cigar, Read):
 
 
 def recoverMappedPortion_dfWrapper(sam_df_dict, print_rows=False, **kwargs):
-    for chr, df in sam_df_dict.items():
+    for chr_key, df in sam_df_dict.items():
         try:
-            sam_df_dict[chr][[15, 16]] = pd.DataFrame(df.apply(lambda x: recoverMappedPortion(x[5], x[9]),
-                                                               axis=1).tolist(), index=df.index)
-            print(f'Recovery of mapped portion complete for Chr-{chr:->4}, read count={len(sam_df_dict[chr].index)}')
+            sam_df_dict[chr_key][['map_read_seq', 'N']] = pd.DataFrame(df.apply(lambda x:
+                                                               recoverMappedPortion(x['cigar'], x['read_seq']),
+                                                                                axis=1).tolist(), index=df.index)
+            print(f'Recovery of mapped portion complete for Chr-{chr_key:->4}, read count={len(sam_df_dict[chr_key].index)}')
             if print_rows:
-                print(sam_df_dict[chr].head(print_rows))
+                print(sam_df_dict[chr_key][['read_id', 'chr', 'chr_pos', 'cigar', 'read_seq', 'map_read_seq']].head(print_rows))
         except AttributeError:
-            print(f'No reads for mapped portion recovery in Chr-{chr:->4}, read count={len(sam_df_dict[chr].index)}')
+            print(f'No reads for mapped portion recovery in Chr-{chr_key:->4}, read count={len(sam_df_dict[chr_key].index)}')
     return sam_df_dict
 
 
@@ -119,20 +116,21 @@ def assignReadsToGenes(sam_file, annot_file, print_rows=None, **kwargs):
     
     # Going for the df.merge() function for mapping annotations onto reads
     print(f"\nAnnotation alignment for {len(sam_df_dict.keys())} chromosomes:")
-    for chr, df in sam_df_dict.items():
+    print(sam_df_dict.keys())
+    for chr_key, df in sam_df_dict.items():
         try:
-            print(f"\tPreforming alignment for Chr-{chr:->4} containing {len(df.index)} reads")
-            sam_df_dict[chr] = df.merge(annot_df_dict[chr], left_on=3, right_on='chr_pos')
-            print(f"\t\tSuccess, {len(sam_df_dict[chr][sam_df_dict[chr]['gene'] != np.nan].index):>7} "
-                  f"reads assigned to genes in Chr-{chr:->4}\n")
+            print(f"\tPreforming alignment for Chr-{chr_key:->4} containing {len(df.index)} reads")
+            sam_df_dict[chr_key] = df.merge(annot_df_dict[chr_key], on=['chr_pos', 'chr'])
+            print(f"\t\tSuccess, {len(sam_df_dict[chr_key][sam_df_dict[chr_key]['gene'] != np.nan].index):>7} "
+                  f"reads assigned to genes in Chr-{chr_key:->4}\n")
             if print_rows:
-                print(sam_df_dict[chr][[0, 2, 'chr', 3, 'chr_pos', 5, 9, 'gene', 'gene_string']].head(print_rows))
+                print(sam_df_dict[chr_key][['read_id', 'chr', 'chr_pos', 'cigar', 'read_seq']].head(print_rows))
         except KeyError as key:
-            if str(key).strip("'") == chr:
-                print(f"\t\tChr-{chr:->4} not found in annotations! -> Adding empty columns to compensate\n")
-                sam_df_dict[chr]['gene'], sam_df_dict[chr]['gene_string'] = np.nan, np.nan
+            if str(key).strip("'") == chr_key:
+                print(f"\t\tChr-{chr_key:->4} not found in annotations! -> Adding empty columns to compensate\n")
+                sam_df_dict[chr_key]['gene'], sam_df_dict[chr_key]['gene_string'] = np.nan, np.nan
             else:
-                print(f"\tOther KeyError pertaining to:", str(key), chr)
+                print(f"\tOther KeyError pertaining to:", str(key), chr_key)
 
     # Lets try to apply the recoverMappedPortion() to dataframe to see how it does
     #  Currently doing this after dropping unassigned reads as this is a more time intensive step.
