@@ -63,18 +63,9 @@ def parseSamToDataframe(filename, headerlines, num_lines=None, print_rows=None, 
     else:
         print(f"\nParsing identified file at: {filename}")
     
-    # Assign known order of datatypes for .SAM file, this helps speed up parsing
+    # Assign known order of datatypes for .SAM file, this helps to speed up parsing
     o = 'object'
     i = 'int64'
-    # # I can't find a clean way to do this quickly but not explicitly
-    # yeast_chr_datatype = pd.api.types.CategoricalDtype(categories=['I', 'II', 'III', 'IV', 'V',
-    #                                                                'VI', 'VII', 'VIII', 'IX', 'X',
-    #                                                                'XI', 'XII', 'XIII', 'XIV', 'XV',
-    #                                                                'XVI'], ordered=True)
-    # chr_cat = yeast_chr_datatype
-    
-    # NEVERMIND: This works very very well and is not organism specific,
-    #   but it sadly lacks the ability to force an order:
     chr_cat = 'category'
     sam_dtypes_list = [o, i, chr_cat, i, i, o, o, i, i, o, o, o, o, o, o]
     sam_dtypes_dict = {i: sam_dtypes_list[i] for i in range(15)}
@@ -140,3 +131,4 @@ def parseSamToDataframe(filename, headerlines, num_lines=None, print_rows=None, 
 if __name__ == '__main__':
     arguments = parseArgs()
     df = parseSamToDataframe(**arguments)
+    print(df.sort_values(by='read_id', kind='mergesort').head(30))
