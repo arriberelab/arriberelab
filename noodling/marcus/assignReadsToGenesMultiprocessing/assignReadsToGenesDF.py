@@ -4,6 +4,9 @@ Marcus Viscardi     April 14, 2020
 
 Basically just rewriting Josh's assignReadsToGenes4.py, with the change of
     utilizing pandas dataframes in an effort to speed up read assignment.
+Currently full script is self contained. Pieces like the parsers and the
+    revCompliment functions were written into here to make it a little more
+    portable.
 """
 
 from os import path
