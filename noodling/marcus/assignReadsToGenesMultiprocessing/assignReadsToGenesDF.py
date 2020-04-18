@@ -24,7 +24,7 @@ set_option('display.width', 300)
 
 # Some type hints help IDEs like PyCharm read the code a bit better:
 CHR_DF_DICT = Dict[str, DataFrame]
-ARG_DICT = Dict[str, Any]
+ARG_DICT = Dict[str, (str, bool, int)]
 
 
 def parseArgs() -> ARG_DICT:
