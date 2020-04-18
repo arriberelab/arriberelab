@@ -13,7 +13,7 @@ from os import path
 from sys import exit
 from argparse import ArgumentParser
 from re import findall
-from typing import Dict
+from typing import Dict, Any
 
 from numpy import nan as numpy_nan
 from pandas import set_option, read_csv, DataFrame, concat
@@ -24,7 +24,7 @@ set_option('display.width', 300)
 
 # Some type hints help IDEs like PyCharm read the code a bit better:
 CHR_DF_DICT = Dict[str, DataFrame]
-ARG_DICT = Dict[str, str]
+ARG_DICT = Dict[str, Any]
 
 
 def parseArgs() -> ARG_DICT:
@@ -38,13 +38,14 @@ def parseArgs() -> ARG_DICT:
     Output -> A dictionary of the argument key (ie. 'sam_file') and the passed value (ie.
         '/my/path/to/a/sam/file.sam'). Currently this system is set up to not pass any
         values which are not assigned by the user in the CLI call. This provides the advantage
-        that another dictionry  of key:value defaults can be used to update the argument
+        that another dictionary  of key:value defaults can be used to update the argument
         dictionary with any defaults that the script-writers would want.
     """
     
     # Start a argument parser instance which will accept CLI input
     parser = ArgumentParser(description="Take reads.SAM file + *.allChrs.txt"
-                                                 "file and assign genes to the reads")
+                                        "file and assign genes to the reads,"
+                                        "output *.jam file")
     # Required arguments:
     parser.add_argument('sam_file', metavar='sam_file',
                         type=str, help="Path to .sam file")
