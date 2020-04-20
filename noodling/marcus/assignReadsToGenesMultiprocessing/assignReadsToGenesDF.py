@@ -450,8 +450,8 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
     unassigned_df = DataFrame()
 
     # Going for the df.merge() function for mapping annotations onto reads
-    annotated_sam_df_dict = assignReadsToGenes(sam_df_dict, annot_df_dict,
-                                               print_rows=print_rows, keep_non_unique=keep_non_unique, **kwargs)
+    annotated_sam_df_dict = assignReadsToGenes(sam_df_dict, annot_df_dict, print_rows=print_rows,
+                                               keep_non_unique=keep_non_unique, **kwargs)
 
     # Apply the recoverMappedPortion() to dataframe to see how it does
     #  Currently doing this after dropping unassigned reads as this is a more time intensive step.
