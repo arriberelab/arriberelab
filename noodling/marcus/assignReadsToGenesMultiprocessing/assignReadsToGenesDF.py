@@ -361,6 +361,9 @@ def assignReadsToGenes(sam_df_dict: CHR_DF_DICT, annot_df_dict: CHR_DF_DICT,
             
             print(f"\tPreforming alignment for Chr-{chr_key:->4} containing {len(df.index)} reads")
             # Using the df.merge() function for mapping annotations onto reads
+            # TODO: In the future we could utilize the parameter: "on='left'" in the merge call. This
+            #       will provide the advantage(?) of allowing unmapped reads through, meaning we can
+            #       pass these into analysis or QC scripts as needed.
             sam_df_dict[chr_key] = df.merge(annot_df_dict[chr_key], on=['chr_pos', 'chr'])
             print(f"\t\tSuccess, {len(sam_df_dict[chr_key][sam_df_dict[chr_key]['gene'] != numpy_nan].index):>7} "
                   f"reads assigned to genes in Chr-{chr_key:->4}\n")
