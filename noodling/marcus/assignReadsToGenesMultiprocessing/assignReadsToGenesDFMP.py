@@ -1,6 +1,6 @@
 """
-assignReadsToGenesDFMP.py
-Marcus Viscardi     Adapted from assignReadsToGenesDF.py on April 18, 2020
+assignReadsToGenesDF.py
+Marcus Viscardi     April 14, 2020
 
 Basically just rewriting Josh's assignReadsToGenes4.py, with the change of
     utilizing pandas dataframes in an effort to speed up read assignment.
@@ -18,7 +18,7 @@ from argparse import ArgumentParser
 from re import findall
 from typing import Dict, Any
 
-import multiprocessing
+from timeit import default_timer
 from numpy import nan as numpy_nan
 from pandas import set_option, read_csv, DataFrame, concat
 # Pandas default would cut off any columns beyond 5 so:
@@ -280,89 +280,66 @@ def parseAllChrsToDF(annot_file: str,
         return annot_df
 
 
-def recoverMappedPortion_perRead(Cigar, Read):
-    # April 15, 2020: Stolen verbatim (+ my comments) from assignReadsToGenes4.py
-
-    """Given a Cigar string and a Read, will return the sequence of the read that mapped to the genome."""
-    # Edit Oct 10, 2013 to include skipped portions of reference sequence (introns)
-
-    # first process the CIGAR string
-    cigarSplit = findall('(\d+|[a-zA-Z]+)', Cigar)  # RE func: matches sets of digits or letters
-    cigarSplit = [[int(cigarSplit[ii]), cigarSplit[ii + 1]] for ii in range(0, len(cigarSplit), 2)]
-
-    # Then use that information to parse out nts of the read sequence
-    mappedRead = ''
-    ii = 0
-    N = 0
-    for entry in cigarSplit:
-        if entry[1] in ['M',
-                        'I']:  # then it's either aligned to the genomic sequence or has an insert relative to it
-            mappedRead += Read[ii:ii + entry[0]]
-            ii += entry[0]
-        elif entry[1] == 'S':
-            ii += entry[0]
-        elif entry[1] == 'N':
-            N += entry[0]
-            # N is used for "skipped region from the reference". I keep track of Ns and
-            #  return them for calculation of position on the - strand
-        # else:
-        #     print(entry[1], end='')
-    return mappedRead, N
-
-
-def recoverMappedPortion_perChr(chr_key, df_dict_in, df_dict_out, print_rows):
-    df_in = df_dict_in[chr_key]
-    print(f"Process {getpid():>5} working on {chr_key}")
-    try:
-        df_out = df_in.copy()
-        # Apply the recover mapped portion function to each read
-        df_out[['map_read_seq', 'N']] = \
-            DataFrame(df_in.apply(lambda x: recoverMappedPortion_perRead(x['cigar'], x['read_seq']),
-                                  axis=1).tolist(), index=df_in.index)
-
-        print(f'Recovery of mapped portion complete for Chr-{chr_key:->4}, '
-              f'read count={len(df_out.index)}/{len(df_in.index)}')
-        if print_rows:
-            print(df_out[chr_key][['read_id',
-                                   'chr',
-                                   'chr_pos',
-                                   'cigar',
-                                   'read_seq',
-                                   'map_read_seq']].head(print_rows))
-    # Catch error of empty dataframe for a chromosome
-    except AttributeError:
-        print(f'No reads for mapped portion recovery in Chr-{chr_key:->4}, '
-              f'read count={len(df_in.index)}')
-        df_out = df_in
-    # This is where we will write to the new dictionary
-    df_dict_out[chr_key] = df_out
-
-
-def recoverMappedPortion_dfWrapper_MP(sam_df_dict: CHR_DF_DICT, print_rows: int = None,
-                                      **kwargs) -> CHR_DF_DICT:
+def recoverMappedPortion_dfWrapper(sam_df_dict: CHR_DF_DICT, print_rows: int = None,
+                                   **kwargs) -> CHR_DF_DICT:
     """
     recoverMappedPortion_dfWrapper
     
     Function to accept the sam dataframe dictionary, recover the mapped portion of the
         original read for each read in each chromosome's dataframe
     """
-    mappedPortionManager = multiprocessing.Manager()
-    shared_input_dict = mappedPortionManager.dict(sam_df_dict)
-    shared_output_dict = mappedPortionManager.dict()
-    process_list = []
-    # Loop through each chromosome
-    for chr_key, chr_df in shared_input_dict.items():
-        process = multiprocessing.Process(target=recoverMappedPortion_perChr, args=[chr_key,
-                                                                                    shared_input_dict,
-                                                                                    shared_output_dict,
-                                                                                    print_rows])
-        process_list.append(process)
+    
+    def recoverMappedPortion_perRead(Cigar, Read):
+        # April 15, 2020: Stolen verbatim (+ my comments) from assignReadsToGenes4.py
 
-    for pro in process_list:
-        pro.start()
-    for pro in process_list:
-        pro.join()
-    return shared_output_dict
+        """Given a Cigar string and a Read, will return the sequence of the read that mapped to the genome."""
+        # Edit Oct 10, 2013 to include skipped portions of reference sequence (introns)
+
+        # first process the CIGAR string
+        cigarSplit = findall('(\d+|[a-zA-Z]+)', Cigar)  # RE func: matches sets of digits or letters
+        cigarSplit = [[int(cigarSplit[ii]), cigarSplit[ii + 1]] for ii in range(0, len(cigarSplit), 2)]
+
+        # Then use that information to parse out nts of the read sequence
+        mappedRead = ''
+        ii = 0
+        N = 0
+        for entry in cigarSplit:
+            if entry[1] in ['M',
+                            'I']:  # then it's either aligned to the genomic sequence or has an insert relative to it
+                mappedRead += Read[ii:ii + entry[0]]
+                ii += entry[0]
+            elif entry[1] == 'S':
+                ii += entry[0]
+            elif entry[1] == 'N':
+                N += entry[0]
+                # N is used for "skipped region from the reference". I keep track of Ns and
+                #  return them for calculation of position on the - strand
+            # else:
+            #     print(entry[1], end='')
+        return mappedRead, N
+    
+    # Loop through each chromosome
+    for chr_key, df in sam_df_dict.items():
+        try:
+            # Apply the recover mapped portion function to each read
+            sam_df_dict[chr_key][['map_read_seq', 'N']] = \
+                DataFrame(df.apply(lambda x: recoverMappedPortion_perRead(x['cigar'], x['read_seq']),
+                                   axis=1).tolist(), index=df.index)
+            
+            print(f'Recovery of mapped portion complete for Chr-{chr_key:->4}, '
+                  f'read count={len(sam_df_dict[chr_key].index)}')
+            if print_rows:
+                print(sam_df_dict[chr_key][['read_id',
+                                            'chr',
+                                            'chr_pos',
+                                            'cigar',
+                                            'read_seq',
+                                            'map_read_seq']].head(print_rows))
+        # Catch error of empty dataframe for a chromosome
+        except AttributeError:
+            print(f'No reads for mapped portion recovery in Chr-{chr_key:->4}, '
+                  f'read count={len(sam_df_dict[chr_key].index)}')
+    return sam_df_dict
 
 
 def assignReadsToGenes(sam_df_dict: CHR_DF_DICT, annot_df_dict: CHR_DF_DICT,
@@ -388,6 +365,9 @@ def assignReadsToGenes(sam_df_dict: CHR_DF_DICT, annot_df_dict: CHR_DF_DICT,
             
             print(f"\tPreforming alignment for Chr-{chr_key:->4} containing {len(df.index)} reads")
             # Using the df.merge() function for mapping annotations onto reads
+            # TODO: In the future we could utilize the parameter: "on='left'" in the merge call. This
+            #       will provide the advantage(?) of allowing unmapped reads through, meaning we can
+            #       pass these into analysis or QC scripts as needed.
             sam_df_dict[chr_key] = df.merge(annot_df_dict[chr_key], on=['chr_pos', 'chr'])
             print(f"\t\tSuccess, {len(sam_df_dict[chr_key][sam_df_dict[chr_key]['gene'] != numpy_nan].index):>7} "
                   f"reads assigned to genes in Chr-{chr_key:->4}\n")
@@ -465,6 +445,7 @@ def outputToCSV(jam_file):
 def main(sam_file: str, annot_file: str, output_prefix: str,
          print_rows: int = None, concatenate_output: bool = False,
          keep_non_unique: bool = False, **kwargs) -> None:
+    start_time = default_timer()
     sam_df_dict = parseSamToDF(sam_file, **kwargs)
     annot_df_dict = parseAllChrsToDF(annot_file, **kwargs)
     unassigned_df = DataFrame()
@@ -510,8 +491,8 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
                                      'NH', 'HI',
                                      'gene',
                                      'gene_string'])
-    
-    print("\n\nDone?!")
+    end_time = default_timer()
+    print(f"\n\nDone?! in {end_time - start_time:<6.2f}")
 
 
 if __name__ == '__main__':
