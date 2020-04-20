@@ -1,5 +1,5 @@
 """
-assignReadsToGenesDF.py
+assignReadsToGenesDFMP.py
 Marcus Viscardi     April 14, 2020
 
 Basically just rewriting Josh's assignReadsToGenes4.py, with the change of
