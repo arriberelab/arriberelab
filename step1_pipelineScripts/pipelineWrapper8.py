@@ -239,6 +239,19 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     #print('Quitting early!!!'), sys.exit()
     
     ############################################################################################################
+    """Create .bam and .bai files"""
+    ############################################################################################################
+    picardPath = '/home/annie/programs/picard.jar'
+    print('Making BAM file')
+    #converting to .bam file
+    os.system('samtools view -S -b %s.finalMapped.Aligned.out.sam > %s.finalMapped.Aligned.out.bam' % (outPrefix, outPrefix))
+    #sort
+    os.system('samtools sort %s.finalMapped.Aligned.out.bam -o %s.finalMapped.Aligned.out.sorted.bam' % (outPrefix, outPrefix))
+    #index .bam file
+    print('Indexing BAM file')
+    os.system('samtools index %s.finalMapped.Aligned.out.sorted.bam' % (outPrefix))
+    
+    ############################################################################################################
     """Creating infographic"""
     ############################################################################################################
     print('Making infographic')
