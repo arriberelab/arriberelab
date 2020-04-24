@@ -254,7 +254,7 @@ def parseArguments():
     """
     parser=argparse.ArgumentParser(description='Wrapper for handling libraries starting from fastq files.')
     parser.add_argument('fastqFile', help='Input reads in fastq format.')
-    parser.add_argument('settings', help='Line-delimited text file containing adaptorSeq, genomeDir, and genomeAnnots, 5\' UMI, and 3\' UMI.')
+    parser.add_argument('settings', help='Line-delimited text file with adaptorSeq, genomeDir, genomeAnnots, 5\' UMI, and 3\' UMI.')
     parser.add_argument('outPrefix', type=str, help='Prefix to name all output files.')
     parser.add_argument('--umi5', type=int, default=None, help='Number of nts to trim from the 5\' end of reads.')
     parser.add_argument('--umi3', type=int, default=None, help='Number of nts to trim from 3\' end of reads.')
