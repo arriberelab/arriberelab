@@ -24,7 +24,7 @@ def parseInFile(inFile,FC):
       for line in f:
          line=line.strip().split(',')
          foldChange=float(line[5])
-         if foldChange<FC:
+         if foldChange<1./FC:
             aa[line[1].strip('"')]=float(line[-2])
          elif foldChange>FC:
             bb[line[1].strip('"')]=float(line[-2])
