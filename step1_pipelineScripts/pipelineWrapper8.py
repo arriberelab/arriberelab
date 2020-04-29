@@ -14,7 +14,6 @@ Input:
         gneomeAnnots /path/to/genome/directory/annots.gtf
         umi5 length
         umi3 length
-        optString STARparameters
     outPrefix - prefix for all output files
 
 run as python3 pipelineWrapper8.py inputReads.fastq settings.txt [options] outPrefix
@@ -61,15 +60,14 @@ def parseSettings(settingsFile,adaptorSeq,minimumReadLength,\
         umi3=int(settingsDict['umi3'])
     ##
     return adaptorSeq,minimumReadLength,maximumReadLength,\
-        genomeDir,genomeAnnots,cores,misMatchMax,umi5,umi3,\
-        settingsDict['optString']
+        genomeDir,genomeAnnots,cores,misMatchMax,umi5,umi3
 
 def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     maximumReadLength,genomeDir,genomeAnnots,cores,misMatchMax,
     umi5,umi3):
     ##parse the settings file w/ override from the command line
     adaptorSeq,minimumReadLength,maximumReadLength,genomeDir,\
-        genomeAnnots,cores,misMatchMax,umi5,umi3,optString=\
+        genomeAnnots,cores,misMatchMax,umi5,umi3=\
         parseSettings(settings,adaptorSeq,minimumReadLength,\
         maximumReadLength,genomeDir,genomeAnnots,cores,\
         misMatchMax,umi5,umi3)
@@ -151,7 +149,7 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     
     ##uncomment to do filter round of mapping
     """
-    misMatchMax2=0
+    misMatchMax2=3
     genomeDir2 = #path to filter genome dir
     genomeAnnots2 = #path to filter genome annots
     
@@ -183,16 +181,14 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     ############################################################################################################
     print(f'Only running on {cores} cores.')
     print(f'{misMatchMax} mismatch max!')
-    """
+    
     #optString for normal pipeline:
-    optString= f'--outFilterScoreMin 14 ' \
-        f'--outFilterScoreMinOverLread 0.3 ' \
-        f'--outFilterMatchNmin 14 ' \
-        f'--outFilterMatchNminOverLread 0.3 ' \
+    optString= f'--outFilterScoreMinOverLread 1 ' \
+        f'--outFilterMatchNminOverLread 1 ' \
         f'--outReadsUnmapped Fastx ' \
         f'--outFilterMismatchNmax {misMatchMax} ' \
         f'--outSJfilterOverhangMin 6 6 6 6'
-    """
+    
     print(f'Length/Score parameters: {optString}')
     os.system(f'STAR {optString} '
               f'--alignIntronMax 1 '
