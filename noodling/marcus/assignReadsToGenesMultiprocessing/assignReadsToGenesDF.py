@@ -32,18 +32,18 @@ ARG_DICT = Dict[str, Any]
 def parseArgs() -> ARG_DICT:
     """
     parseArgs
-
+    
     A tool to parse  CLI (Command Line Interface) arguments. Major advantage is that this
         allows users to type -h or --help, which will show all of the required and possible
         arguments along with the help statements written below.
-
+    
     Output -> A dictionary of the argument key (ie. 'sam_file') and the passed value (ie.
         '/my/path/to/a/sam/file.sam'). Currently this system is set up to not pass any
         values which are not assigned by the user in the CLI call. This provides the advantage
         that another dictionary  of key:value defaults can be used to update the argument
         dictionary with any defaults that the script-writers would want.
     """
-
+    
     # Start a argument parser instance which will accept CLI input
     parser = ArgumentParser(description="Take reads.SAM file + *.allChrs.txt"
                                         "file and assign genes to the reads,"
@@ -70,13 +70,13 @@ def parseArgs() -> ARG_DICT:
                         help="Boolean flag to output a single file for all chromosomes")
     parser.add_argument('-u', '--keep_non_unique', action='store_true',
                         help="Boolean flag to allow non-unique reads through the assignment process")
-
+    
     # This creates a namespace object from the users CLI call
     args = parser.parse_args()
-
+    
     # Quickly convert Namespace object to dictionary
     arg_dict = {arg: vars(args)[arg] for arg in vars(args)}
-
+    
     # Print arguments, specifies arguments which will not be passed in the arg_dict
     print("\nGiven Arguments (ArgParse):")
     for key, arg in arg_dict.items():
@@ -85,10 +85,10 @@ def parseArgs() -> ARG_DICT:
         else:
             print(f"\t{key} = {arg}")
     print("\tDone.\n")
-
+    
     # Recreate dict without arguments that did not receive any input
     arg_dict = {k: v for k, v in arg_dict.items() if v is not None}
-
+    
     return arg_dict
 
 
@@ -98,7 +98,7 @@ def parseSamToDF(sam_file: str, headerlines: int = 20,
                  **kwargs) -> DataFrame or CHR_DF_DICT:
     """
     parseSamToDF
-
+    
     This function does a lot of the grunt work in parsing, organizing/sorting and
         splitting up the specified SAM file.
     TODO: Need to pass in the headerlines value somehow. It will differ across sam files!
@@ -109,14 +109,14 @@ def parseSamToDF(sam_file: str, headerlines: int = 20,
         exit()
     else:
         print(f"\nParsing identified file at: {sam_file}")
-
+    
     # Assign known order of datatypes for .SAM file, this helps to speed up parsing
     o = 'object'
     i = 'int64'
     chr_cat = 'category'
     sam_dtypes_list = [o, i, chr_cat, i, i, o, o, i, i, o, o, o, o, o, o]
     sam_dtypes_dict = {i: sam_dtypes_list[i] for i in range(15)}
-
+    
     # Parse sam file using pandas.read_csv function
     #   There is currently more work that can be front-loaded into this function call:
     #   - 'converters': The use of a the converters parameter could allow us to work with some of the
@@ -147,11 +147,11 @@ def parseSamToDF(sam_file: str, headerlines: int = 20,
                           names=range(15),
                           dtype=sam_dtypes_dict,
                           )
-
+    
     # This sort_values with the ignore_index option on will currently reset the
     # indexes to the new sorted order, I don't know if this is good or bad...
     SAM_df = SAM_df.sort_values(by=[2, 3], ignore_index=True)
-
+    
     # Rename columns, this can be the source of an error if a SAM file is not in
     #   the 15 column format - be wary!
     SAM_df = SAM_df.rename(columns={0: 'read_id',
@@ -169,14 +169,14 @@ def parseSamToDF(sam_file: str, headerlines: int = 20,
                                     12: 'HI',
                                     13: 'AS',
                                     14: 'nM'})
-
+    
     print(f'Finished parsing and sorting of file at: {sam_file}')
-
+    
     if print_rows:
         print(f"\nFirst {print_rows} rows of dataframe:\n", SAM_df.head(print_rows), "\n")
     if deep_memory:
         print(SAM_df.info(memory_usage='deep'))
-
+    
     # Attempting to split chromosomes
     if split_chrs:
         SAM_df_dict = dict(tuple(SAM_df.groupby('chr')))
@@ -195,18 +195,18 @@ def parseAllChrsToDF(annot_file: str,
                      **kwargs) -> DataFrame or CHR_DF_DICT:
     """
     parseAllChrsToDF
-
+    
     This function does a lot of the grunt work in parsing, organizing/sorting and
         splitting up the specified annotations file.
     """
-
+    
     # Quick check to ensure the passed file path exists
     if not path.isfile(annot_file):
         print(f"\nFile does not exist at: {annot_file}, Terminating Script\n")
         exit()
     else:
         print(f"\nParsing identified file at: {annot_file}")
-
+    
     # Parse annotations file using pandas.read_csv function
     #   There is currently more work that can be front-loaded into this function call:
     #   - 'converters': The use of a the converters parameter could allow us to work with some of the
@@ -230,11 +230,11 @@ def parseAllChrsToDF(annot_file: str,
                             delimiter='|',
                             names=['chr', 'gene_string'],
                             )
-
+    
     # Split the chr_index column into two
     annot_df[['chr', 'chr_pos']] = DataFrame(annot_df['chr'].str.split('_').values.tolist(),
                                              index=annot_df.index)
-
+    
     # Reorganize gene info for final .JAM file:
     #   This first step will currently trip up if an annotation file has multiple genes at a single index...
     #   Which will need to be handled when we get to that.
@@ -244,27 +244,27 @@ def parseAllChrsToDF(annot_file: str,
     annot_df[['gene', 'sense']] = DataFrame(annot_df['genes'].str.strip().str.split(':').values.tolist(),
                                             index=annot_df.index)
     annot_df['gene_string'] = annot_df['gene_string'] + ':' + annot_df['sense']
-
+    
     # Sort by Chromosome and index on chromosome
     annot_df = annot_df.sort_values(by=['chr', 'chr_pos'])
-
+    
     # Change data types:
     annot_df = annot_df.astype({'chr': 'category',
                                 'chr_pos': 'int64',
                                 'gene': 'object',
                                 'gene_string': 'object'})
-
+    
     # Quickly reorder columns... might be completely superficial
     annot_df = annot_df[['chr', 'chr_pos', 'gene', 'gene_string']]
-
+    
     print(f'Finished parsing and sorting of file at: {annot_file}')
-
+    
     if print_rows:
         print(f"\nFirst {print_rows} rows of dataframe:\n",
               annot_df.sort_values(by=['chr', 'chr_pos']).head(print_rows), '\n')
     if deep_memory:
         print(annot_df.info(memory_usage='deep'))
-
+    
     if split_chrs:
         annot_df_dict = dict(tuple(annot_df.groupby('chr')))
         # # Print for each chromosome if the user asked for print_rows
@@ -282,21 +282,21 @@ def recoverMappedPortion_dfWrapper(sam_df_dict: CHR_DF_DICT, print_rows: int = N
                                    **kwargs) -> CHR_DF_DICT:
     """
     recoverMappedPortion_dfWrapper
-
+    
     Function to accept the sam dataframe dictionary, recover the mapped portion of the
         original read for each read in each chromosome's dataframe
     """
-
+    
     def recoverMappedPortion_perRead(Cigar, Read):
         # April 15, 2020: Stolen verbatim (+ my comments) from assignReadsToGenes4.py
-
+        
         """Given a Cigar string and a Read, will return the sequence of the read that mapped to the genome."""
         # Edit Oct 10, 2013 to include skipped portions of reference sequence (introns)
-
+        
         # first process the CIGAR string
         cigarSplit = findall('(\d+|[a-zA-Z]+)', Cigar)  # RE func: matches sets of digits or letters
         cigarSplit = [[int(cigarSplit[ii]), cigarSplit[ii + 1]] for ii in range(0, len(cigarSplit), 2)]
-
+        
         # Then use that information to parse out nts of the read sequence
         mappedRead = ''
         ii = 0
@@ -315,7 +315,7 @@ def recoverMappedPortion_dfWrapper(sam_df_dict: CHR_DF_DICT, print_rows: int = N
             # else:
             #     print(entry[1], end='')
         return mappedRead, N
-
+    
     # Loop through each chromosome
     for chr_key, df in sam_df_dict.items():
         try:
@@ -323,7 +323,7 @@ def recoverMappedPortion_dfWrapper(sam_df_dict: CHR_DF_DICT, print_rows: int = N
             sam_df_dict[chr_key][['map_read_seq', 'N']] = \
                 DataFrame(df.apply(lambda x: recoverMappedPortion_perRead(x['cigar'], x['read_seq']),
                                    axis=1).tolist(), index=df.index)
-
+            
             print(f'Recovery of mapped portion complete for Chr-{chr_key:->4}, '
                   f'read count={len(sam_df_dict[chr_key].index)}')
             if print_rows:
@@ -345,14 +345,14 @@ def assignReadsToGenes(sam_df_dict: CHR_DF_DICT, annot_df_dict: CHR_DF_DICT,
                        **kwargs) -> CHR_DF_DICT:
     """
     assignReadsToGenes
-
+    
     This function utilizes the pandas.DataFrame.merge function which pulls together
         the reads dataframes and the annotations dataframes matching the rows based
         on the chromosome and the chromosome position. This is much faster than
         iterating through the reads dataframe because it is able to utilize some of
         the C backend of pandas (which was built with numpy).
     """
-
+    
     print(f"\nAnnotation alignment for {len(sam_df_dict.keys())} chromosomes:")
     for chr_key, df in sam_df_dict.items():
         try:
@@ -360,7 +360,7 @@ def assignReadsToGenes(sam_df_dict: CHR_DF_DICT, annot_df_dict: CHR_DF_DICT,
             if not keep_non_unique:
                 df = sam_df_dict[chr_key][sam_df_dict[chr_key]['NH'].str.endswith(':1')]
             # << ONLY KEEP UNIQUELY MAPPING READS
-
+            
             print(f"\tPreforming alignment for Chr-{chr_key:->4} containing {len(df.index)} reads")
             # Using the df.merge() function for mapping annotations onto reads
             # TODO: In the future we could utilize the parameter: "on='left'" in the merge call. This
@@ -377,7 +377,7 @@ def assignReadsToGenes(sam_df_dict: CHR_DF_DICT, annot_df_dict: CHR_DF_DICT,
                                             'read_seq',
                                             'gene',
                                             'gene_string']].head(print_rows))
-
+                
             # TODO: some functionality to drop full df if nothing is assigned at all, this is only an issue when
             #       trying to work with a small slice of a annotations file for testing
         except KeyError as key:
@@ -393,10 +393,10 @@ def fixSenseNonsense(sam_df_dict: CHR_DF_DICT,
                      **kwargs) -> CHR_DF_DICT:
     """
     fixSenseNonsense
-
+    
     Check for strand and sense/antisense, create rev-compliment as needed, and edits gene_string
     """
-
+    
     def revCompl(seq: str):
         """
         Stolen from assignReadsToGenes4.py
@@ -406,7 +406,7 @@ def fixSenseNonsense(sam_df_dict: CHR_DF_DICT,
              'a': 't', 't': 'a', 'g': 'c', 'c': 'g',
              'N': 'N', 'n': 'n', '.': '.', '-': '-'}
         return ''.join([a[seq[-i]] for i in range(1, len(seq) + 1)])
-
+    
     def S_AS_flag_rework(S_AS: int, chr_pos: int, read_seq: str,
                          map_read_seq: str, N: int, gene_string: str):
         """Stolen from assignReadsToGenes4.py"""
@@ -424,7 +424,7 @@ def fixSenseNonsense(sam_df_dict: CHR_DF_DICT,
             gene_string = str(gene_string)[:-1] + 'AS'
         # <<< This has some issues if reads without annotations get through
         return read_strand, read_seq, map_read_seq, chr_pos, gene_string
-
+    
     for chr_key, df in sam_df_dict.items():
         sam_df_dict[chr_key][['strand', 'read_seq', 'map_read_seq', 'chr_pos', 'gene_string']] = \
             DataFrame(df.apply(lambda x: S_AS_flag_rework(x['strand'],
@@ -437,7 +437,24 @@ def fixSenseNonsense(sam_df_dict: CHR_DF_DICT,
     return sam_df_dict
 
 
-def outputToCSV(jam_file):
+def hitIndexAndHitNumber(sam_df_dict: CHR_DF_DICT,
+                         **kwargs) -> CHR_DF_DICT:
+    # Define the internal function to be used per DF line:
+    def parseHIandNH_perRead(HI: str, NH: str):
+        # Pull out everything after the last ':'
+        hit_index = HI.split(':')[-1]
+        number_of_hits = NH.split(':')[-1]
+        # This is marginally faster than f-string concatenation
+        HINH = hit_index + ':' + number_of_hits
+        return HINH
+    # Apply it to each chr DF:
+    for chr_key, df in sam_df_dict.items():
+        sam_df_dict[chr_key]['HI:NH'] = DataFrame(df.apply(lambda x: parseHIandNH_perRead(x['HI'], x['NH']),
+                                                           axis=1).tolist(), index=df.index)
+    return sam_df_dict
+
+
+def outputToCSV(dataframe, outputprefix):
     pass
 
 
@@ -448,17 +465,22 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
     sam_df_dict = parseSamToDF(sam_file, **kwargs)
     annot_df_dict = parseAllChrsToDF(annot_file, **kwargs)
     unassigned_df = DataFrame()
-
+    end_of_imports = default_timer()
+    
+    # This is currently a little chaotic with all of the naming steps. The goal was for it to be more readable, but...
+    
     # Going for the df.merge() function for mapping annotations onto reads
     annotated_sam_df_dict = assignReadsToGenes(sam_df_dict, annot_df_dict, print_rows=print_rows,
                                                keep_non_unique=keep_non_unique, **kwargs)
-
+    end_of_assignment = default_timer()
     # Apply the recoverMappedPortion() to dataframe to see how it does
     #  Currently doing this after dropping unassigned reads as this is a more time intensive step.
     fixed_annotated_sam_df_dict = recoverMappedPortion_dfWrapper(annotated_sam_df_dict, print_rows=print_rows, **kwargs)
-
-    jam_df_dict = fixSenseNonsense(fixed_annotated_sam_df_dict, print_rows=print_rows, **kwargs)
-
+    
+    final_annotated_sam_df_dict = hitIndexAndHitNumber(fixed_annotated_sam_df_dict, **kwargs)
+    
+    jam_df_dict = fixSenseNonsense(final_annotated_sam_df_dict, print_rows=print_rows, **kwargs)
+    end_of_cleanup = default_timer()
     # Output to file
     if not concatenate_output:
         for chr_key, df in jam_df_dict.items():
@@ -472,7 +494,7 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
                                                  'mapq',
                                                  'cigar',
                                                  'map_read_seq',
-                                                 'NH', 'HI',
+                                                 'HI:NH',
                                                  'gene',
                                                  'gene_string'])
     else:
@@ -487,11 +509,15 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
                                      'mapq',
                                      'cigar',
                                      'map_read_seq',
-                                     'NH', 'HI',
+                                     'HI:NH',
                                      'gene',
                                      'gene_string'])
     end_time = default_timer()
-    print(f"\n\nDone?! in {end_time - start_time:<6.2f}")
+    print(f"\n\nDone?!\n"
+          f"Total Time: {end_time - start_time:<6.2f}\n"
+          f"Imports:    {end_of_imports - start_time:<6.2f}\n"
+          f"Assignment: {end_of_assignment - end_of_imports:<6.2f}\n"
+          f"Clean Up:   {end_of_cleanup - end_of_assignment:<6.2f}")
 
 
 if __name__ == '__main__':
