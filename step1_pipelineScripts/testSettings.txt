@@ -1,3 +1,5 @@
+# Test settings file, argument names before the pipe ('|') must match the variable names within the pipeline wrapper.
+# Arguements given here can be overwritten by command line options when running the pipeline
 #adaptorSeq:
 adaptorSeq|CACTCGGGCACCAAGGAC
 #minReadLength:
