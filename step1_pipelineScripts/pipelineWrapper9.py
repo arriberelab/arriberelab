@@ -25,62 +25,43 @@ Input: settings.txt - a line-delimited settings file in the format:
 run as python3 pipelineWrapper9.py settings.txt inputReads.fastq outPrefix
 """
 
-import sys, common, os, assignReadsToGenes4, readCollapser4, filterJoshSAMByReadLength, thecountReads
+# import sys, common
+import os, readCollapser4, filterJoshSAMByReadLength, thecountReads
 import argparse
-import assignReadsToGenes5
 import assignReadsToGenesDF
 import infoGraphQC
 #import metaStartStop
 from logJosh import Tee
 
-def parseSettings(settingsFile,adaptorSeq,minimumReadLength,\
-        maximumReadLength,genomeDir,genomeAnnots,cores,\
-        misMatchMax,umi5,umi3):
+def parseSettings(settings):
     """
     Will loop through and replace variables that are None
     """
     ##first, parse the settings file to a dictionary called settingsDict
     settingsDict={}
-    with open(settingsFile,'r') as f:
+    with open(settings,'r') as f:
         for line in f:
             if not line.startswith('#'):
                 line=line.strip()
                 if line!='':
-                    line=line.split()
-                    ##the next line is to allow for the optString
-                    ##parameter. You could also do this by
-                    #changing the delimiter. May revisit this.
-                    settingsDict[line[0]]=' '.join(line[1:])
-    ##now loop through the variables and update any that are not None
-    if adaptorSeq==None:
-        adaptorSeq=settingsDict['adaptorSeq']
-    if minimumReadLength==None:
-        minimumReadLength=int(settingsDict['minimumReadLength'])
-    if maximumReadLength==None:
-        maximumReadLength=int(settingsDict['maximumReadLength'])
-    if genomeDir==None:
-        genomeDir=settingsDict['genomeDir']
-    if genomeAnnots==None:
-        genomeAnnots=settingsDict['genomeAnnots']
-    if umi5==None:
-        umi5=int(settingsDict['umi5'])
-    if umi3==None:
-        umi3=int(settingsDict['umi3'])
-    ##
-    return adaptorSeq,minimumReadLength,maximumReadLength,\
-        genomeDir,genomeAnnots,cores,misMatchMax,umi5,umi3,\
-        settingsDict['optString']
+                    line=line.split('|')
+                    if len(line) == 2:
+                        settingsDict[line[0]] = line[1]
+                    else:
+                        print("Remove pipes ('|') from settings file arguments (or rewrite parser)")
+                        raise ImportError
+    print(f"\nSettings Arguments (file: '{settings}')")
+    for key, arg in settingsDict.items():
+        if not arg:
+            print(f"\t{key} = {arg} -> (Will not be passed)")
+        else:
+            print(f"\t{key} = {arg}")
+    settingsDict = {k: v for k, v in settingsDict.items() if v is not None and v is not ''}
+    return settingsDict
 
 def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     maximumReadLength,genomeDir,genomeAnnots,cores,misMatchMax,
-    umi5,umi3):
-    ##parse the settings file w/ override from the command line
-    adaptorSeq,minimumReadLength,maximumReadLength,genomeDir,\
-        genomeAnnots,cores,misMatchMax,umi5,umi3,optString=\
-        parseSettings(settings,adaptorSeq,minimumReadLength,\
-        maximumReadLength,genomeDir,genomeAnnots,cores,\
-        misMatchMax,umi5,umi3)
-    ##
+    umi5,umi3,**otherkwargs):
     
     #Uncomment the following for filter round of mapping:
     """
@@ -258,26 +239,85 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     infoGraphQC.main([outPrefix+'.jam',minimumReadLength,maximumReadLength,-21,21,-30,12,outPrefix+'.qc'])
     thecountReads.main([fastqFile, outPrefix])
 
-def parseArguments():
+def parseArguments() -> dict:
     """
-    Still learning how to do argparse.
+    Outputs a dictionary of argument keys (taken either from the metavar parameter below or the --name for flags)
+        and the passed argument's item. This can be used with
     """
     parser=argparse.ArgumentParser(description='Wrapper for the handling of libraries starting from fastq files.')
-    parser.add_argument('fastqFile', help='The fastq file input')
-    parser.add_argument('settings', help='A text file containing a line-delimited input of adaptorSeq, genomeDir, and genomeAnnots.')
-    parser.add_argument('outPrefix', type=str, help='The outPrefix that all files produced will be named as.')
-    parser.add_argument('--umi5', type=int, default=None, help='The number of nucleotides to be trimmed from the 5prime end of reads.')
-    parser.add_argument('--umi3', type=int, default=None, help='The number of nucleotides to be trimmed from the 3prime end of reads.')
-    parser.add_argument('--minimumReadLength','--min', type=int, default=None, help='The shortest reads to be mapped to the genome.')
-    parser.add_argument('--maximumReadLength','--max', type=int, default=None, help='The longest reads to be mapped to the genome.')
-    parser.add_argument('--adaptorSeq','--adaptor', type=str, default=None, help='3\' adaptor to be trimmed off.')
-    parser.add_argument('--genomeDir', type=str, default=None, help='Genome directory where STAR index can be found.')
-    parser.add_argument('--genomeAnnots', type=str, default=None, help='Genome annotations (gtf format).')
-    parser.add_argument('--cores', type=int, default=7, help='Number of cores to use.')
-    parser.add_argument('--misMatchMax', type=int, default=0, help='Number of mismatches to tolerate during mapping.')
-    return parser.parse_args()
+    # Required Arguments:
+    parser.add_argument('fastqFile', metavar='fastqFile',
+                        type=str, help='The fastq file input')
+    parser.add_argument('settings', metavar='settings', type=str,
+                        help='A text file containing a line-delimited input of adaptorSeq, genomeDir, and genomeAnnots.')
+    parser.add_argument('outPrefix', metavar='outPrefix', type=str,
+                        help='The outPrefix that all files produced will be named as.')
+    # Optional Arguments: (None default here allows us to not pass anything that isn't given by user.
+    #                      This helps to simplify settings.txt/default overwrites further down the line.)
+    parser.add_argument('--umi5', metavar='umi5', type=int, default=None,
+                        help='The number of nucleotides to be trimmed from the 5prime end of reads.')
+    parser.add_argument('--umi3', metavar='umi3', type=int, default=None,
+                        help='The number of nucleotides to be trimmed from the 3prime end of reads.')
+    parser.add_argument('--minimumReadLength', '--min', metavar='min', type=int, default=None,
+                        help='The shortest reads to be mapped to the genome.')
+    parser.add_argument('--maximumReadLength', '--max', metavar='max', type=int, default=None,
+                        help='The longest reads to be mapped to the genome.')
+    parser.add_argument('--adaptorSeq', '--adaptor', metavar='adaptor', type=str, default=None,
+                        help='3\' adaptor to be trimmed off.')
+    parser.add_argument('--genomeDir', metavar='genomeDir', type=str, default=None,
+                        help='Genome directory where STAR index can be found.')
+    parser.add_argument('--genomeAnnots', metavar='genomeAnnots', type=str, default=None,
+                        help='Genome annotations (gtf format).')
+    parser.add_argument('--cores', metavar='cores', type=int, default=None,  # 7 cores as default!
+                        help='Number of cores to use.')
+    parser.add_argument('--misMatchMax', metavar='misMatchMax', type=int, default=None,  # 0 mismatchmax as default
+                        help='Number of mismatches to tolerate during mapping.')
+    # Flag Arguments: (just add these as tags to change pipeline functionality)
+    parser.add_argument('-u', '--keep_non_unique', action='store_true',
+                        help="Boolean flag to allow non-unique reads in the final .jam file(s).")
+    
+    # Spit out namespace object from argParse
+    args = parser.parse_args()
+    # Quickly convert Namespace object to dictionary
+    arg_dict = {arg: vars(args)[arg] for arg in vars(args)}
+    # Print arguments, specifies arguments which will not be passed in the arg_dict
+    print("\nGiven Arguments (ArgParse):")
+    for key, arg in arg_dict.items():
+        if not arg:
+            print(f"\t{key} = {arg} -> (Will not be passed)")
+        else:
+            print(f"\t{key} = {arg}")
+    # Recreate dict without arguments that did not receive any input
+    arg_dict = {k: v for k, v in arg_dict.items() if v is not None}
+    return arg_dict
+
+def combineSettingsAndArguments() -> dict:
+    base_default_dict = {'cores': 7, 'misMatchMax': 0,
+                         'optString': '--outFilterScoreMin 14'
+                                      '--outFilterScoreMinOverLread 0.3'
+                                      '--outFilterMatchNmin 14'
+                                      '--outFilterMatchNminOverLread 0.3'
+                                      '--outReadsUnmapped Fastx'
+                                      '--outFilterMismatchNmax 0'  # Need an edit here to allow us to drop in the arg if passed
+                                      '--outSJfilterOverhangMin 6 6 6 6'}
+    argDict = parseArguments()
+    settingsDict = parseSettings(argDict['settings'])
+    finalArgumentsDict = {}
+    
+    finalArgumentsDict.update(base_default_dict)
+    finalArgumentsDict.update(settingsDict)
+    finalArgumentsDict.update(argDict)
+    
+    print("\nFinal Arguments: (absolute defaults overwritten by settings.txt overwritten by CLI arguments)")
+    for key, arg in finalArgumentsDict.items():
+        print(f"\t{key} = {arg}")
+        try:
+            finalArgumentsDict[key] = int(arg)
+        except ValueError:
+            finalArgumentsDict[key] = str(arg)
+    return finalArgumentsDict
 
 if __name__ == '__main__':
     Tee()
-    arguments=parseArguments()
-    main(**vars(arguments))
+    arguments=combineSettingsAndArguments()
+    main(**arguments)
