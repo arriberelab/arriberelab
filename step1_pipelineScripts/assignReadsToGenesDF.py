@@ -70,6 +70,8 @@ def parseArgs() -> ARG_DICT:
                         help="Boolean flag to output a single file for all chromosomes")
     parser.add_argument('-u', '--keep_non_unique', action='store_true',
                         help="Boolean flag to allow non-unique reads through the assignment process")
+    parser.add_argument('-j', '--output_joshSAM', action='store_true',
+                        help="Boolean flag to output a .joshSAM file instead")
     
     # This creates a namespace object from the users CLI call
     args = parser.parse_args()
@@ -517,7 +519,16 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
                        'read_length',  # We need a read length column
                        'gene',
                        'gene_string']
-    if not concatenate_output:
+    if output_joshSAM:
+        for chr_key, df in sam_df_dict.items():
+            jam_df_dict[chr_key]['read_length'] = DataFrame(df.apply(lambda x: len(x['map_read_seq']),
+                                                            axis=1).tolist(), index=df.index)
+        joshSAM_all_chrs = concat(jam_df_dict.values(), ignore_index=True)
+        joshSAM_all_chrs.sort_values(by=['chr', 'chr_pos'])
+        joshSAM_all_chrs.to_csv(f"{output_prefix}.allChrs.joshSAM",
+                            index=False, sep='\t',
+                            columns=joshSAM_columns)
+    elif not concatenate_output:
         for chr_key, df in jam_df_dict.items():
             jam_df_dict[chr_key].sort_values(by=['chr', 'chr_pos'])
             jam_df_dict[chr_key].to_csv(f"{output_prefix}.chr{chr_key}.jam",
@@ -529,12 +540,6 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
         jam_all_chrs.to_csv(f"{output_prefix}.allChrs.jam",
                             index=False, sep='\t',
                             columns=jam_columns)
-    if output_joshSAM:
-        jam_all_chrs = concat(jam_df_dict.values(), ignore_index=True)
-        jam_all_chrs.sort_values(by=['chr', 'chr_pos'])
-        jam_all_chrs.to_csv(f"{output_prefix}.allChrs.joshSAM",
-                            index=False, sep='\t',
-                            columns=joshSAM_columns)  # Currently will throw error as read_length isn't a column we have
     end_time = default_timer() # Timer
     print(f"\n\nDone?!\n"
           f"Total Time: {end_time - start_time:<6.2f}\n\t"
