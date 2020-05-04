@@ -22,10 +22,10 @@ Input: settings.txt - a line-delimited settings file in the format:
 
     inputReads.fastq - a fastq file of reads
 
-run as python3 pipelineWrapper8.py settings.txt inputReads.fastq outPrefix
+run as python3 pipelineWrapper9.py settings.txt inputReads.fastq outPrefix
 """
 
-import sys, common, os, assignReadsToGenes4, readCollapser4, filterJoshSAMByReadLength, thecountReads
+import sys, common, os, assignReadsToGenesDF, readCollapser4, filterJoshSAMByReadLength, thecountReads
 import argparse
 import assignReadsToGenes5
 import infoGraphQC
@@ -222,16 +222,27 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     # assignReadsToGenes4.main([genomeAnnotProcessed,
     #                          outPrefix+'.finalMapped.Aligned.out.sam',
     #                          outPrefix])
-    
+    assignReadsToGenesDF.main(outPrefix+'finalMapped.Aligned.out.sam',
+                              genomeAnnotProcessed,
+                              outPrefix,
+                              keep_non_unique=False,
+                              concatenate_output=True)
     print('Assigning reads to genes allowing for multiply-mapping reads...')
     # assignReadsToGenes5.main([genomeAnnotProcessed,
     #                          outPrefix+'.finalMapped.Aligned.out.sam',
     #                          outPrefix+'.redundantAndUnique'])
+    assignReadsToGenesDF.main(outPrefix + 'finalMapped.Aligned.out.sam',
+                              genomeAnnotProcessed,
+                              outPrefix+'.redundantAndUnique',
+                              keep_non_unique=True,
+                              concatenate_output=True)
     print('Done with read assignment!')
     ############################################################################################################
     """Additional filtering of reads by length"""
     ############################################################################################################
     # print('Quitting early!!!'), sys.exit()
+    
+    # TODO: Definitely broken:
     print('filtering read lengths again...')
     filterJoshSAMByReadLength.main([outPrefix+'.jam',
                                 minimumReadLength,
