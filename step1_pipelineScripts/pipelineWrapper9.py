@@ -33,35 +33,20 @@ import infoGraphQC
 #import metaStartStop
 from logJosh import Tee
 
-def parseSettings(settings):
-    """
-    Will loop through and replace variables that are None
-    """
-    ##first, parse the settings file to a dictionary called settingsDict
-    settingsDict={}
-    with open(settings,'r') as f:
-        for line in f:
-            if not line.startswith('#'):
-                line=line.strip()
-                if line!='':
-                    line=line.split('|')
-                    if len(line) == 2:
-                        settingsDict[line[0]] = line[1]
-                    else:
-                        print("Remove pipes ('|') from settings file arguments (or rewrite parser)")
-                        raise ImportError
-    print(f"\nSettings Arguments (file: '{settings}')")
-    for key, arg in settingsDict.items():
-        if not arg:
-            print(f"\t{key} = {arg} -> (Will not be passed)")
-        else:
-            print(f"\t{key} = {arg}")
-    settingsDict = {k: v for k, v in settingsDict.items() if v is not None and v is not ''}
-    return settingsDict
+# Absolute defaults are overwritten by the given settings file and any command line arguments given
+ABSOLUTE_DEFAULT_DICT = {'cores': 7, 'misMatchMax': 0,
+                         'optString': '--outFilterScoreMin 14'
+                                      '--outFilterScoreMinOverLread 0.3'
+                                      '--outFilterMatchNmin 14'
+                                      '--outFilterMatchNminOverLread 0.3'
+                                      '--outReadsUnmapped Fastx'
+                                      '--outFilterMismatchNmax 0'  # Need an edit here to allow us to drop in the arg if passed
+                                      '--outSJfilterOverhangMin 6 6 6 6'}
+
 
 def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     maximumReadLength,genomeDir,genomeAnnots,cores,misMatchMax,
-    umi5,umi3,**otherkwargs):
+    umi5,umi3,optString,**otherkwargs):
     
     #Uncomment the following for filter round of mapping:
     """
@@ -273,51 +258,76 @@ def parseArguments() -> dict:
     parser.add_argument('--misMatchMax', metavar='misMatchMax', type=int, default=None,  # 0 mismatchmax as default
                         help='Number of mismatches to tolerate during mapping.')
     # Flag Arguments: (just add these as tags to change pipeline functionality)
-    parser.add_argument('-u', '--keep_non_unique', action='store_true',
+    parser.add_argument('-u', '--keep_non_unique', action='store_true',  # This is currently unused!
                         help="Boolean flag to allow non-unique reads in the final .jam file(s).")
+    parser.add_argument('-p', '--print_arguments', action='store_true',
+                        help="Boolean flag to show how arguments are overwritten/accepted")
     
     # Spit out namespace object from argParse
     args = parser.parse_args()
     # Quickly convert Namespace object to dictionary
     arg_dict = {arg: vars(args)[arg] for arg in vars(args)}
-    # Print arguments, specifies arguments which will not be passed in the arg_dict
-    print("\nGiven Arguments (ArgParse):")
-    for key, arg in arg_dict.items():
-        if not arg:
-            print(f"\t{key} = {arg} -> (Will not be passed)")
-        else:
-            print(f"\t{key} = {arg}")
+    
+    if arg_dict['print_arguments']:
+        # Print arguments, specifies arguments which will not be passed in the arg_dict
+        print("\nGiven Arguments (ArgParse):")
+        for key, arg in arg_dict.items():
+            if not arg:
+                print(f"\t{key} = {arg} -> (Will not be passed)")
+            else:
+                print(f"\t{key} = {arg}")
     # Recreate dict without arguments that did not receive any input
     arg_dict = {k: v for k, v in arg_dict.items() if v is not None}
     return arg_dict
 
+def parseSettings(settings, print_arguments=False, **other_args):
+    """
+    Will loop through and replace variables that are None
+    """
+    ##first, parse the settings file to a dictionary called settingsDict
+    settingsDict={}
+    with open(settings,'r') as f:
+        for line in f:
+            if not line.startswith('#'):
+                line=line.strip()
+                if line!='':
+                    line=line.split('|')
+                    if len(line) == 2:
+                        settingsDict[line[0]] = line[1]
+                    else:
+                        print("Remove pipes ('|') from settings file arguments (or rewrite parser)")
+                        raise ImportError
+    if print_arguments:
+        print(f"\nSettings Arguments (file: '{settings}')")
+        for key, arg in settingsDict.items():
+            if not arg:
+                print(f"\t{key} = {arg} -> (Will not be passed)")
+            else:
+                print(f"\t{key} = {arg}")
+    settingsDict = {k: v for k, v in settingsDict.items() if v is not None and v is not ''}
+    return settingsDict
+
 def combineSettingsAndArguments() -> dict:
-    base_default_dict = {'cores': 7, 'misMatchMax': 0,
-                         'optString': '--outFilterScoreMin 14'
-                                      '--outFilterScoreMinOverLread 0.3'
-                                      '--outFilterMatchNmin 14'
-                                      '--outFilterMatchNminOverLread 0.3'
-                                      '--outReadsUnmapped Fastx'
-                                      '--outFilterMismatchNmax 0'  # Need an edit here to allow us to drop in the arg if passed
-                                      '--outSJfilterOverhangMin 6 6 6 6'}
+    absoluteDefDict = ABSOLUTE_DEFAULT_DICT
     argDict = parseArguments()
-    settingsDict = parseSettings(argDict['settings'])
-    finalArgumentsDict = {}
+    settingsDict = parseSettings(**argDict)
+    finalArgDict = {}
     
-    finalArgumentsDict.update(base_default_dict)
-    finalArgumentsDict.update(settingsDict)
-    finalArgumentsDict.update(argDict)
-    
-    print("\nFinal Arguments: (absolute defaults overwritten by settings.txt overwritten by CLI arguments)")
-    for key, arg in finalArgumentsDict.items():
-        print(f"\t{key} = {arg}")
+    finalArgDict.update(absoluteDefDict)
+    finalArgDict.update(settingsDict)
+    finalArgDict.update(argDict)
+    if finalArgDict['print_arguments']:
+        print("\nFinal Arguments: (absolute defaults overwritten by settings.txt overwritten by CLI arguments)")
+    for key, arg in finalArgDict.items():
+        if finalArgDict['print_arguments']:
+            print(f"\t{key} = {arg}")
         try:
-            finalArgumentsDict[key] = int(arg)
+            finalArgDict[key] = int(arg)
         except ValueError:
-            finalArgumentsDict[key] = str(arg)
-    return finalArgumentsDict
+            finalArgDict[key] = str(arg)
+    return finalArgDict
 
 if __name__ == '__main__':
     Tee()
-    arguments=combineSettingsAndArguments()
+    arguments = combineSettingsAndArguments()
     main(**arguments)
