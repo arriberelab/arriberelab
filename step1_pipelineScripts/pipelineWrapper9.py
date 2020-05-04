@@ -331,6 +331,6 @@ if __name__ == '__main__':
     Tee()
     argument_dict = combineSettingsAndArguments()
     # Below is where the 'magic' is happening just as it was with the **vars(argParse_NameSpace):
-    #   main() is unpacking the dictionary and using the dictionary's keys to point to variables that 
+    #   main() is unpacking the dictionary and using the dictionary's keys to point to variables that
     #   main() is asking for
     main(**argument_dict)

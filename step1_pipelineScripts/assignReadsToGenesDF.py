@@ -92,7 +92,7 @@ def parseArgs() -> ARG_DICT:
     return arg_dict
 
 
-def parseSamToDF(sam_file: str, headerlines: int = 20,
+def parseSamToDF(sam_file: str,
                  split_chrs: bool = True, num_lines: int = None,
                  print_rows: int = None, deep_memory: bool = False,
                  **kwargs) -> DataFrame or CHR_DF_DICT:
@@ -101,7 +101,6 @@ def parseSamToDF(sam_file: str, headerlines: int = 20,
     
     This function does a lot of the grunt work in parsing, organizing/sorting and
         splitting up the specified SAM file.
-    TODO: Need to pass in the headerlines value somehow. It will differ across sam files!
     """
     # Quick check to ensure the passed file path exists
     if not path.isfile(sam_file):
@@ -130,9 +129,14 @@ def parseSamToDF(sam_file: str, headerlines: int = 20,
     #     full file to be parsed into memory, then reads it from there. If the used system is able to
     #     handle this much memory usage, this option can improve performance because there is no
     #     longer any I/O overhead.
-    #   - 'comment': This parameter would provide the advantage of not specifying how many header
-    #     lines are before the data in the file. The issue currently is that the '@' symbol used
-    #     as the comment indicator for sam files allows comes up in the Phred alignment score scale.
+    headerlines = 0
+    with open(sam_file, 'r')as sam_file_quick:
+        for line in sam_file_quick:
+            if line.startswith('@'):
+                headerlines += 1
+            else:
+                break
+    
     if num_lines:
         SAM_df = read_csv(sam_file,
                           sep="\t",
@@ -464,7 +468,8 @@ def outputToCSV(dataframe, outputprefix):
 
 def main(sam_file: str, annot_file: str, output_prefix: str,
          print_rows: int = None, concatenate_output: bool = False,
-         keep_non_unique: bool = False, **kwargs) -> None:
+         keep_non_unique: bool = False, output_joshSAM: bool = False,
+         **kwargs) -> None:
     
     start_time = default_timer()  # Timer
     
@@ -496,27 +501,40 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
     
     # Output to file:
     jam_columns = ['read_id',
-                      'chr',
-                      'chr_pos',
-                      'strand',
-                      'mapq',
-                      'cigar',
-                      'map_read_seq',
-                      'HI:NH',
-                      'gene',
-                      'gene_string']
+                   'chr',
+                   'chr_pos',
+                   'strand',
+                   'mapq',
+                   'cigar',
+                   'map_read_seq',
+                   'HI:NH',
+                   'gene',
+                   'gene_string']
+    joshSAM_columns = ['chr',
+                       'chr_pos',
+                       'strand',
+                       'map_read_seq',
+                       'read_length',  # We need a read length column
+                       'gene',
+                       'gene_string']
     if not concatenate_output:
         for chr_key, df in jam_df_dict.items():
-            jam_df_dict[chr_key].sort_values(by=['read_id', 'chr', 'chr_pos'])
+            jam_df_dict[chr_key].sort_values(by=['chr', 'chr_pos'])
             jam_df_dict[chr_key].to_csv(f"{output_prefix}.chr{chr_key}.jam",
                                         index=False, sep='\t',
                                         columns=jam_columns)
     else:
         jam_all_chrs = concat(jam_df_dict.values(), ignore_index=True)
-        jam_all_chrs.sort_values(by=['read_id', 'chr', 'chr_pos'])
+        jam_all_chrs.sort_values(by=['chr', 'chr_pos'])
         jam_all_chrs.to_csv(f"{output_prefix}.allChrs.jam",
                             index=False, sep='\t',
                             columns=jam_columns)
+    if output_joshSAM:
+        jam_all_chrs = concat(jam_df_dict.values(), ignore_index=True)
+        jam_all_chrs.sort_values(by=['chr', 'chr_pos'])
+        jam_all_chrs.to_csv(f"{output_prefix}.allChrs.joshSAM",
+                            index=False, sep='\t',
+                            columns=joshSAM_columns)  # Currently will throw error as read_length isn't a column we have
     end_time = default_timer() # Timer
     print(f"\n\nDone?!\n"
           f"Total Time: {end_time - start_time:<6.2f}\n\t"

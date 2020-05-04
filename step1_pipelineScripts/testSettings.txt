@@ -1,5 +1,6 @@
 # Test settings file, argument names before the pipe ('|') must match the variable names within the pipeline wrapper.
 # Arguments given here can be overwritten by command line options when running the pipeline
+# Unused arguments can either be completly deleted or left blank 
 #adaptorSeq:
 adaptorSeq|CACTCGGGCACCAAGGAC
 #minReadLength:
@@ -18,8 +19,8 @@ genomeAnnots|/data14/parissa/genomes/200329_cerevisiae/Saccharomyces_cerevisiae.
 cores|
 #misMatchMax:
 misMatchMax|0
-#optSring:
-optString|--outFilterScoreMin 14 --outFilterScoreMinOverLread 0.3 --outFilterMatchNmin 14 --outFilterMatchNminOverLread 0.3 --outReadsUnmapped Fastx --outFilterMismatchNmax 0 --outSJfilterOverhangMin 6 6 6 6
+#optString:
+optString|
 #genomeDir2 (filter mapping):
 genomeDir2|
 #genomeAnnots2 (filter mapping):
