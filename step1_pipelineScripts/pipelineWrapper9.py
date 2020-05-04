@@ -243,9 +243,9 @@ def parseArguments():
                         help='The number of nucleotides to be trimmed from the 5prime end of reads.')
     parser.add_argument('--umi3', metavar='umi3', type=int, default=None,
                         help='The number of nucleotides to be trimmed from the 3prime end of reads.')
-    parser.add_argument('--minimumReadLength', '--min', metavar='min', type=int, default=None,
+    parser.add_argument('--minimumReadLength', '--min', type=int, default=None,
                         help='The shortest reads to be mapped to the genome.')
-    parser.add_argument('--maximumReadLength', '--max', metavar='max', type=int, default=None,
+    parser.add_argument('--maximumReadLength', '--max', type=int, default=None,
                         help='The longest reads to be mapped to the genome.')
     parser.add_argument('--adaptorSeq', '--adaptor', metavar='adaptor', type=str, default=None,
                         help='3\' adaptor to be trimmed off.')
@@ -317,7 +317,7 @@ def combineSettingsAndArguments():
     finalArgDict.update(settingsDict)
     finalArgDict.update(argDict)
     if finalArgDict['print_arguments']:
-        print("\nFinal Arguments: (absolute defaults overwritten by settings.txt overwritten by CLI arguments)")
+        print("\nFinal Arguments: (absolute defaults overwritten by settings.txt then overwritten by CLI arguments)")
     for key, arg in finalArgDict.items():
         if finalArgDict['print_arguments']:
             print(f"\t{key} = {arg}")
@@ -329,5 +329,8 @@ def combineSettingsAndArguments():
 
 if __name__ == '__main__':
     Tee()
-    arguments = combineSettingsAndArguments()
-    main(**arguments)
+    argument_dict = combineSettingsAndArguments()
+    # Below is where the 'magic' is happening just as it was with the **vars(argParse_NameSpace):
+    #   main() is unpacking the dictionary and using the dictionary's keys to point to variables that 
+    #   main() is asking for
+    main(**argument_dict)
