@@ -482,36 +482,28 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
     jam_df_dict = fixSenseNonsense(final_annotated_sam_df_dict, print_rows=print_rows, **kwargs)
     end_of_cleanup = default_timer()
     # Output to file
+    jam_columns = ['read_id',
+                      'chr',
+                      'chr_pos',
+                      'strand',
+                      'mapq',
+                      'cigar',
+                      'map_read_seq',
+                      'HI:NH',
+                      'gene',
+                      'gene_string']
     if not concatenate_output:
         for chr_key, df in jam_df_dict.items():
             jam_df_dict[chr_key].sort_values(by=['read_id', 'chr', 'chr_pos'])
             jam_df_dict[chr_key].to_csv(f"{output_prefix}.chr{chr_key}.jam",
                                         index=False, sep='\t',
-                                        columns=['read_id',
-                                                 'chr',
-                                                 'chr_pos',
-                                                 'strand',
-                                                 'mapq',
-                                                 'cigar',
-                                                 'map_read_seq',
-                                                 'HI:NH',
-                                                 'gene',
-                                                 'gene_string'])
+                                        columns=jam_columns)
     else:
         jam_all_chrs = concat(jam_df_dict.values(), ignore_index=True)
         jam_all_chrs.sort_values(by=['read_id', 'chr', 'chr_pos'])
         jam_all_chrs.to_csv(f"{output_prefix}.allChrs.jam",
                             index=False, sep='\t',
-                            columns=['read_id',
-                                     'chr',
-                                     'chr_pos',
-                                     'strand',
-                                     'mapq',
-                                     'cigar',
-                                     'map_read_seq',
-                                     'HI:NH',
-                                     'gene',
-                                     'gene_string'])
+                            columns=jam_columns)
     end_time = default_timer()
     print(f"\n\nDone?!\n"
           f"Total Time: {end_time - start_time:<6.2f}\n"
