@@ -219,13 +219,14 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     ############################################################################################################
     print('Assigning reads to genes...')
     genomeAnnotProcessed=genomeAnnots.strip('gtf')+'allChrs.txt'
-    assignReadsToGenes4.main([genomeAnnotProcessed,
-                             outPrefix+'.finalMapped.Aligned.out.sam',
-                             outPrefix])
+    # assignReadsToGenes4.main([genomeAnnotProcessed,
+    #                          outPrefix+'.finalMapped.Aligned.out.sam',
+    #                          outPrefix])
+    
     print('Assigning reads to genes allowing for multiply-mapping reads...')
-    assignReadsToGenes5.main([genomeAnnotProcessed,
-                             outPrefix+'.finalMapped.Aligned.out.sam',
-                             outPrefix+'.redundantAndUnique'])
+    # assignReadsToGenes5.main([genomeAnnotProcessed,
+    #                          outPrefix+'.finalMapped.Aligned.out.sam',
+    #                          outPrefix+'.redundantAndUnique'])
     print('Done with read assignment!')
     ############################################################################################################
     """Additional filtering of reads by length"""
