@@ -109,6 +109,7 @@ def parseSamToDF(sam_file: str, headerlines: int = 20,
         exit()
     else:
         # print(f"\nParsing identified file at: {sam_file}")
+        pass
     
     # Assign known order of datatypes for .SAM file, this helps to speed up parsing
     o = 'object'
@@ -206,6 +207,7 @@ def parseAllChrsToDF(annot_file: str,
         exit()
     else:
         # print(f"\nParsing identified file at: {annot_file}")
+        pass
     
     # Parse annotations file using pandas.read_csv function
     #   There is currently more work that can be front-loaded into this function call:
