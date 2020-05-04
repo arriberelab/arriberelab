@@ -108,7 +108,7 @@ def parseSamToDF(sam_file: str, headerlines: int = 20,
         print(f"\nFile does not exist at: {sam_file}, Terminating Script\n")
         exit()
     else:
-        print(f"\nParsing identified file at: {sam_file}")
+        # print(f"\nParsing identified file at: {sam_file}")
     
     # Assign known order of datatypes for .SAM file, this helps to speed up parsing
     o = 'object'
@@ -205,7 +205,7 @@ def parseAllChrsToDF(annot_file: str,
         print(f"\nFile does not exist at: {annot_file}, Terminating Script\n")
         exit()
     else:
-        print(f"\nParsing identified file at: {annot_file}")
+        # print(f"\nParsing identified file at: {annot_file}")
     
     # Parse annotations file using pandas.read_csv function
     #   There is currently more work that can be front-loaded into this function call:
@@ -272,7 +272,9 @@ def parseAllChrsToDF(annot_file: str,
         #     for chr, df in annot_df_dict.items():
         #         print(f"\nFirst {print_rows} rows of Chromosome-{chr}:\n", df.head(print_rows))
         # Short print to show how the dataframe was split up
-        print(f"Split annotations dataframe into {len(annot_df_dict.keys())} separate df's:\n{annot_df_dict.keys()}")
+        print(f"Split annotations dataframe into {len(annot_df_dict.keys())} separate df's"
+              #f":\n{annot_df_dict.keys()}"
+             )
         return annot_df_dict
     else:
         return annot_df
@@ -324,7 +326,7 @@ def recoverMappedPortion_dfWrapper(sam_df_dict: CHR_DF_DICT, print_rows: int = N
                 DataFrame(df.apply(lambda x: recoverMappedPortion_perRead(x['cigar'], x['read_seq']),
                                    axis=1).tolist(), index=df.index)
             
-            print(f'Recovery of mapped portion complete for Chr-{chr_key:->4}, '
+            print(f'Chr-{chr_key:->4} mapped portion recovery complete, '
                   f'read count={len(sam_df_dict[chr_key].index)}')
             if print_rows:
                 print(sam_df_dict[chr_key][['read_id',
@@ -361,7 +363,7 @@ def assignReadsToGenes(sam_df_dict: CHR_DF_DICT, annot_df_dict: CHR_DF_DICT,
                 df = sam_df_dict[chr_key][sam_df_dict[chr_key]['NH'].str.endswith(':1')]
             # << ONLY KEEP UNIQUELY MAPPING READS
             
-            print(f"\tPreforming alignment for Chr-{chr_key:->4} containing {len(df.index)} reads")
+            ### print(f"\tPreforming alignment for Chr-{chr_key:->4} containing {len(df.index)} reads")
             # Using the df.merge() function for mapping annotations onto reads
             # TODO: In the future we could utilize the parameter: "on='left'" in the merge call. This
             #       will provide the advantage(?) of allowing unmapped reads through, meaning we can
