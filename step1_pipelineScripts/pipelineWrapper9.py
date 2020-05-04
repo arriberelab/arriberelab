@@ -30,7 +30,7 @@ import os, readCollapser4, filterJoshSAMByReadLength, thecountReads
 import argparse
 import assignReadsToGenesDF
 import infoGraphQC
-#import metaStartStop
+# import metaStartStop
 from logJosh import Tee
 
 # Absolute defaults are overwritten by the given settings file and any command line arguments given
@@ -224,7 +224,7 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     infoGraphQC.main([outPrefix+'.jam',minimumReadLength,maximumReadLength,-21,21,-30,12,outPrefix+'.qc'])
     thecountReads.main([fastqFile, outPrefix])
 
-def parseArguments() -> dict:
+def parseArguments():
     """
     Outputs a dictionary of argument keys (taken either from the metavar parameter below or the --name for flags)
         and the passed argument's item. This can be used with
@@ -280,7 +280,7 @@ def parseArguments() -> dict:
     arg_dict = {k: v for k, v in arg_dict.items() if v is not None}
     return arg_dict
 
-def parseSettings(settings, print_arguments=False, **other_args):
+def parseSettings(settings,print_arguments=False,**other_kwargs):
     """
     Will loop through and replace variables that are None
     """
@@ -307,7 +307,7 @@ def parseSettings(settings, print_arguments=False, **other_args):
     settingsDict = {k: v for k, v in settingsDict.items() if v is not None and v is not ''}
     return settingsDict
 
-def combineSettingsAndArguments() -> dict:
+def combineSettingsAndArguments():
     absoluteDefDict = ABSOLUTE_DEFAULT_DICT
     argDict = parseArguments()
     settingsDict = parseSettings(**argDict)
