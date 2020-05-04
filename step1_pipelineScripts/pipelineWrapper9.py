@@ -25,9 +25,10 @@ Input: settings.txt - a line-delimited settings file in the format:
 run as python3 pipelineWrapper9.py settings.txt inputReads.fastq outPrefix
 """
 
-import sys, common, os, assignReadsToGenesDF, readCollapser4, filterJoshSAMByReadLength, thecountReads
+import sys, common, os, assignReadsToGenes4, readCollapser4, filterJoshSAMByReadLength, thecountReads
 import argparse
 import assignReadsToGenes5
+import assignReadsToGenesDF
 import infoGraphQC
 #import metaStartStop
 from logJosh import Tee
