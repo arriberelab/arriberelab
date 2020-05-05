@@ -3,7 +3,7 @@ Joshua Arribere, April 6, 2020
 
 Script to plot both read length and fraction in each frame for a library.
 
-Input: file.joshSAM - joshSAM file
+Input: file.jam - jam file
     lowerBound - smallest read size to consider
     upperBound - largest read size to consider
 
@@ -11,7 +11,7 @@ Output: two plots, one a histogram of readLength (x-axis) and read count
     (y-axis). Second plot will be readLength (x-axis) and fraction in
     frame (y-axis). Second plot will be a stacked bar graph.
 
-run as python readLengthAndPhasingAnalysis.py inFile.joshSAM X Y
+run as python readLengthAndPhasingAnalysis.py inFile.jam X Y
     outPrefix
 """
 import sys, common, pickle
@@ -20,7 +20,7 @@ import pandas
 import seaborn,matplotlib
 
 def getFrame(txtList,index):
-    """txtList is a list of txtInfo a la joshSAM. Will
+    """txtList is a list of txtInfo a la jam. Will
     loop through all the txts. If the index position of
     the txts is all the same, then will return that
     position. Else will return 'na'. Will also require
@@ -39,13 +39,14 @@ def getFrame(txtList,index):
 
 def getReadLengthAndFrameInfo(inFile,X,Y):
     """
-    inFile is a joshSAM file. Will consider reads in range [X,Y]
-    inclusive. For each read in the joshSAM file, will only focus on
+    inFile is a jam file. Will consider reads in range [X,Y]
+    inclusive. For each read in the jam file, will only focus on
     reads that are sense-stranded. Will build a DataFrame with indexes
     as readLengths and columns are 0, 1, or 2 frame. Will not tally
     reads--instead this information will be computed at the ends as a
     sum of the 0, 1, 2 frame read counts.
     """
+    print('Restriction for uniquely mapping reads is on!')
     ##initialize the indexes
     #index=pandas.MultiIndex.from_tuples([0,1,2],
     #                                    names=['frame'])
@@ -55,14 +56,18 @@ def getReadLengthAndFrameInfo(inFile,X,Y):
         columns=range(3))
     ##loop through the file
     with open(inFile,'r') as f:
+        ##ignore the first line
+        next(f)
+        ##now do something
         for line in f:
             if not line.startswith('@'):
                 line=line.strip().split('\t')
-                frame=getFrame(line[6:],1)
-                if frame!='na':
-                    readLength=len(line[3])
-                    if readLength in range(X,Y+1):
-                        df.loc[readLength,frame]+=1
+                if line[7]=='1:1' and line[3]=='-':
+                    frame=getFrame(line[9:],1)
+                    if frame!='na':
+                        readLength=len(line[6])
+                        if readLength in range(X,Y+1):
+                            df.loc[readLength,frame]+=1
     ##now compute the total
     df['total']=df[0]+df[1]+df[2]
     ##return
