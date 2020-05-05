@@ -70,6 +70,8 @@ def parseArgs() -> ARG_DICT:
                         help="Boolean flag to output a single file for all chromosomes")
     parser.add_argument('-u', '--keep_non_unique', action='store_true',
                         help="Boolean flag to allow non-unique reads through the assignment process")
+    parser.add_argument('-j', '--output_joshSAM', action='store_true',
+                        help="Boolean flag to output a .joshSAM file instead")
     
     # This creates a namespace object from the users CLI call
     args = parser.parse_args()
@@ -92,7 +94,7 @@ def parseArgs() -> ARG_DICT:
     return arg_dict
 
 
-def parseSamToDF(sam_file: str, headerlines: int = 20,
+def parseSamToDF(sam_file: str,
                  split_chrs: bool = True, num_lines: int = None,
                  print_rows: int = None, deep_memory: bool = False,
                  **kwargs) -> DataFrame or CHR_DF_DICT:
@@ -101,7 +103,6 @@ def parseSamToDF(sam_file: str, headerlines: int = 20,
     
     This function does a lot of the grunt work in parsing, organizing/sorting and
         splitting up the specified SAM file.
-    TODO: Need to pass in the headerlines value somehow. It will differ across sam files!
     """
     # Quick check to ensure the passed file path exists
     if not path.isfile(sam_file):
@@ -130,9 +131,14 @@ def parseSamToDF(sam_file: str, headerlines: int = 20,
     #     full file to be parsed into memory, then reads it from there. If the used system is able to
     #     handle this much memory usage, this option can improve performance because there is no
     #     longer any I/O overhead.
-    #   - 'comment': This parameter would provide the advantage of not specifying how many header
-    #     lines are before the data in the file. The issue currently is that the '@' symbol used
-    #     as the comment indicator for sam files allows comes up in the Phred alignment score scale.
+    headerlines = 0
+    with open(sam_file, 'r')as sam_file_quick:
+        for line in sam_file_quick:
+            if line.startswith('@'):
+                headerlines += 1
+            else:
+                break
+    
     if num_lines:
         SAM_df = read_csv(sam_file,
                           sep="\t",
@@ -151,7 +157,7 @@ def parseSamToDF(sam_file: str, headerlines: int = 20,
     
     # This sort_values with the ignore_index option on will currently reset the
     # indexes to the new sorted order, I don't know if this is good or bad...
-    SAM_df = SAM_df.sort_values(by=[2, 3], ignore_index=True)
+    SAM_df = SAM_df.sort_values(by=[2, 3])  # TODO: ignore index removed
     
     # Rename columns, this can be the source of an error if a SAM file is not in
     #   the 15 column format - be wary!
@@ -464,7 +470,8 @@ def outputToCSV(dataframe, outputprefix):
 
 def main(sam_file: str, annot_file: str, output_prefix: str,
          print_rows: int = None, concatenate_output: bool = False,
-         keep_non_unique: bool = False, **kwargs) -> None:
+         keep_non_unique: bool = False, output_joshSAM: bool = False,
+         **kwargs) -> None:
     
     start_time = default_timer()  # Timer
     
@@ -472,58 +479,65 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
     sam_df_dict = parseSamToDF(sam_file, **kwargs)
     annot_df_dict = parseAllChrsToDF(annot_file, **kwargs)
     
-    end_of_imports = default_timer()  # Timer
-    
     # TODO: This is currently a little chaotic with all of the steps/naming. The goal was for it to be readable, but...
-    
-    # Going for the df.merge() function for mapping annotations onto reads
-    annotated_sam_df_dict = assignReadsToGenes(sam_df_dict, annot_df_dict, print_rows=print_rows,
-                                               keep_non_unique=keep_non_unique, **kwargs)
-    
-    end_of_assignment = default_timer()  # Timer
     
     # Apply the recoverMappedPortion() to dataframe to see how it does
     #  Currently doing this after dropping unassigned reads as it seems to be the time intensive step.
-    fixed_annotated_sam_df_dict = recoverMappedPortion_dfWrapper(annotated_sam_df_dict, print_rows=print_rows, **kwargs)
+    post_map_df_dict = recoverMappedPortion_dfWrapper(sam_df_dict, print_rows=print_rows, **kwargs)
+
+    # Handle +/- and Sense/Antisense issues from SAM format
+    post_sense_antisense_df_dict = fixSenseNonsense(post_map_df_dict, print_rows=print_rows, **kwargs)
+    
+    # Going for the df.merge() function for mapping annotations onto reads
+    assigned_df_dict = assignReadsToGenes(post_sense_antisense_df_dict, annot_df_dict, print_rows=print_rows,
+                                          keep_non_unique=keep_non_unique, **kwargs)
     
     # Add the HitIndex:NumberOfHits column from the SAM HI and NH columns
-    final_annotated_sam_df_dict = hitIndexAndHitNumber(fixed_annotated_sam_df_dict, **kwargs)
-    
-    # Handle +/- and Sense/Antisense issues from SAM format
-    jam_df_dict = fixSenseNonsense(final_annotated_sam_df_dict, print_rows=print_rows, **kwargs)
-    
-    end_of_cleanup = default_timer()  # Timer
+    jam_df_dict = hitIndexAndHitNumber(assigned_df_dict, **kwargs)
     
     # Output to file:
     jam_columns = ['read_id',
-                      'chr',
-                      'chr_pos',
-                      'strand',
-                      'mapq',
-                      'cigar',
-                      'map_read_seq',
-                      'HI:NH',
-                      'gene',
-                      'gene_string']
-    if not concatenate_output:
+                   'chr',
+                   'chr_pos',
+                   'strand',
+                   'mapq',
+                   'cigar',
+                   'map_read_seq',
+                   'HI:NH',
+                   'gene',
+                   'gene_string']
+    joshSAM_columns = ['chr',
+                       'chr_pos',
+                       'strand',
+                       'map_read_seq',
+                       'read_length',  # We need a read length column
+                       'gene',
+                       'gene_string']
+    if output_joshSAM:
+        for chr_key, df in sam_df_dict.items():
+            jam_df_dict[chr_key]['read_length'] = DataFrame(df.apply(lambda x: len(x['map_read_seq']),
+                                                            axis=1).tolist(), index=df.index)
+        joshSAM_all_chrs = concat(jam_df_dict.values())
+        # joshSAM_all_chrs.sort_values(by=['chr', 'chr_pos'], inplace=True)
+        joshSAM_all_chrs.sort_index(inplace=True)
+        joshSAM_all_chrs.to_csv(f"{output_prefix}.allChrs.joshSAM",
+                            index=False, sep='\t',
+                            columns=joshSAM_columns)
+    elif not concatenate_output:
         for chr_key, df in jam_df_dict.items():
-            jam_df_dict[chr_key].sort_values(by=['read_id', 'chr', 'chr_pos'])
+            jam_df_dict[chr_key].sort_values(by=['chr', 'chr_pos'], inplace=True)
             jam_df_dict[chr_key].to_csv(f"{output_prefix}.chr{chr_key}.jam",
                                         index=False, sep='\t',
                                         columns=jam_columns)
     else:
         jam_all_chrs = concat(jam_df_dict.values(), ignore_index=True)
-        jam_all_chrs.sort_values(by=['read_id', 'chr', 'chr_pos'])
+        jam_all_chrs.sort_values(by=['chr', 'chr_pos'], inplace=True)
         jam_all_chrs.to_csv(f"{output_prefix}.allChrs.jam",
                             index=False, sep='\t',
                             columns=jam_columns)
     end_time = default_timer() # Timer
     print(f"\n\nDone?!\n"
-          f"Total Time: {end_time - start_time:<6.2f}\n\t"
-          f"Imports:    {end_of_imports - start_time:<6.2f}\n\t"
-          f"Assignment: {end_of_assignment - end_of_imports:<6.2f}\n\t"
-          f"Clean Up:   {end_of_cleanup - end_of_assignment:<6.2f}\n\t"
-          f"Write:      {end_time - end_of_cleanup:<6.2f}")
+          f"Total Time: {end_time - start_time:<6.2f}\n\t")
 
 
 if __name__ == '__main__':
