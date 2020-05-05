@@ -228,31 +228,15 @@ def parseAllChrsToDF(annot_file: str,
     #     full file to be parsed into memory, then reads it from there. If the used system is able to
     #     handle this much memory usage, this option can improve performance because there is no
     #     longer any I/O overhead.
-    if num_lines:
-        annot_df = read_csv(annot_file,
-                            delimiter='|',
-                            names=['chr', 'gene_string'],
-                            nrows=num_lines,
-                            )
-    else:
-        annot_df = read_csv(annot_file,
-                            delimiter='|',
-                            names=['chr', 'gene_string'],
-                            )
+    annot_df = read_csv(annot_file,
+                        delimiter='\t',
+                        names=['chr', 'gene', 'transcripts'])
     
     # Split the chr_index column into two
     annot_df[['chr', 'chr_pos']] = DataFrame(annot_df['chr'].str.split('_').values.tolist(),
                                              index=annot_df.index)
-    
+     
     # Reorganize gene info for final .JAM file:
-    #   This first step will currently trip up if an annotation file has multiple genes at a single index...
-    #   Which will need to be handled when we get to that.
-    annot_df[['gene_string', 'genes']] = DataFrame(
-        annot_df['gene_string'].str.strip().str.split('\t').values.tolist(),
-        index=annot_df.index)
-    annot_df[['gene', 'sense']] = DataFrame(annot_df['genes'].str.strip().str.split(':').values.tolist(),
-                                            index=annot_df.index)
-    annot_df['gene_string'] = annot_df['gene_string'] + ':' + annot_df['sense']
     
     # Sort by Chromosome and index on chromosome
     annot_df = annot_df.sort_values(by=['chr', 'chr_pos'])
@@ -261,10 +245,10 @@ def parseAllChrsToDF(annot_file: str,
     annot_df = annot_df.astype({'chr': 'category',
                                 'chr_pos': 'int64',
                                 'gene': 'object',
-                                'gene_string': 'object'})
+                                'transcripts': 'object'})
     
     # Quickly reorder columns... might be completely superficial
-    annot_df = annot_df[['chr', 'chr_pos', 'gene', 'gene_string']]
+    annot_df = annot_df[['chr', 'chr_pos', 'gene', 'transcripts']]
     
     print(f'Finished parsing and sorting of file at: {annot_file}')
     
@@ -377,9 +361,9 @@ def assignReadsToGenes(sam_df_dict: CHR_DF_DICT, annot_df_dict: CHR_DF_DICT,
             # TODO: In the future we could utilize the parameter: "on='left'" in the merge call. This
             #       will provide the advantage(?) of allowing unmapped reads through, meaning we can
             #       pass these into analysis or QC scripts as needed.
-            sam_df_dict[chr_key] = df.merge(annot_df_dict[chr_key], on=['chr_pos', 'chr'])
-            print(f"\t\tSuccess, {len(sam_df_dict[chr_key][sam_df_dict[chr_key]['gene'] != numpy_nan].index):>7} "
-                  f"reads assigned to genes in Chr-{chr_key:->4}\n")
+            sam_df_dict[chr_key] = df.merge(annot_df_dict[chr_key], on=['chr', 'chr_pos'])
+            print(f"Chr-{chr_key:->4} genes assigned, read count="
+                  f"{len(sam_df_dict[chr_key][sam_df_dict[chr_key]['gene'] != numpy_nan].index):>7}")
             if print_rows:
                 print(sam_df_dict[chr_key][['read_id',
                                             'chr',
@@ -387,25 +371,22 @@ def assignReadsToGenes(sam_df_dict: CHR_DF_DICT, annot_df_dict: CHR_DF_DICT,
                                             'cigar',
                                             'read_seq',
                                             'gene',
-                                            'gene_string']].head(print_rows))
-                
-            # TODO: some functionality to drop full df if nothing is assigned at all, this is only an issue when
-            #       trying to work with a small slice of a annotations file for testing
+                                            'transcripts']].head(print_rows))
         except KeyError as key:
             if str(key).strip("'") == chr_key:
                 print(f"\t\tChr-{chr_key:->4} not found in annotations! -> Adding empty columns to compensate\n")
-                sam_df_dict[chr_key]['gene'], sam_df_dict[chr_key]['gene_string'] = numpy_nan, numpy_nan
+                sam_df_dict[chr_key]['gene'], sam_df_dict[chr_key]['transcripts'] = numpy_nan, numpy_nan
             else:
                 print(f"\tOther KeyError pertaining to:", str(key), chr_key)
     return sam_df_dict
 
 
 def fixSenseNonsense(sam_df_dict: CHR_DF_DICT,
-                     **kwargs) -> CHR_DF_DICT:
+                           **kwargs) -> CHR_DF_DICT:
     """
     fixSenseNonsense
     
-    Check for strand and sense/antisense, create rev-compliment as needed, and edits gene_string
+    Check for strand and sense/antisense, create rev-compliment as needed, and edits transcripts column
     """
     
     def revCompl(seq: str):
@@ -419,7 +400,7 @@ def fixSenseNonsense(sam_df_dict: CHR_DF_DICT,
         return ''.join([a[seq[-i]] for i in range(1, len(seq) + 1)])
     
     def S_AS_flag_rework(S_AS: int, chr_pos: int, read_seq: str,
-                         map_read_seq: str, N: int, gene_string: str):
+                         map_read_seq: str, N: int):
         """Stolen from assignReadsToGenes4.py"""
         if S_AS & 16 != 0:  # check strand
             chr_pos += len(map_read_seq) + N - 1
@@ -428,40 +409,47 @@ def fixSenseNonsense(sam_df_dict: CHR_DF_DICT,
             read_seq = revCompl(read_seq)
         else:
             read_strand = '+'
-        # This has some issues if reads without annotations get through >>>
-        if str(gene_string)[-1] == read_strand:
-            gene_string = str(gene_string)[:-1] + 'S'
-        else:
-            gene_string = str(gene_string)[:-1] + 'AS'
-        # <<< This has some issues if reads without annotations get through
-        return read_strand, read_seq, map_read_seq, chr_pos, gene_string
+        return read_strand, read_seq, map_read_seq, chr_pos
     
     for chr_key, df in sam_df_dict.items():
-        sam_df_dict[chr_key][['strand', 'read_seq', 'map_read_seq', 'chr_pos', 'gene_string']] = \
+        sam_df_dict[chr_key][['strand', 'read_seq', 'map_read_seq', 'chr_pos']] = \
             DataFrame(df.apply(lambda x: S_AS_flag_rework(x['strand'],
                                                           x['chr_pos'],
                                                           x['read_seq'],
                                                           x['map_read_seq'],
                                                           x['N'],
-                                                          x['gene_string']),
+                                                          ),
                                axis=1).tolist(), index=df.index)
     return sam_df_dict
 
-
-def hitIndexAndHitNumber(sam_df_dict: CHR_DF_DICT,
-                         **kwargs) -> CHR_DF_DICT:
-    # Define the internal function to be used per DF line:
-    def parseHIandNH_perRead(HI: str, NH: str):
+def finalFixers(sam_df_dict: CHR_DF_DICT, **kwargs) -> CHR_DF_DICT:
+    """
+    finalFixers
+    
+    Function to apply last touches on reads:
+        -Add sense or antisense call to gene
+        -Put HI (hit index) and NH (number of hits) together
+    """
+    def perReadFinalFix(gene: str, strand: str,
+                        HI: str, NH: str):
+        # This has some issues if reads without annotations get through >>>
+        if str(gene)[-1] == strand:
+            new_gene = str(gene)[:-1] + 'S'
+        else:
+            new_gene = str(gene)[:-1] + 'AS'
         # Pull out everything after the last ':'
         hit_index = HI.split(':')[-1]
         number_of_hits = NH.split(':')[-1]
         # This is marginally faster than f-string concatenation
         HINH = hit_index + ':' + number_of_hits
-        return HINH
+        return HINH, new_gene
     # Apply it to each chr DF:
     for chr_key, df in sam_df_dict.items():
-        sam_df_dict[chr_key]['HI:NH'] = DataFrame(df.apply(lambda x: parseHIandNH_perRead(x['HI'], x['NH']),
-                                                           axis=1).tolist(), index=df.index)
+        sam_df_dict[chr_key][['HI:NH', 'gene']] = DataFrame(df.apply(lambda x: perReadFinalFix(x['gene'],
+                                                                                               x['strand'],
+                                                                                               x['HI'],
+                                                                                               x['NH']),
+                                                                     axis=1).tolist(), index=df.index)
     return sam_df_dict
 
 
@@ -486,15 +474,15 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
     #  Currently doing this after dropping unassigned reads as it seems to be the time intensive step.
     post_map_df_dict = recoverMappedPortion_dfWrapper(sam_df_dict, print_rows=print_rows, **kwargs)
     
+    # Handle +/- and Sense/Antisense issues from SAM format
+    post_sense_antisense_df_dict = fixSenseNonsense(post_map_df_dict, print_rows=print_rows, **kwargs)
+    
     # Going for the df.merge() function for mapping annotations onto reads
-    assigned_df_dict = assignReadsToGenes(post_map_df_dict, annot_df_dict, print_rows=print_rows,
+    assigned_df_dict = assignReadsToGenes(post_sense_antisense_df_dict, annot_df_dict, print_rows=print_rows,
                                           keep_non_unique=keep_non_unique, **kwargs)
     
-    # Handle +/- and Sense/Antisense issues from SAM format
-    post_sense_antisense_df_dict = fixSenseNonsense(assigned_df_dict, print_rows=print_rows, **kwargs)
-    
     # Add the HitIndex:NumberOfHits column from the SAM HI and NH columns
-    jam_df_dict = hitIndexAndHitNumber(post_sense_antisense_df_dict, **kwargs)
+    jam_df_dict = finalFixers(assigned_df_dict, **kwargs)
     
     # Output to file:
     jam_columns = ['read_id',
@@ -506,14 +494,14 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
                    'map_read_seq',
                    'HI:NH',
                    'gene',
-                   'gene_string']
+                   'transcripts']
     joshSAM_columns = ['chr',
                        'chr_pos',
                        'strand',
                        'map_read_seq',
                        'read_length',  # We need a read length column
                        'gene',
-                       'gene_string']
+                       'transcripts']
     if output_joshSAM:
         for chr_key, df in sam_df_dict.items():
             jam_df_dict[chr_key]['read_length'] = DataFrame(df.apply(lambda x: len(x['map_read_seq']),
@@ -522,9 +510,10 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
         # joshSAM_all_chrs.sort_values(by=['chr', 'chr_pos'], inplace=True)
         joshSAM_all_chrs.sort_index(inplace=True)
         joshSAM_all_chrs.to_csv(f"{output_prefix}.allChrs.joshSAM",
-                            index=False, sep='\t',
-                            columns=joshSAM_columns)
-    elif not concatenate_output:
+                                index=False, sep='\t',
+                                columns=joshSAM_columns)
+    
+    if not concatenate_output:
         for chr_key, df in jam_df_dict.items():
             jam_df_dict[chr_key].sort_values(by=['chr', 'chr_pos'], inplace=True)
             jam_df_dict[chr_key].to_csv(f"{output_prefix}.chr{chr_key}.jam",
