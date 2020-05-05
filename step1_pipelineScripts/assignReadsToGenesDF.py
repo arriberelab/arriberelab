@@ -235,8 +235,6 @@ def parseAllChrsToDF(annot_file: str,
     # Split the chr_index column into two
     annot_df[['chr', 'chr_pos']] = DataFrame(annot_df['chr'].str.split('_').values.tolist(),
                                              index=annot_df.index)
-     
-    # Reorganize gene info for final .JAM file:
     
     # Sort by Chromosome and index on chromosome
     annot_df = annot_df.sort_values(by=['chr', 'chr_pos'])
@@ -252,22 +250,20 @@ def parseAllChrsToDF(annot_file: str,
     
     print(f'Finished parsing and sorting of file at: {annot_file}')
     
-    if print_rows:
+    if print_rows and print_rows == int:
         print(f"\nFirst {print_rows} rows of dataframe:\n",
-              annot_df.sort_values(by=['chr', 'chr_pos']).head(print_rows), '\n')
+              annot_df.sort_values(by=['chr', 'chr_pos']), '\n')
+    elif print_rows:
+        print(f"PrintError: print_rows parameter must be an integer, you passed: {print_rows},"
+              f"which is a {type(print_rows)}.")
     if deep_memory:
         print(annot_df.info(memory_usage='deep'))
     
     if split_chrs:
         annot_df_dict = dict(tuple(annot_df.groupby('chr')))
-        # # Print for each chromosome if the user asked for print_rows
-        # if print_rows:
-        #     for chr, df in annot_df_dict.items():
-        #         print(f"\nFirst {print_rows} rows of Chromosome-{chr}:\n", df.head(print_rows))
         # Short print to show how the dataframe was split up
         print(f"Split annotations dataframe into {len(annot_df_dict.keys())} separate df's"
-              #f":\n{annot_df_dict.keys()}"
-             )
+              f":\n{annot_df_dict.keys()}")
         return annot_df_dict
     else:
         return annot_df
