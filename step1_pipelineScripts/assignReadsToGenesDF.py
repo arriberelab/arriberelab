@@ -157,7 +157,7 @@ def parseSamToDF(sam_file: str,
     
     # This sort_values with the ignore_index option on will currently reset the
     # indexes to the new sorted order, I don't know if this is good or bad...
-    SAM_df = SAM_df.sort_values(by=[2, 3], ignore_index=True)
+    SAM_df = SAM_df.sort_values(by=[2, 3])  # TODO: ignore index removed
     
     # Rename columns, this can be the source of an error if a SAM file is not in
     #   the 15 column format - be wary!
@@ -479,27 +479,21 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
     sam_df_dict = parseSamToDF(sam_file, **kwargs)
     annot_df_dict = parseAllChrsToDF(annot_file, **kwargs)
     
-    end_of_imports = default_timer()  # Timer
-    
     # TODO: This is currently a little chaotic with all of the steps/naming. The goal was for it to be readable, but...
-    
-    # Going for the df.merge() function for mapping annotations onto reads
-    annotated_sam_df_dict = assignReadsToGenes(sam_df_dict, annot_df_dict, print_rows=print_rows,
-                                               keep_non_unique=keep_non_unique, **kwargs)
-    
-    end_of_assignment = default_timer()  # Timer
     
     # Apply the recoverMappedPortion() to dataframe to see how it does
     #  Currently doing this after dropping unassigned reads as it seems to be the time intensive step.
-    fixed_annotated_sam_df_dict = recoverMappedPortion_dfWrapper(annotated_sam_df_dict, print_rows=print_rows, **kwargs)
+    post_map_df_dict = recoverMappedPortion_dfWrapper(sam_df_dict, print_rows=print_rows, **kwargs)
+
+    # Handle +/- and Sense/Antisense issues from SAM format
+    post_sense_antisense_df_dict = fixSenseNonsense(post_map_df_dict, print_rows=print_rows, **kwargs)
+    
+    # Going for the df.merge() function for mapping annotations onto reads
+    assigned_df_dict = assignReadsToGenes(post_sense_antisense_df_dict, annot_df_dict, print_rows=print_rows,
+                                          keep_non_unique=keep_non_unique, **kwargs)
     
     # Add the HitIndex:NumberOfHits column from the SAM HI and NH columns
-    final_annotated_sam_df_dict = hitIndexAndHitNumber(fixed_annotated_sam_df_dict, **kwargs)
-    
-    # Handle +/- and Sense/Antisense issues from SAM format
-    jam_df_dict = fixSenseNonsense(final_annotated_sam_df_dict, print_rows=print_rows, **kwargs)
-    
-    end_of_cleanup = default_timer()  # Timer
+    jam_df_dict = hitIndexAndHitNumber(assigned_df_dict, **kwargs)
     
     # Output to file:
     jam_columns = ['read_id',
@@ -523,30 +517,27 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
         for chr_key, df in sam_df_dict.items():
             jam_df_dict[chr_key]['read_length'] = DataFrame(df.apply(lambda x: len(x['map_read_seq']),
                                                             axis=1).tolist(), index=df.index)
-        joshSAM_all_chrs = concat(jam_df_dict.values(), ignore_index=True)
-        joshSAM_all_chrs.sort_values(by=['chr', 'chr_pos'])
+        joshSAM_all_chrs = concat(jam_df_dict.values())
+        # joshSAM_all_chrs.sort_values(by=['chr', 'chr_pos'], inplace=True)
+        joshSAM_all_chrs.sort_index(inplace=True)
         joshSAM_all_chrs.to_csv(f"{output_prefix}.allChrs.joshSAM",
                             index=False, sep='\t',
                             columns=joshSAM_columns)
     elif not concatenate_output:
         for chr_key, df in jam_df_dict.items():
-            jam_df_dict[chr_key].sort_values(by=['chr', 'chr_pos'])
+            jam_df_dict[chr_key].sort_values(by=['chr', 'chr_pos'], inplace=True)
             jam_df_dict[chr_key].to_csv(f"{output_prefix}.chr{chr_key}.jam",
                                         index=False, sep='\t',
                                         columns=jam_columns)
     else:
         jam_all_chrs = concat(jam_df_dict.values(), ignore_index=True)
-        jam_all_chrs.sort_values(by=['chr', 'chr_pos'])
+        jam_all_chrs.sort_values(by=['chr', 'chr_pos'], inplace=True)
         jam_all_chrs.to_csv(f"{output_prefix}.allChrs.jam",
                             index=False, sep='\t',
                             columns=jam_columns)
     end_time = default_timer() # Timer
     print(f"\n\nDone?!\n"
-          f"Total Time: {end_time - start_time:<6.2f}\n\t"
-          f"Imports:    {end_of_imports - start_time:<6.2f}\n\t"
-          f"Assignment: {end_of_assignment - end_of_imports:<6.2f}\n\t"
-          f"Clean Up:   {end_of_cleanup - end_of_assignment:<6.2f}\n\t"
-          f"Write:      {end_time - end_of_cleanup:<6.2f}")
+          f"Total Time: {end_time - start_time:<6.2f}\n\t")
 
 
 if __name__ == '__main__':
