@@ -484,16 +484,16 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
     # Apply the recoverMappedPortion() to dataframe to see how it does
     #  Currently doing this after dropping unassigned reads as it seems to be the time intensive step.
     post_map_df_dict = recoverMappedPortion_dfWrapper(sam_df_dict, print_rows=print_rows, **kwargs)
-
-    # Handle +/- and Sense/Antisense issues from SAM format
-    post_sense_antisense_df_dict = fixSenseNonsense(post_map_df_dict, print_rows=print_rows, **kwargs)
     
     # Going for the df.merge() function for mapping annotations onto reads
-    assigned_df_dict = assignReadsToGenes(post_sense_antisense_df_dict, annot_df_dict, print_rows=print_rows,
+    assigned_df_dict = assignReadsToGenes(post_map_df_dict, annot_df_dict, print_rows=print_rows,
                                           keep_non_unique=keep_non_unique, **kwargs)
     
+    # Handle +/- and Sense/Antisense issues from SAM format
+    post_sense_antisense_df_dict = fixSenseNonsense(assigned_df_dict, print_rows=print_rows, **kwargs)
+    
     # Add the HitIndex:NumberOfHits column from the SAM HI and NH columns
-    jam_df_dict = hitIndexAndHitNumber(assigned_df_dict, **kwargs)
+    jam_df_dict = hitIndexAndHitNumber(post_sense_antisense_df_dict, **kwargs)
     
     # Output to file:
     jam_columns = ['read_id',
