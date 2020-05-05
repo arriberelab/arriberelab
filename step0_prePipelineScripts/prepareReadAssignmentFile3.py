@@ -21,7 +21,7 @@ Input: annots.gtf - gtf-formatted annotations. Will also get output name from th
 
 Output: a txt file where each line contains a position on a chr, and the txts at that site
     as:
-        position|txt1:posRelStart:posRelStop:+\tgene:+\n
+        position\tgene:+\ttxt1:posRelStart:posRelStop|txt2:posRelStart:posRelStop|...
 
 run as python prepareReadAssignmentFile.py annots.gtf
 """
