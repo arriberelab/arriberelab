@@ -230,7 +230,7 @@ def parseAllChrsToDF(annot_file: str,
     #     longer any I/O overhead.
     annot_df = read_csv(annot_file,
                         delimiter='\t',
-                        names=['chr', 'gene', 'transcripts'])
+                        names=['chr', 'gene', 'gene_string'])
     
     # Split the chr_index column into two
     annot_df[['chr', 'chr_pos']] = DataFrame(annot_df['chr'].str.split('_').values.tolist(),
@@ -245,10 +245,10 @@ def parseAllChrsToDF(annot_file: str,
     annot_df = annot_df.astype({'chr': 'category',
                                 'chr_pos': 'int64',
                                 'gene': 'object',
-                                'transcripts': 'object'})
+                                'gene_string': 'object'})
     
     # Quickly reorder columns... might be completely superficial
-    annot_df = annot_df[['chr', 'chr_pos', 'gene', 'transcripts']]
+    annot_df = annot_df[['chr', 'chr_pos', 'gene', 'gene_string']]
     
     print(f'Finished parsing and sorting of file at: {annot_file}')
     
@@ -371,11 +371,11 @@ def assignReadsToGenes(sam_df_dict: CHR_DF_DICT, annot_df_dict: CHR_DF_DICT,
                                             'cigar',
                                             'read_seq',
                                             'gene',
-                                            'transcripts']].head(print_rows))
+                                            'gene_tring']].head(print_rows))
         except KeyError as key:
             if str(key).strip("'") == chr_key:
                 print(f"\t\tChr-{chr_key:->4} not found in annotations! -> Adding empty columns to compensate\n")
-                sam_df_dict[chr_key]['gene'], sam_df_dict[chr_key]['transcripts'] = numpy_nan, numpy_nan
+                sam_df_dict[chr_key]['gene'], sam_df_dict[chr_key]['gene_string'] = numpy_nan, numpy_nan
             else:
                 print(f"\tOther KeyError pertaining to:", str(key), chr_key)
     return sam_df_dict
@@ -386,7 +386,7 @@ def fixSenseNonsense(sam_df_dict: CHR_DF_DICT,
     """
     fixSenseNonsense
     
-    Check for strand and sense/antisense, create rev-compliment as needed, and edits transcripts column
+    Check for strand and sense/antisense, create rev-compliment as needed, and edits gene_string column
     """
     
     def revCompl(seq: str):
@@ -494,14 +494,14 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
                    'map_read_seq',
                    'HI:NH',
                    'gene',
-                   'transcripts']
+                   'gene_string']
     joshSAM_columns = ['chr',
                        'chr_pos',
                        'strand',
                        'map_read_seq',
                        'read_length',  # We need a read length column
                        'gene',
-                       'transcripts']
+                       'gene_string']
     if output_joshSAM:
         for chr_key, df in sam_df_dict.items():
             jam_df_dict[chr_key]['read_length'] = DataFrame(df.apply(lambda x: len(x['map_read_seq']),
