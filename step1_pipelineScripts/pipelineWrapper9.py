@@ -26,7 +26,8 @@ run as python3 pipelineWrapper9.py settings.txt inputReads.fastq outPrefix
 """
 
 # import sys, common
-import os, readCollapser4, filterJoshSAMByReadLength, thecountReads
+import sys
+import os, readCollapser4, filterJamByReadLength, thecountReads
 import argparse
 import assignReadsToGenesDF
 import infoGraphQC
@@ -35,12 +36,9 @@ from logJosh import Tee
 
 # Absolute defaults are overwritten by the given settings file and any command line arguments given
 ABSOLUTE_DEFAULT_DICT = {'cores': 7, 'misMatchMax': 0,
-                         'optString': '--outFilterScoreMin 14'
-                                      '--outFilterScoreMinOverLread 0.3'
-                                      '--outFilterMatchNmin 14'
-                                      '--outFilterMatchNminOverLread 0.3'
+                         'optString': '--outFilterScoreMinOverLread 1'
+                                      '--outFilterMatchNminOverLread 1'
                                       '--outReadsUnmapped Fastx'
-                                      '--outFilterMismatchNmax 0'  # Need an edit here to allow us to drop in the arg if passed
                                       '--outSJfilterOverhangMin 6 6 6 6'}
 
 
@@ -90,7 +88,7 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     print('read length restriction does not include %sNs and %sNs.'%(umi5,umi3))
     print('to accomodate UMI length, this program will add %snts to acceptable length.'%(umi5+umi3))
     
-    os.system(f'cutadapt -a {adaptorSeq} '
+    os.system(f'cutadapt -a {adaptorSeq} -j {cores} '
               f'-m {minimumReadLength+umi5+umi3} '
               f'-M {maximumReadLength+umi5+umi3} '
               f'--too-short-output {outPrefix + ".trimmed.selfDestruct.tooShort.fastq"} '
@@ -98,7 +96,6 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
               f'{fastqFile} > {outPrefix + ".trimmed.selfDestruct.fastq"} '
               f'2>/dev/null'
               )
-    
     ############################################################################################################
     """Collapse reads and trim off UMIs"""
     ############################################################################################################
@@ -161,17 +158,9 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     ############################################################################################################
     print(f'Only running on {cores} cores.')
     print(f'{misMatchMax} mismatch max!')
-    """
-    optString= f'--outFilterScoreMin 14 ' \
-        f'--outFilterScoreMinOverLread 0.3 ' \
-        f'--outFilterMatchNmin 14 ' \
-        f'--outFilterMatchNminOverLread 0.3 ' \
-        f'--outReadsUnmapped Fastx ' \
-        f'--outFilterMismatchNmax {misMatchMax} ' \
-        f'--outSJfilterOverhangMin 6 6 6 6'
-    """
     print(f'Length/Score parameters: {optString}')
     os.system(f'STAR {optString} '
+              f'--outFilterMismatchNmax {misMatchMax} '
               f'--alignIntronMax 1 '
               f'--sjdbGTFfile {genomeAnnots} '
               f'--genomeDir {genomeDir} '
@@ -189,7 +178,7 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     # assignReadsToGenes4.main([genomeAnnotProcessed,
     #                          outPrefix+'.finalMapped.Aligned.out.sam',
     #                          outPrefix])
-    assignReadsToGenesDF.main(outPrefix+'finalMapped.Aligned.out.sam',
+    assignReadsToGenesDF.main(outPrefix+'.finalMapped.Aligned.out.sam',
                               genomeAnnotProcessed,
                               outPrefix,
                               keep_non_unique=False,
@@ -198,7 +187,7 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     # assignReadsToGenes5.main([genomeAnnotProcessed,
     #                          outPrefix+'.finalMapped.Aligned.out.sam',
     #                          outPrefix+'.redundantAndUnique'])
-    assignReadsToGenesDF.main(outPrefix + 'finalMapped.Aligned.out.sam',
+    assignReadsToGenesDF.main(outPrefix + '.finalMapped.Aligned.out.sam',
                               genomeAnnotProcessed,
                               outPrefix+'.redundantAndUnique',
                               keep_non_unique=True,
@@ -208,10 +197,8 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     """Additional filtering of reads by length"""
     ############################################################################################################
     # print('Quitting early!!!'), sys.exit()
-    
-    # TODO: Definitely broken:
     print('filtering read lengths again...')
-    filterJoshSAMByReadLength.main([outPrefix+'.jam',
+    filterJamByReadLength.main([outPrefix+'.allChrs.jam',
                                 minimumReadLength,
                                 maximumReadLength,
                                 outPrefix+'.filtered_%s-%snt.jam'%(minimumReadLength,maximumReadLength)])
