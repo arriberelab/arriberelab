@@ -518,7 +518,7 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
             jam_all_chrs.to_csv(f"{output_prefix}.redundantAndUnique.allChrs.joshSAM",
                                 index=False, sep='\t',
                                 columns=joshSAM_columns)
-    elif output_joshSAM:
+    if output_joshSAM:
         # joshSAM files need a read_length column
         jam_unique_all_chrs['read_length'] = DataFrame(jam_unique_all_chrs.apply(lambda x: len(x['map_read_seq']),
                                                        axis=1).tolist(), index=jam_unique_all_chrs.index)
