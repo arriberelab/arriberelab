@@ -238,7 +238,7 @@ def parseAllChrsToDF(annot_file: str,
                                                  index=annot_df.index)
     except ValueError as error:
         with open(annot_file, 'r') as file:
-            line_one = file[0]
+            line_one = file.readline()
         print(f"Error: {error}\n"
               f"\tLikely that genome annotation file at {annot_file} is in incorrect format.\n"
               f"\tPlease ensure that format is: \"chr_chr-pos\\tgene\\ttranscript(s)(separated by '|')\"\n"
