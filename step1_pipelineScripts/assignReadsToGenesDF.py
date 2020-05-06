@@ -505,9 +505,13 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
     jam_all_chrs = concat(jam_df_dict.values())  # testing
     # Sort by chromosome and chr_pos
     jam_all_chrs.sort_values(by=['chr', 'chr_pos'], inplace=True)
-    
+    # This solves some issue with pandas eorror relating to copying a slice:
+    if output_joshSAM:
+        # joshSAM files need a read_length column
+        jam_all_chrs['read_length'] = DataFrame(jam_all_chrs.apply(lambda x: len(x['map_read_seq']),
+                                                                   axis=1).tolist(), index=jam_all_chrs.index)
     # New DF with only unique reads (this could be a source of memory overload as its creating a full copy(?))
-    jam_unique_all_chrs = jam_all_chrs[jam_all_chrs['NH'].str.endswith(':1')]
+    jam_unique_all_chrs = jam_all_chrs[jam_all_chrs['NH'].str.endswith(':1')].copy(deep=True)
     # Write unique reads to .jam file >>>
     jam_unique_all_chrs.to_csv(f"{output_prefix}.allChrs.jam",
                                index=False, sep='\t',
@@ -518,9 +522,6 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
                             index=False, sep='\t',
                             columns=jam_columns)
         if output_joshSAM:
-            # joshSAM files need a read_length column
-            jam_all_chrs['read_length'] = DataFrame(jam_all_chrs.apply(lambda x: len(x['map_read_seq']),
-                                                                       axis=1).tolist(), index=jam_all_chrs.index)
             # joshSAM files are organized based on the original SAM file (this info should be retained by the indexes)
             jam_all_chrs.sort_index(inplace=True)
             # Write joshSAM file with non-unique reads and unique reads >>>
@@ -528,9 +529,6 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
                                 index=False, sep='\t',
                                 columns=joshSAM_columns)
     if output_joshSAM:
-        # joshSAM files need a read_length column
-        jam_unique_all_chrs['read_length'] = DataFrame(jam_unique_all_chrs.apply(lambda x: len(x['map_read_seq']),
-                                                       axis=1).tolist(), index=jam_unique_all_chrs.index)
         # joshSAM files are organized based on the original SAM file (this info should be retained by the indexes)
         jam_unique_all_chrs.sort_index(inplace=True)
         # Write joshSAM file with only unique reads >>>
