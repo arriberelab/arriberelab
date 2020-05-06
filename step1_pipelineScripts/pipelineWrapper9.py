@@ -85,8 +85,8 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     ############################################################################################################
     # print('skipping trimming of any kind, so min/maximumReadLength restrictions ignored.')
     # os.system(f'cp {fastqFile} {outPrefix}.trimmed')
-    print('read length restriction does not include %sNs and %sNs.'%(umi5,umi3))
-    print('to accomodate UMI length, this program will add %snts to acceptable length.'%(umi5+umi3))
+    print(f'read length restriction does not include {umi5}Ns and {umi3}Ns.')
+    print(f'to accommodate UMI length, this program will add {umi5 + umi3}nts to acceptable length.')
     
     os.system(f'cutadapt -a {adaptorSeq} -j {cores} '
               f'-m {minimumReadLength+umi5+umi3} '
@@ -96,15 +96,15 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
               f'{fastqFile} > {outPrefix + ".trimmed.selfDestruct.fastq"} '
               f'2>/dev/null'
               )
-    ############################################################################################################
+    ############################################################################################################ implementing
     """Collapse reads and trim off UMIs"""
     ############################################################################################################
     ##it doesn't make sense to run readCollapser if there's no UMI
     if 0<umi5+umi3<=6:
-        print(f"Your combined UMI length is {umi5 + umi3}, which is pretty short.\
-            I'm going to try and collapse based on it, assuming you know what \
-            you are doing. But if you do not understand this message, please \
-            go find someone who can help you.")
+        print(f"\nYour combined UMI length is {umi5 + umi3}, which is pretty short.\n"
+              f"I'm going to try and collapse based on it, assuming you know what\n"
+              f"you are doing. But if you do not understand this message, please\n"
+              f"go find someone who can help you.\n")
     ##
     if umi5+umi3!=0:
         readCollapser4.main([outPrefix+'.trimmed.selfDestruct.fastq', 
