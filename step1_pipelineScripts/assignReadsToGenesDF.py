@@ -357,12 +357,14 @@ def assignReadsToGenes(sam_df_dict: CHR_DF_DICT, annot_df_dict: CHR_DF_DICT,
     print(f"\nAnnotation alignment for {len(sam_df_dict.keys())} chromosomes:")
     for chr_key, df in sam_df_dict.items():
         try:
+            # TODO: Move unique filtering to the end of this. It will slow down the whole process a bit,
+            #       but it will mean that a whole second round won't be necessary
+            #       -> Other option could be to have two sites of this flag being implemented in the file, and always
+            #          outputting two files (unique_only.jam & unique+multimap.jam) if the flag is raised
             # ONLY KEEP UNIQUELY MAPPING READS: >>
             if not keep_non_unique:
                 df = sam_df_dict[chr_key][sam_df_dict[chr_key]['NH'].str.endswith(':1')]
             # << ONLY KEEP UNIQUELY MAPPING READS
-            
-            ### print(f"\tPreforming alignment for Chr-{chr_key:->4} containing {len(df.index)} reads")
             # Using the df.merge() function for mapping annotations onto reads
             # TODO: In the future we could utilize the parameter: "on='left'" in the merge call. This
             #       will provide the advantage(?) of allowing unmapped reads through, meaning we can
@@ -427,6 +429,7 @@ def fixSenseNonsense(sam_df_dict: CHR_DF_DICT,
                                                           ),
                                axis=1).tolist(), index=df.index)
     return sam_df_dict
+
 
 def finalFixers(sam_df_dict: CHR_DF_DICT, **kwargs) -> CHR_DF_DICT:
     """
