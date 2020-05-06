@@ -101,10 +101,10 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     ############################################################################################################
     ##it doesn't make sense to run readCollapser if there's no UMI
     if 0<umi5+umi3<=6:
-        print(f'Your combined UMI length is {umi5+umi3}, which is pretty short.\
-            I\'m going to try and collapse based on it, assuming you know what \
+        print(f"Your combined UMI length is {umi5 + umi3}, which is pretty short.\
+            I'm going to try and collapse based on it, assuming you know what \
             you are doing. But if you do not understand this message, please \
-            go find someone who can help you.')
+            go find someone who can help you.")
     ##
     if umi5+umi3!=0:
         readCollapser4.main([outPrefix+'.trimmed.selfDestruct.fastq', 
