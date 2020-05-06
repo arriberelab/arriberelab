@@ -44,7 +44,7 @@ ABSOLUTE_DEFAULT_DICT = {'cores': 7, 'misMatchMax': 0,
 
 def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     maximumReadLength,genomeDir,genomeAnnots,cores,misMatchMax,
-    umi5,umi3,optString,**otherkwargs):
+    umi5,umi3,optString,keep_non_unique,output_joshSAM,**otherkwargs):
     
     #Uncomment the following for filter round of mapping:
     """
@@ -181,17 +181,17 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     assignReadsToGenesDF.main(outPrefix+'.finalMapped.Aligned.out.sam',
                               genomeAnnotProcessed,
                               outPrefix,
-                              keep_non_unique=False,
-                              concatenate_output=True)
-    print('Assigning reads to genes allowing for multiply-mapping reads...')
+                              keep_non_unique=keep_non_unique,
+                              output_joshSAM=output_joshSAM)
+    # print('Assigning reads to genes allowing for multiply-mapping reads...')
     # assignReadsToGenes5.main([genomeAnnotProcessed,
     #                          outPrefix+'.finalMapped.Aligned.out.sam',
     #                          outPrefix+'.redundantAndUnique'])
-    assignReadsToGenesDF.main(outPrefix + '.finalMapped.Aligned.out.sam',
-                              genomeAnnotProcessed,
-                              outPrefix+'.redundantAndUnique',
-                              keep_non_unique=True,
-                              concatenate_output=True)
+    # assignReadsToGenesDF.main(outPrefix + '.finalMapped.Aligned.out.sam',
+    #                           genomeAnnotProcessed,
+    #                           outPrefix+'.redundantAndUnique',
+    #                           keep_non_unique=True,
+    #                           concatenate_output=True)
     print('Done with read assignment!')
     ############################################################################################################
     """Additional filtering of reads by length"""
@@ -245,10 +245,12 @@ def parseArguments():
     parser.add_argument('--misMatchMax', metavar='misMatchMax', type=int, default=None,  # 0 mismatchmax as default
                         help='Number of mismatches to tolerate during mapping.')
     # Flag Arguments: (just add these as tags to change pipeline functionality)
-    parser.add_argument('-u', '--keep_non_unique', action='store_true',  # This is currently unused!
+    parser.add_argument('-u', '--keep_non_unique', action='store_true',
                         help="Boolean flag to allow non-unique reads in the final .jam file(s).")
     parser.add_argument('-p', '--print_arguments', action='store_true',
                         help="Boolean flag to show how arguments are overwritten/accepted")
+    parser.add_argument('-j', '--output_joshSAM', action='store_true',
+                        help="Boolean flag to also output joshSAM format files in addition to the jam")
     
     # Spit out namespace object from argParse
     args = parser.parse_args()
