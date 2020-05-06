@@ -247,10 +247,10 @@ def parseArguments():
     # Flag Arguments: (just add these as tags to change pipeline functionality)
     parser.add_argument('-u', '--keep_non_unique', action='store_true',
                         help="Boolean flag to allow non-unique reads in the final .jam file(s).")
-    parser.add_argument('-p', '--print_arguments', action='store_true',
-                        help="Boolean flag to show how arguments are overwritten/accepted")
     parser.add_argument('-j', '--output_joshSAM', action='store_true',
                         help="Boolean flag to also output joshSAM format files in addition to the jam")
+    parser.add_argument('-p', '--print_arguments', action='store_true',
+                        help="Boolean flag to show how arguments are overwritten/accepted")
     
     # Spit out namespace object from argParse
     args = parser.parse_args()
