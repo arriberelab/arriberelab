@@ -175,13 +175,12 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     ############################################################################################################
     print('Assigning reads to genes', end=' ')
     if keep_non_unique:
-        print('allowing for multiply-mapping reads...')
+        print('allowing for multiply-mapping reads...\n')
     else:
-        print('only allowing uniquely-mapping reads...')
+        print('only allowing uniquely-mapping reads...\n')
     genomeAnnotProcessed=genomeAnnots.strip('gtf')+'allChrs.txt'
-    # assignReadsToGenes4.main([genomeAnnotProcessed,
-    #                          outPrefix+'.finalMapped.Aligned.out.sam',
-    #                          outPrefix])
+    # This currently is dramatically slowed by rRNA locus especially when keeping non-unique,
+    # filter-mapping would be really great
     assignReadsToGenesDF.main(outPrefix+'.finalMapped.Aligned.out.sam',
                               genomeAnnotProcessed,
                               outPrefix,
@@ -191,10 +190,6 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
                               output_joshSAM=output_joshSAM,  # Output old format joshSAM file in addition to .jam if
                               #                                 this flag is passed. Also stacks with keep_non_unique
                               )
-    # print('Assigning reads to genes allowing for multiply-mapping reads...')
-    # assignReadsToGenes5.main([genomeAnnotProcessed,
-    #                          outPrefix+'.finalMapped.Aligned.out.sam',
-    #                          outPrefix+'.redundantAndUnique'])
     print('Done with read assignment!')
     ############################################################################################################
     """Additional filtering of reads by length"""
