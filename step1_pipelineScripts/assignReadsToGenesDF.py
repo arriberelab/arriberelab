@@ -354,7 +354,7 @@ def assignReadsToGenes(sam_df_dict: CHR_DF_DICT, annot_df_dict: CHR_DF_DICT,
             #       pass these into analysis or QC scripts as needed.
             sam_df_dict[chr_key] = df.merge(annot_df_dict[chr_key], on=['chr', 'chr_pos'])
             print(f"Chr-{chr_key:->4} genes assigned, read count="
-                  f"{len(sam_df_dict[chr_key][sam_df_dict[chr_key]['gene'] != numpy_nan].index):>7}")
+                  f"{len(sam_df_dict[chr_key][sam_df_dict[chr_key]['gene'] != numpy_nan].index):<7}")
             if print_rows:
                 print(sam_df_dict[chr_key][['read_id',
                                             'chr',
