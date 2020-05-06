@@ -72,16 +72,16 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     
     ############################################################################################################
     
-    print(f'adaptorseq: {adaptorSeq}\n'
-          f'minimumReadLength (not including UMI): {minimumReadLength}\n'
-          f'maximumReadLength (not including UMI): {maximumReadLength}\n'
-          f'5\' UMI length: {umi5}\n'
-          f'3\' UMI length: {umi3}\n'
-          f'genomeDir: {genomeDir}\n'
-          f'genomeAnnots: {genomeAnnots}\n'
-          f'cores To Use: {cores}\n'
-          f'misMatchMax: {misMatchMax}\n'
-          )
+    # print(f'adaptorseq: {adaptorSeq}\n'
+    #       f'minimumReadLength (not including UMI): {minimumReadLength}\n'
+    #       f'maximumReadLength (not including UMI): {maximumReadLength}\n'
+    #       f'5\' UMI length: {umi5}\n'
+    #       f'3\' UMI length: {umi3}\n'
+    #       f'genomeDir: {genomeDir}\n'
+    #       f'genomeAnnots: {genomeAnnots}\n'
+    #       f'cores To Use: {cores}\n'
+    #       f'misMatchMax: {misMatchMax}\n'
+    #       )
     
     ############################################################################################################
     """Trim adaptor from reads and sort by desired length"""
@@ -303,11 +303,9 @@ def combineSettingsAndArguments():
     finalArgDict.update(absoluteDefDict)
     finalArgDict.update(settingsDict)
     finalArgDict.update(argDict)
-    if finalArgDict['print_arguments']:
-        print("\nFinal Arguments: (absolute defaults overwritten by settings.txt then overwritten by CLI arguments)")
+    print("\nFinal Arguments: (absolute defaults overwritten by settings.txt then overwritten by CLI arguments)")
     for key, arg in finalArgDict.items():
-        if finalArgDict['print_arguments']:
-            print(f"\t{key} = {arg}")
+        print(f"\t{key} = {arg}")
         try:
             finalArgDict[key] = int(arg)
         except ValueError:
