@@ -22,7 +22,7 @@ Input: settings.txt - a line-delimited settings file in the format:
 
     inputReads.fastq - a fastq file of reads
 
-run as python3 pipelineWrapper9.py settings.txt inputReads.fastq outPrefix
+run as python3 pipelineWrapper9.py inputReads.fastq settings.txt outPrefix
 """
 
 # import sys, common
@@ -311,6 +311,8 @@ def combineSettingsAndArguments():
         try:
             finalArgDict[key] = int(arg)
         except ValueError:
+            finalArgDict[key] = str(arg)
+        except TypeError:
             finalArgDict[key] = str(arg)
     return finalArgDict
 
