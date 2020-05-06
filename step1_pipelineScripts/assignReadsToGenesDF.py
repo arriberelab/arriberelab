@@ -473,8 +473,8 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
     start_time = default_timer()  # Timer
     
     # Load the read and annotation files into pandas DFs
-    sam_df_dict = parseSamToDF(sam_file, **kwargs)
     annot_df_dict = parseAllChrsToDF(annot_file, **kwargs)
+    sam_df_dict = parseSamToDF(sam_file, **kwargs)
     
     # TODO: This is currently a little chaotic with all of the steps/naming. The goal was for it to be readable, but...
     
