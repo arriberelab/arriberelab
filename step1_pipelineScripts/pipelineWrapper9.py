@@ -47,7 +47,8 @@ ABSOLUTE_DEFAULT_DICT = {'cores': 7,
                          f'--outFilterMatchNmin 14 '
                          f'--outFilterMatchNminOverLread 0.3 '
                          f'--outReadsUnmapped Fastx '
-                         f'--outSJfilterOverhangMin 1000 1000 1000 1000 '}
+                         f'--outSJfilterOverhangMin 1000 1000 1000 1000 ',
+                         'genomeDir2': None, 'genomeAnnots2': None}
 
 
 def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
