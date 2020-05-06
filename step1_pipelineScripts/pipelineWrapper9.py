@@ -35,19 +35,18 @@ import infoGraphQC
 from logJosh import Tee
 
 # Absolute defaults are overwritten by the given settings file and any command line arguments given
-ABSOLUTE_DEFAULT_DICT = {'cores': 7,
-                         'misMatchMax': 0,
+ABSOLUTE_DEFAULT_DICT = {'cores': 7, 'misMatchMax': 0,
                          'optString': '--outFilterScoreMinOverLread 1'
                                       '--outFilterMatchNminOverLread 1'
                                       '--outReadsUnmapped Fastx'
                                       '--outSJfilterOverhangMin 6 6 6 6',
                          'misMatchMax2': 3,
                          'optString2': f'--outFilterScoreMin 14 '
-                         f'--outFilterScoreMinOverLread 0.3 '
-                         f'--outFilterMatchNmin 14 '
-                         f'--outFilterMatchNminOverLread 0.3 '
-                         f'--outReadsUnmapped Fastx '
-                         f'--outSJfilterOverhangMin 1000 1000 1000 1000 ',
+                                       f'--outFilterScoreMinOverLread 0.3 '
+                                       f'--outFilterMatchNmin 14 '
+                                       f'--outFilterMatchNminOverLread 0.3 '
+                                       f'--outReadsUnmapped Fastx '
+                                       f'--outSJfilterOverhangMin 1000 1000 1000 1000 ',
                          'genomeDir2': None, 'genomeAnnots2': None}
 
 
@@ -117,10 +116,10 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
                          outPrefix+'.trimmed.collapsed.selfDestruct.fastq'])
     else:
         print('Skipping collapsing...')
-        ##the next line creates a symbolic link for the .collapsed file location
-        ##instead of the prior way, which copied them.
+        # The next line creates a symbolic link for the .collapsed file location
+        # instead of the prior way, which copied them.
         os.system(f'ln -s {outPrefix}.trimmed.selfDestruct.fastq '
-                    f'{outPrefix}.trimmed.collapsed.selfDestruct.fastq')
+                  f'{outPrefix}.trimmed.collapsed.selfDestruct.fastq')
     
     ############################################################################################################
     """Introduce a variable to make reading code easier"""
@@ -237,9 +236,9 @@ def parseArguments():
                         help='Genome directory where STAR index can be found.')
     parser.add_argument('--genomeAnnots', metavar='genomeAnnots', type=str, default=None,
                         help='Genome annotations (gtf format).')
-    parser.add_argument('--cores', metavar='cores', type=int, default=None,  # 7 cores as default!
+    parser.add_argument('--cores', metavar='cores', type=int, default=None,
                         help='Number of cores to use.')
-    parser.add_argument('--misMatchMax', metavar='misMatchMax', type=int, default=None,  # 0 mismatchmax as default
+    parser.add_argument('--misMatchMax', metavar='misMatchMax', type=int, default=None,
                         help='Number of mismatches to tolerate during mapping.')
     # Flag Arguments: (just add these as tags to change pipeline functionality)
     parser.add_argument('-u', '--keep_non_unique', action='store_true',
