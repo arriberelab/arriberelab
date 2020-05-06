@@ -35,23 +35,26 @@ import infoGraphQC
 from logJosh import Tee
 
 # Absolute defaults are overwritten by the given settings file and any command line arguments given
-ABSOLUTE_DEFAULT_DICT = {'cores': 7, 'misMatchMax': 0,
+ABSOLUTE_DEFAULT_DICT = {'cores': 7,
+                         'misMatchMax': 0,
                          'optString': '--outFilterScoreMinOverLread 1'
                                       '--outFilterMatchNminOverLread 1'
                                       '--outReadsUnmapped Fastx'
-                                      '--outSJfilterOverhangMin 6 6 6 6'}
+                                      '--outSJfilterOverhangMin 6 6 6 6',
+                         'misMatchMax2': 3,
+                         'optString2': f'--outFilterScoreMin 14 '
+                         f'--outFilterScoreMinOverLread 0.3 '
+                         f'--outFilterMatchNmin 14 '
+                         f'--outFilterMatchNminOverLread 0.3 '
+                         f'--outReadsUnmapped Fastx '
+                         f'--outSJfilterOverhangMin 1000 1000 1000 1000 '}
 
 
 def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     maximumReadLength,genomeDir,genomeAnnots,cores,misMatchMax,
-    umi5,umi3,optString,keep_non_unique,output_joshSAM,**otherkwargs):
+    umi5,umi3,optString,filterMap,optString2,genomeDir2,genomeAnnots2,misMatchMax2,
+    keep_non_unique,output_joshSAM,**otherkwargs):
     
-    #Uncomment the following for filter round of mapping:
-    """
-    genomeDir2=setList[10]
-    genomeAnnots2=setList[11]
-    optString2=setList[12]
-    """
     ############################################################################################################
     """First set some parameters-- all of this can be deleted if we're good""" 
     ############################################################################################################
@@ -126,33 +129,27 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     ############################################################################################################
     """Perform a filter round of mapping. e.g. to rDNA or RNAi trigger"""
     ############################################################################################################
-    print('skipping filter round of mapping...')
+    if filterMap and genomeDir2 and genomeAnnots2:
+        print(f'performing filter round of mapping to {genomeDir2}')
+        print(f'Only running on {cores} cores.')
+        print(f'{misMatchMax2} mismatch max!')
+        print(f'Length/Score parameters: {optString2}')
+        os.system(f'STAR {optString2} '
+                  f'--outFilterMismatchNmax {misMatchMax2} '
+                  f'--alignIntronMax 1 '
+                  f'--sjdbGTFfile {genomeAnnots2} '
+                  f'--genomeDir {genomeDir2} '
+                  f'--readFilesIn {readFile} '
+                  f'--runThreadN {cores} '
+                  f'--outFileNamePrefix {outPrefix}.trimmed.collapsed.mapped.filter'
+                  )
+        #Now rewrite the read file to map from the unmapped reads
+        readFile=outPrefix+'.trimmed.collapsed.mapped.filterUnmapped.out.mate1'
+    elif filterMap:
+        print('No file given for genomeDir2 or genomeAnnots2')
+    else:
+        print('skipping filter round of mapping...')
     
-    ##uncomment to do filter round of mapping
-    """
-    misMatchMax2=0
-    print(f'performing filter round of mapping to {genomeDir2}')
-    print(f'Only running on {cores} cores.')
-    print(f'{misMatchMax2} mismatch max!')
-    optString2= f'--outFilterScoreMin 14 ' \
-        f'--outFilterScoreMinOverLread 0.3 ' \
-        f'--outFilterMatchNmin 14 ' \
-        f'--outFilterMatchNminOverLread 0.3 ' \
-        f'--outReadsUnmapped Fastx ' \
-        f'--outFilterMismatchNmax {misMatchMax2} ' \
-        f'--outSJfilterOverhangMin 1000 1000 1000 1000 '
-    print(f'Length/Score parameters: {optString2}')
-    os.system(f'STAR {optString2} '
-              f'--alignIntronMax 1 '
-              f'--sjdbGTFfile {genomeAnnots2} '
-              f'--genomeDir {genomeDir2} '
-              f'--readFilesIn {readFile} '
-              f'--runThreadN {cores} '
-              f'--outFileNamePrefix {outPrefix}.trimmed.collapsed.mapped.filter'
-              )
-    #Now rewrite the read file to map from the unmapped reads
-    #readFile=outPrefix+'.trimmed.collapsed.mapped.filterUnmapped.out.mate1'
-    """
     
     ############################################################################################################
     """Commence read mapping"""
@@ -251,6 +248,8 @@ def parseArguments():
                         help="Boolean flag to also output joshSAM format files in addition to the jam")
     parser.add_argument('-p', '--print_arguments', action='store_true',
                         help="Boolean flag to show how arguments are overwritten/accepted")
+    parser.add_argument('-f', '--filterMap', action='store_true',
+                        help="Boolean flag to perform filter mapping")
     
     # Spit out namespace object from argParse
     args = parser.parse_args()
@@ -319,7 +318,4 @@ def combineSettingsAndArguments():
 if __name__ == '__main__':
     Tee()
     argument_dict = combineSettingsAndArguments()
-    # Below is where the 'magic' is happening just as it was with the **vars(argParse_NameSpace):
-    #   main() is unpacking the dictionary and using the dictionary's keys to point to variables that
-    #   main() is asking for
     main(**argument_dict)
