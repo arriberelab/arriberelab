@@ -89,7 +89,7 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     print(f'to accommodate UMI length, this program will add {umi5 + umi3}nts to acceptable length.')
     
     os.system(f'cutadapt -a {adaptorSeq} '
-              # f'-j {cores} '
+              f'-j {cores} '
               f'-m {minimumReadLength+umi5+umi3} '
               f'-M {maximumReadLength+umi5+umi3} '
               f'--too-short-output {outPrefix + ".trimmed.selfDestruct.tooShort.fastq"} '
