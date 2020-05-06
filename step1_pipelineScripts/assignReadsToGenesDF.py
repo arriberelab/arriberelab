@@ -456,7 +456,7 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
     
     # Load the read and annotation files into pandas DFs
     annot_df_dict = parseAllChrsToDF(annot_file, **kwargs)
-    sam_df_dict = parseSamToDF(sam_file, **kwargs)
+    sam_df_dict = parseSamToDF(sam_file, keep_non_unique=keep_non_unique, **kwargs)
     
     # TODO: This is currently a little chaotic with all of the steps/naming. The goal was for it to be readable, but...
     
