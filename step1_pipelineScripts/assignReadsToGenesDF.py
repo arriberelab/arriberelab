@@ -442,13 +442,16 @@ def finalFixers(sam_df_dict: CHR_DF_DICT, **kwargs) -> CHR_DF_DICT:
     print(f"\nCreating HI:NH column for {len(sam_df_dict.keys())} chromosomes:")
     # Apply it to each chr DF:
     for chr_key, df in sam_df_dict.items():
-        sam_df_dict[chr_key][['HI:NH', 'gene']] = DataFrame(df.apply(lambda x: perReadFinalFix(x['gene'],
-                                                                                               x['strand'],
-                                                                                               x['HI'],
-                                                                                               x['NH']),
-                                                                     axis=1).tolist(), index=df.index)
-        print(f'Chr-{chr_key:->4} HI:NH column created, '
-              f'read count={len(sam_df_dict[chr_key].index)}')
+        if not df.empty:
+            sam_df_dict[chr_key][['HI:NH', 'gene']] = DataFrame(df.apply(lambda x: perReadFinalFix(x['gene'],
+                                                                                                   x['strand'],
+                                                                                                   x['HI'],
+                                                                                                   x['NH']),
+                                                                         axis=1).tolist(), index=df.index)
+            print(f'Chr-{chr_key:->4} HI:NH column created, '
+                  f'read count={len(sam_df_dict[chr_key].index)}')
+        else:
+            print(f'Chr-{chr_key:->4} is empty!')
     return sam_df_dict
 
 
