@@ -6,8 +6,8 @@ April 2, 2020: Now accepts settings via a line-delimited txt file
 
 Input: settings.txt - a line-delimited settings file in the format:
     adaptorSeq|(raw sequence of adaptor)
-    minReadLength|(min length after adaptor and UMI trimming)
-    maxReadLength|(max length after adaptor and UMI trimming)
+    minimumReadLength|(min length after adaptor and UMI trimming)
+    maximumReadLength|(max length after adaptor and UMI trimming)
     UMI5|(5' UMI length in nts)
     UMI3|(3' UMI length in nts)
     genomeDir|(full path to genome directory)
@@ -173,11 +173,11 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     ############################################################################################################
     """Assign reads to genes"""
     ############################################################################################################
-    print('Assigning reads to genes', end=' ')
+    print('\nAssigning reads to genes', end=' ')
     if keep_non_unique:
-        print('allowing for multiply-mapping reads...\n')
+        print('allowing for multiply-mapping reads...')
     else:
-        print('only allowing uniquely-mapping reads...\n')
+        print('only allowing uniquely-mapping reads...')
     genomeAnnotProcessed=genomeAnnots.strip('gtf')+'allChrs.txt'
     # This currently is dramatically slowed by rRNA locus especially when keeping non-unique,
     # filter-mapping would be really great
