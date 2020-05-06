@@ -129,24 +129,25 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     ############################################################################################################
     """Perform a filter round of mapping. e.g. to rDNA or RNAi trigger"""
     ############################################################################################################
-    if filterMap and genomeDir2 and genomeAnnots2:
-        print(f'performing filter round of mapping to {genomeDir2}')
-        print(f'Only running on {cores} cores.')
-        print(f'{misMatchMax2} mismatch max!')
-        print(f'Length/Score parameters: {optString2}')
-        os.system(f'STAR {optString2} '
-                  f'--outFilterMismatchNmax {misMatchMax2} '
-                  f'--alignIntronMax 1 '
-                  f'--sjdbGTFfile {genomeAnnots2} '
-                  f'--genomeDir {genomeDir2} '
-                  f'--readFilesIn {readFile} '
-                  f'--runThreadN {cores} '
-                  f'--outFileNamePrefix {outPrefix}.trimmed.collapsed.mapped.filter'
-                  )
-        #Now rewrite the read file to map from the unmapped reads
-        readFile=outPrefix+'.trimmed.collapsed.mapped.filterUnmapped.out.mate1'
-    elif filterMap:
-        print('No file given for genomeDir2 or genomeAnnots2')
+    if filterMap:
+        if genomeDir2 and genomeAnnots2:
+            print(f'performing filter round of mapping to {genomeDir2}')
+            print(f'Only running on {cores} cores.')
+            print(f'{misMatchMax2} mismatch max!')
+            print(f'Length/Score parameters: {optString2}')
+            os.system(f'STAR {optString2} '
+                      f'--outFilterMismatchNmax {misMatchMax2} '
+                      f'--alignIntronMax 1 '
+                      f'--sjdbGTFfile {genomeAnnots2} '
+                      f'--genomeDir {genomeDir2} '
+                      f'--readFilesIn {readFile} '
+                      f'--runThreadN {cores} '
+                      f'--outFileNamePrefix {outPrefix}.trimmed.collapsed.mapped.filter'
+                      )
+            #Now rewrite the read file to map from the unmapped reads
+            readFile=outPrefix+'.trimmed.collapsed.mapped.filterUnmapped.out.mate1'
+        else:
+            print('No file given for genomeDir2 or genomeAnnots2')
     else:
         print('skipping filter round of mapping...')
     
