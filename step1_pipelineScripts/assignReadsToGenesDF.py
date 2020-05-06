@@ -308,6 +308,7 @@ def recoverMappedPortion_dfWrapper(sam_df_dict: CHR_DF_DICT, print_rows: int = N
             #     print(entry[1], end='')
         return mappedRead, N
     
+    print(f"\nRecovering mapped portion of reads for {len(sam_df_dict.keys())} chromosomes:")
     # Loop through each chromosome
     for chr_key, df in sam_df_dict.items():
         try:
@@ -372,7 +373,7 @@ def assignReadsToGenes(sam_df_dict: CHR_DF_DICT, annot_df_dict: CHR_DF_DICT,
 
 
 def fixSenseNonsense(sam_df_dict: CHR_DF_DICT,
-                           **kwargs) -> CHR_DF_DICT:
+                     **kwargs) -> CHR_DF_DICT:
     """
     fixSenseNonsense
     
@@ -401,6 +402,7 @@ def fixSenseNonsense(sam_df_dict: CHR_DF_DICT,
             read_strand = '+'
         return read_strand, read_seq, map_read_seq, chr_pos
     
+    print(f"\nApplying sense and rev-comp changes to {len(sam_df_dict.keys())} chromosomes:")
     for chr_key, df in sam_df_dict.items():
         sam_df_dict[chr_key][['strand', 'read_seq', 'map_read_seq', 'chr_pos']] = \
             DataFrame(df.apply(lambda x: S_AS_flag_rework(x['strand'],
@@ -410,6 +412,8 @@ def fixSenseNonsense(sam_df_dict: CHR_DF_DICT,
                                                           x['N'],
                                                           ),
                                axis=1).tolist(), index=df.index)
+        print(f'Chr-{chr_key:->4} sense and rev-comp changes applied, '
+              f'read count={len(sam_df_dict[chr_key].index)}')
     return sam_df_dict
 
 
@@ -434,6 +438,8 @@ def finalFixers(sam_df_dict: CHR_DF_DICT, **kwargs) -> CHR_DF_DICT:
         # This is marginally faster than f-string concatenation
         HINH = hit_index + ':' + number_of_hits
         return HINH, new_gene
+    
+    print(f"\nCreating HI:NH column for {len(sam_df_dict.keys())} chromosomes:")
     # Apply it to each chr DF:
     for chr_key, df in sam_df_dict.items():
         sam_df_dict[chr_key][['HI:NH', 'gene']] = DataFrame(df.apply(lambda x: perReadFinalFix(x['gene'],
@@ -441,6 +447,8 @@ def finalFixers(sam_df_dict: CHR_DF_DICT, **kwargs) -> CHR_DF_DICT:
                                                                                                x['HI'],
                                                                                                x['NH']),
                                                                      axis=1).tolist(), index=df.index)
+        print(f'Chr-{chr_key:->4} HI:NH column created, '
+              f'read count={len(sam_df_dict[chr_key].index)}')
     return sam_df_dict
 
 
