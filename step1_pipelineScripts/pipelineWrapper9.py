@@ -151,7 +151,6 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     else:
         print('skipping filter round of mapping...')
     
-    
     ############################################################################################################
     """Commence read mapping"""
     ############################################################################################################
