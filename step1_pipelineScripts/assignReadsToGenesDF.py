@@ -493,7 +493,8 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
                        'gene_string']
     
     # Bring all chromosomes together
-    jam_all_chrs = concat(jam_df_dict.values(), ignore_index=True)
+    #jam_all_chrs = concat(jam_df_dict.values(), ignore_index=True)
+    jam_all_chrs = concat(jam_df_dict.values())  # testing
     # Sort by chromosome and chr_pos
     jam_all_chrs.sort_values(by=['chr', 'chr_pos'], inplace=True)
     
