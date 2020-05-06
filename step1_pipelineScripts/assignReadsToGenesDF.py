@@ -67,8 +67,6 @@ def parseArgs() -> ARG_DICT:
     parser.add_argument('-m', '--deep_memory', action='store_true',
                         help="Boolean flag to print dataframe deep memory info\n"
                              "(this can be very CPU/time intensive, but informative)")
-    parser.add_argument('-o', '--concatenate_output', action='store_true',
-                        help="Boolean flag to output a single file for all chromosomes")
     parser.add_argument('-u', '--keep_non_unique', action='store_true',
                         help="Boolean flag to allow non-unique reads through the assignment process")
     parser.add_argument('-j', '--output_joshSAM', action='store_true',
@@ -87,7 +85,6 @@ def parseArgs() -> ARG_DICT:
             print(f"\t{key} = {arg} -> (Will not be passed)")
         else:
             print(f"\t{key} = {arg}")
-    print("\tDone.\n")
     
     # Recreate dict without arguments that did not receive any input
     arg_dict = {k: v for k, v in arg_dict.items() if v is not None}
@@ -96,8 +93,7 @@ def parseArgs() -> ARG_DICT:
 
 
 def parseSamToDF(sam_file: str, keep_non_unique: bool = False,
-                 split_chrs: bool = True, num_lines: int = None,
-                 print_rows: int = None, deep_memory: bool = False,
+                 split_chrs: bool = True, deep_memory: bool = False,
                  **kwargs) -> DataFrame or CHR_DF_DICT:
     """
     parseSamToDF
@@ -110,7 +106,7 @@ def parseSamToDF(sam_file: str, keep_non_unique: bool = False,
         print(f"\nFile does not exist at: {sam_file}, Terminating Script\n")
         exit()
     else:
-        # print(f"\nParsing identified file at: {sam_file}")
+        print(f"\nParsing read file at: {sam_file}")
         pass
     
     # Assign known order of datatypes for .SAM file, this helps to speed up parsing
@@ -120,6 +116,15 @@ def parseSamToDF(sam_file: str, keep_non_unique: bool = False,
     sam_dtypes_list = [o, i, chr_cat, i, i, o, o, i, i, o, o, o, o, o, o]
     sam_dtypes_dict = {i: sam_dtypes_list[i] for i in range(15)}
     
+    # First figure out how many header lines are in the file,
+    #   Pandas has a hard time parsing @comments without messing up the Phred scores in the file
+    headerlines = 0
+    with open(sam_file, 'r')as sam_file_quick:
+        for line in sam_file_quick:
+            if line.startswith('@'):
+                headerlines += 1
+            else:
+                break
     # Parse sam file using pandas.read_csv function
     #   There is currently more work that can be front-loaded into this function call:
     #   - 'converters': The use of a the converters parameter could allow us to work with some of the
@@ -132,29 +137,13 @@ def parseSamToDF(sam_file: str, keep_non_unique: bool = False,
     #     full file to be parsed into memory, then reads it from there. If the used system is able to
     #     handle this much memory usage, this option can improve performance because there is no
     #     longer any I/O overhead.
-    headerlines = 0
-    with open(sam_file, 'r')as sam_file_quick:
-        for line in sam_file_quick:
-            if line.startswith('@'):
-                headerlines += 1
-            else:
-                break
     
-    if num_lines:
-        SAM_df = read_csv(sam_file,
-                          sep="\t",
-                          header=headerlines,
-                          nrows=num_lines,  # If the CLI user specifies a number of lines to use, it comes in here
-                          names=range(15),  # Just name columns by an index, to be renamed below
-                          dtype=sam_dtypes_dict,  # The hope is this allows pandas to skip the type calling step
-                          )
-    else:
-        SAM_df = read_csv(sam_file,
-                          sep="\t",
-                          header=headerlines,
-                          names=range(15),
-                          dtype=sam_dtypes_dict,
-                          )
+    SAM_df = read_csv(sam_file,
+                      sep="\t",
+                      header=headerlines,
+                      names=range(15),
+                      dtype=sam_dtypes_dict,
+                      )
     
     # This sort_values with the ignore_index option on will currently reset the
     # indexes to the new sorted order, I don't know if this is good or bad...
@@ -178,28 +167,22 @@ def parseSamToDF(sam_file: str, keep_non_unique: bool = False,
                                     13: 'AS',
                                     14: 'nM'})
     
-    print(f'Finished parsing and sorting of file at: {sam_file}')
+    print(f'Finished parsing and sorting of read file')
     
-    if print_rows:
-        print(f"\nFirst {print_rows} rows of dataframe:\n", SAM_df.head(print_rows), "\n")
     if deep_memory:
         print(SAM_df.info(memory_usage='deep'))
-    # TODO: Move unique filtering to the end of this. It will slow down the whole process a bit,
-    #       but it will mean that a whole second round won't be necessary
-    #       -> Other option could be to have two sites of this flag being implemented in the file, and always
+    # TODO: Have two sites of this flag being implemented in the file, and always
     #          outputting two files (unique_only.jam & unique+multimap.jam) if the flag is raised
-    # ONLY KEEP UNIQUELY MAPPING READS: >>
+    # ONLY KEEP UNIQUELY MAPPING READS:
     if not keep_non_unique:
         print(f"Filtering out non-uniquely mapped reads...")
         SAM_df = SAM_df[SAM_df['NH'].str.endswith(':1')]
-    # << ONLY KEEP UNIQUELY MAPPING READS
-    # Attempting to split chromosomes
+    else:
+        print(f"Keeping non-uniquely mapped reads...")
+    
     if split_chrs:
         SAM_df_dict = dict(tuple(SAM_df.groupby('chr')))
-        # if print_rows:
-        #     for chr, df in SAM_df_dict.items():
-        #         print(f"\nFirst {print_rows} rows of Chromosome-{chr}:\n", df.head(print_rows))
-        print(f"Split -reads.SAM- dataframe into {len(SAM_df_dict.keys())} separate df's:\n{SAM_df_dict.keys()}")
+        print(f"Split reads file dataframe into {len(SAM_df_dict.keys())} separate df's:\n{SAM_df_dict.keys()}")
         return SAM_df_dict
     else:
         return SAM_df
@@ -466,9 +449,8 @@ def outputToCSV(dataframe, outputprefix):
 
 
 def main(sam_file: str, annot_file: str, output_prefix: str,
-         print_rows: int = None, concatenate_output: bool = False,
-         keep_non_unique: bool = False, output_joshSAM: bool = False,
-         **kwargs) -> None:
+         print_rows: int = None, keep_non_unique: bool = False,
+         output_joshSAM: bool = False, **kwargs) -> None:
     
     start_time = default_timer()  # Timer
     
@@ -478,21 +460,20 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
     
     # TODO: This is currently a little chaotic with all of the steps/naming. The goal was for it to be readable, but...
     
-    # Apply the recoverMappedPortion() to dataframe to see how it does
-    #  Currently doing this after dropping unassigned reads as it seems to be the time intensive step.
+    # Apply the recoverMappedPortion() to dataframe
     post_map_df_dict = recoverMappedPortion_dfWrapper(sam_df_dict, print_rows=print_rows, **kwargs)
     
     # Handle +/- and Sense/Antisense issues from SAM format
     post_sense_antisense_df_dict = fixSenseNonsense(post_map_df_dict, print_rows=print_rows, **kwargs)
     
-    # Going for the df.merge() function for mapping annotations onto reads
-    assigned_df_dict = assignReadsToGenes(post_sense_antisense_df_dict, annot_df_dict, print_rows=print_rows,
-                                          keep_non_unique=keep_non_unique, **kwargs)
+    # Use df.merge() function for mapping annotations onto reads
+    assigned_df_dict = assignReadsToGenes(post_sense_antisense_df_dict, annot_df_dict,
+                                          print_rows=print_rows, **kwargs)
     
     # Add the HitIndex:NumberOfHits column from the SAM HI and NH columns
     jam_df_dict = finalFixers(assigned_df_dict, **kwargs)
     
-    # Output to file:
+    # Columns and order for final output(s):
     jam_columns = ['read_id',
                    'chr',
                    'chr_pos',
@@ -507,35 +488,48 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
                        'chr_pos',
                        'strand',
                        'map_read_seq',
-                       'read_length',  # We need a read length column
+                       'read_length',
                        'gene',
                        'gene_string']
-    if output_joshSAM:
-        for chr_key, df in sam_df_dict.items():
-            jam_df_dict[chr_key]['read_length'] = DataFrame(df.apply(lambda x: len(x['map_read_seq']),
-                                                            axis=1).tolist(), index=df.index)
-        joshSAM_all_chrs = concat(jam_df_dict.values())
-        # joshSAM_all_chrs.sort_values(by=['chr', 'chr_pos'], inplace=True)
-        joshSAM_all_chrs.sort_index(inplace=True)
-        joshSAM_all_chrs.to_csv(f"{output_prefix}.allChrs.joshSAM",
-                                index=False, sep='\t',
-                                columns=joshSAM_columns)
     
-    if not concatenate_output:
-        for chr_key, df in jam_df_dict.items():
-            jam_df_dict[chr_key].sort_values(by=['chr', 'chr_pos'], inplace=True)
-            jam_df_dict[chr_key].to_csv(f"{output_prefix}.chr{chr_key}.jam",
-                                        index=False, sep='\t',
-                                        columns=jam_columns)
-    else:
-        jam_all_chrs = concat(jam_df_dict.values(), ignore_index=True)
-        jam_all_chrs.sort_values(by=['chr', 'chr_pos'], inplace=True)
-        jam_all_chrs.to_csv(f"{output_prefix}.allChrs.jam",
+    # Bring all chromosomes together
+    jam_all_chrs = concat(jam_df_dict.values(), ignore_index=True)
+    # Sort by chromosome and chr_pos
+    jam_all_chrs.sort_values(by=['chr', 'chr_pos'], inplace=True)
+    
+    # New DF with only unique reads (this could be a source of memory overload as its creating a full copy(?))
+    jam_unique_all_chrs = jam_all_chrs[jam_all_chrs['NH'].str.endswith(':1')]
+    # Write unique reads to .jam file >>>
+    jam_unique_all_chrs.to_csv(f"{output_prefix}.allChrs.jam",
+                               index=False, sep='\t',
+                               columns=jam_columns)
+    if keep_non_unique:
+        # If flag is called, write non-unique reads and unique reads to another .jam file
+        jam_all_chrs.to_csv(f"{output_prefix}.redundantAndUnique.allChrs.jam",
                             index=False, sep='\t',
                             columns=jam_columns)
-    end_time = default_timer() # Timer
-    print(f"\n\nDone?!\n"
-          f"Total Time: {end_time - start_time:<6.2f}\n\t")
+        if output_joshSAM:
+            # joshSAM files need a read_length column
+            jam_all_chrs['read_length'] = DataFrame(jam_all_chrs.apply(lambda x: len(x['map_read_seq']),
+                                                                       axis=1).tolist(), index=jam_all_chrs.index)
+            # joshSAM files are organized based on the original SAM file (this info should be retained by the indexes)
+            jam_all_chrs.sort_index(inplace=True)
+            # Write joshSAM file with non-unique reads and unique reads >>>
+            jam_all_chrs.to_csv(f"{output_prefix}.redundantAndUnique.allChrs.joshSAM",
+                                index=False, sep='\t',
+                                columns=joshSAM_columns)
+    elif output_joshSAM:
+        # joshSAM files need a read_length column
+        jam_unique_all_chrs['read_length'] = DataFrame(jam_unique_all_chrs.apply(lambda x: len(x['map_read_seq']),
+                                                       axis=1).tolist(), index=jam_unique_all_chrs.index)
+        # joshSAM files are organized based on the original SAM file (this info should be retained by the indexes)
+        jam_unique_all_chrs.sort_index(inplace=True)
+        # Write joshSAM file with only unique reads >>>
+        jam_unique_all_chrs.to_csv(f"{output_prefix}.allChrs.joshSAM",
+                                   index=False, sep='\t',
+                                   columns=joshSAM_columns)
+    end_time = default_timer()  # Timer
+    print(f"\nTotal Time for assignReadsToGenesDF: {end_time - start_time:<6.2f} seconds\n\t")
 
 
 if __name__ == '__main__':
