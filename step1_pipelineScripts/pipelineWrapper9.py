@@ -173,7 +173,11 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     ############################################################################################################
     """Assign reads to genes"""
     ############################################################################################################
-    print('Assigning reads to genes...')
+    print('Assigning reads to genes', end=' ')
+    if keep_non_unique:
+        print('allowing for multiply-mapping reads...')
+    else:
+        print('only allowing uniquely-mapping reads...')
     genomeAnnotProcessed=genomeAnnots.strip('gtf')+'allChrs.txt'
     # assignReadsToGenes4.main([genomeAnnotProcessed,
     #                          outPrefix+'.finalMapped.Aligned.out.sam',
@@ -181,17 +185,16 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     assignReadsToGenesDF.main(outPrefix+'.finalMapped.Aligned.out.sam',
                               genomeAnnotProcessed,
                               outPrefix,
-                              keep_non_unique=keep_non_unique,
-                              output_joshSAM=output_joshSAM)
+                              keep_non_unique=keep_non_unique,  # If this flag is passed from argParse (or settings.txt)
+                              #                                   assignReadsToGenesDF will *also* output a file titled:
+                              #                                   outputPrefix.redundantAndUnique.allChrs.jam
+                              output_joshSAM=output_joshSAM,  # Output old format joshSAM file in addition to .jam if
+                              #                                 this flag is passed. Also stacks with keep_non_unique
+                              )
     # print('Assigning reads to genes allowing for multiply-mapping reads...')
     # assignReadsToGenes5.main([genomeAnnotProcessed,
     #                          outPrefix+'.finalMapped.Aligned.out.sam',
     #                          outPrefix+'.redundantAndUnique'])
-    # assignReadsToGenesDF.main(outPrefix + '.finalMapped.Aligned.out.sam',
-    #                           genomeAnnotProcessed,
-    #                           outPrefix+'.redundantAndUnique',
-    #                           keep_non_unique=True,
-    #                           concatenate_output=True)
     print('Done with read assignment!')
     ############################################################################################################
     """Additional filtering of reads by length"""
