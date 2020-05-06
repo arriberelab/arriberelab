@@ -88,7 +88,8 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     print(f'read length restriction does not include {umi5}Ns and {umi3}Ns.')
     print(f'to accommodate UMI length, this program will add {umi5 + umi3}nts to acceptable length.')
     
-    os.system(f'cutadapt -a {adaptorSeq} -j {cores} '
+    os.system(f'cutadapt -a {adaptorSeq} '
+              # f'-j {cores} '
               f'-m {minimumReadLength+umi5+umi3} '
               f'-M {maximumReadLength+umi5+umi3} '
               f'--too-short-output {outPrefix + ".trimmed.selfDestruct.tooShort.fastq"} '
@@ -158,7 +159,7 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     ############################################################################################################
     print(f'Only running on {cores} cores.')
     print(f'{misMatchMax} mismatch max!')
-    print(f'Length/Score parameters: {optString}')
+    print(f'Length/Score parameters: {optString} --outFilterMismatchNmax {misMatchMax}')
     os.system(f'STAR {optString} '
               f'--outFilterMismatchNmax {misMatchMax} '
               f'--alignIntronMax 1 '
@@ -219,7 +220,8 @@ def parseArguments():
     parser.add_argument('fastqFile', metavar='fastqFile',
                         type=str, help='The fastq file input')
     parser.add_argument('settings', metavar='settings', type=str,
-                        help='A text file containing a line-delimited input of adaptorSeq, genomeDir, and genomeAnnots.')
+                        help='A text file containing a line-delimited input of adaptorSeq, genomeDir, and genomeAnnots.'
+                             ' Plus any of the following optional arguments. All in arg|value format')
     parser.add_argument('outPrefix', metavar='outPrefix', type=str,
                         help='The outPrefix that all files produced will be named as.')
     # Optional Arguments: (None default here allows us to not pass anything that isn't given by user.
