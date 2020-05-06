@@ -204,7 +204,7 @@ def parseAllChrsToDF(annot_file: str,
         print(f"\nFile does not exist at: {annot_file}, Terminating Script\n")
         exit()
     else:
-        # print(f"\nParsing identified file at: {annot_file}")
+        print(f"\nParsing annotation file at: {annot_file}")
         pass
     
     # Parse annotations file using pandas.read_csv function
