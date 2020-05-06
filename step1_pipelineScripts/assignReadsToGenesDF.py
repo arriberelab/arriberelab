@@ -233,8 +233,18 @@ def parseAllChrsToDF(annot_file: str,
                         names=['chr', 'gene', 'gene_string'])
     
     # Split the chr_index column into two
-    annot_df[['chr', 'chr_pos']] = DataFrame(annot_df['chr'].str.split('_').values.tolist(),
-                                             index=annot_df.index)
+    try:
+        annot_df[['chr', 'chr_pos']] = DataFrame(annot_df['chr'].str.split('_').values.tolist(),
+                                                 index=annot_df.index)
+    except ValueError as error:
+        with open(annot_file, 'r') as file:
+            line_one = file[0]
+        print(f"Error: {error}\n"
+              f"\tLikely that genome annotation file at {annot_file} is in incorrect format.\n"
+              f"\tPlease ensure that format is: \"chr_chr-pos\\tgene\\ttranscript(s)(separated by '|')\"\n"
+              f"\tFirst line of passed file: {line_one}"
+              f"Terminating...")
+        exit()
     
     # Sort by Chromosome and index on chromosome
     annot_df = annot_df.sort_values(by=['chr', 'chr_pos'])
