@@ -145,9 +145,8 @@ def parseSamToDF(sam_file: str, keep_non_unique: bool = False,
                       dtype=sam_dtypes_dict,
                       )
     
-    # This sort_values with the ignore_index option on will currently reset the
-    # indexes to the new sorted order, I don't know if this is good or bad...
-    SAM_df = SAM_df.sort_values(by=[2, 3])  # TODO: ignore index removed
+    # Sort my chr (2) and chr_pos (3)
+    SAM_df = SAM_df.sort_values(by=[2, 3])
     
     # Rename columns, this can be the source of an error if a SAM file is not in
     #   the 15 column format - be wary!
@@ -171,8 +170,6 @@ def parseSamToDF(sam_file: str, keep_non_unique: bool = False,
     
     if deep_memory:
         print(SAM_df.info(memory_usage='deep'))
-    # TODO: Have two sites of this flag being implemented in the file, and always
-    #          outputting two files (unique_only.jam & unique+multimap.jam) if the flag is raised
     # ONLY KEEP UNIQUELY MAPPING READS:
     if not keep_non_unique:
         print(f"Filtering out non-uniquely mapped reads...")
