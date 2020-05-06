@@ -95,7 +95,7 @@ def parseArgs() -> ARG_DICT:
     return arg_dict
 
 
-def parseSamToDF(sam_file: str,
+def parseSamToDF(sam_file: str, keep_non_unique: bool = False,
                  split_chrs: bool = True, num_lines: int = None,
                  print_rows: int = None, deep_memory: bool = False,
                  **kwargs) -> DataFrame or CHR_DF_DICT:
@@ -184,7 +184,15 @@ def parseSamToDF(sam_file: str,
         print(f"\nFirst {print_rows} rows of dataframe:\n", SAM_df.head(print_rows), "\n")
     if deep_memory:
         print(SAM_df.info(memory_usage='deep'))
-    
+    # TODO: Move unique filtering to the end of this. It will slow down the whole process a bit,
+    #       but it will mean that a whole second round won't be necessary
+    #       -> Other option could be to have two sites of this flag being implemented in the file, and always
+    #          outputting two files (unique_only.jam & unique+multimap.jam) if the flag is raised
+    # ONLY KEEP UNIQUELY MAPPING READS: >>
+    if not keep_non_unique:
+        print(f"Filtering out non-uniquely mapped reads...")
+        SAM_df = SAM_df[SAM_df['NH'].str.endswith(':1')]
+    # << ONLY KEEP UNIQUELY MAPPING READS
     # Attempting to split chromosomes
     if split_chrs:
         SAM_df_dict = dict(tuple(SAM_df.groupby('chr')))
@@ -240,10 +248,10 @@ def parseAllChrsToDF(annot_file: str,
         with open(annot_file, 'r') as file:
             line_one = file.readline()
         print(f"Error: {error}\n"
-              f"\tLikely that genome annotation file at {annot_file} is in incorrect format.\n"
-              f"\tPlease ensure that format is: \"chr_chr-pos\\tgene\\ttranscript(s)(separated by '|')\"\n"
+              f"\tLikely that genome annotation file is in incorrect format (file: {annot_file})\n"
+              f"\tPlease ensure that format is: \"chr_chr-pos\tgene\ttranscript(s)(separated by '|')\"\n\n"
               f"\tFirst line of passed file: {line_one}"
-              f"Terminating...")
+              f"Terminating...\n")
         exit()
     
     # Sort by Chromosome and index on chromosome
@@ -255,7 +263,7 @@ def parseAllChrsToDF(annot_file: str,
                                 'gene': 'object',
                                 'gene_string': 'object'})
     
-    # Quickly reorder columns... might be completely superficial
+    # Quickly reorder columns (completely superficial)
     annot_df = annot_df[['chr', 'chr_pos', 'gene', 'gene_string']]
     
     print(f'Finished parsing and sorting of file at: {annot_file}')
@@ -342,8 +350,7 @@ def recoverMappedPortion_dfWrapper(sam_df_dict: CHR_DF_DICT, print_rows: int = N
 
 
 def assignReadsToGenes(sam_df_dict: CHR_DF_DICT, annot_df_dict: CHR_DF_DICT,
-                       print_rows: int = None, keep_non_unique: bool = False,
-                       **kwargs) -> CHR_DF_DICT:
+                       print_rows: int = None, **kwargs) -> CHR_DF_DICT:
     """
     assignReadsToGenes
     
@@ -357,14 +364,6 @@ def assignReadsToGenes(sam_df_dict: CHR_DF_DICT, annot_df_dict: CHR_DF_DICT,
     print(f"\nAnnotation alignment for {len(sam_df_dict.keys())} chromosomes:")
     for chr_key, df in sam_df_dict.items():
         try:
-            # TODO: Move unique filtering to the end of this. It will slow down the whole process a bit,
-            #       but it will mean that a whole second round won't be necessary
-            #       -> Other option could be to have two sites of this flag being implemented in the file, and always
-            #          outputting two files (unique_only.jam & unique+multimap.jam) if the flag is raised
-            # ONLY KEEP UNIQUELY MAPPING READS: >>
-            if not keep_non_unique:
-                df = sam_df_dict[chr_key][sam_df_dict[chr_key]['NH'].str.endswith(':1')]
-            # << ONLY KEEP UNIQUELY MAPPING READS
             # Using the df.merge() function for mapping annotations onto reads
             # TODO: In the future we could utilize the parameter: "on='left'" in the merge call. This
             #       will provide the advantage(?) of allowing unmapped reads through, meaning we can
