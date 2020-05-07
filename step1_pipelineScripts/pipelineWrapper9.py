@@ -313,9 +313,9 @@ def combineSettingsAndArguments():
             finalArgDict[key] = str(arg)
         except TypeError:
             finalArgDict[key] = str(arg)
-    print(f"cutadapt version =", end=' ', flush=True)
+    print(f"cutadapt version:")
     os.system('cutadapt --version')
-    print(f"STAR version =", end=' ', flush=True)
+    print(f"STAR version:")
     os.system('STAR --version')
     return finalArgDict
 
