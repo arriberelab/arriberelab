@@ -145,8 +145,8 @@ def parseSamToDF(sam_file: str, keep_non_unique: bool = False,
                           dtype=sam_dtypes_dict,
                           )
     except errors.ParserError as error_message:
-        print(f'\033[35m Error: {error_message} \033[0m\nThe SAM files passed to assignReadsToGenes has no reads,'
-              f'please check previous steps.')
+        print(f'\031[35mError: {error_message}\nThe SAM files passed to assignReadsToGenes has no reads,'
+              f'please check previous steps.\033[0m')
         exit()
     # Sort my chr (2) and chr_pos (3)
     SAM_df = SAM_df.sort_values(by=[2, 3])
