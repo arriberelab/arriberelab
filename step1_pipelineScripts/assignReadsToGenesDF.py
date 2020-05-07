@@ -18,7 +18,7 @@ from typing import Dict, Any
 
 from timeit import default_timer
 from numpy import nan as numpy_nan
-from pandas import set_option, read_csv, DataFrame, concat
+from pandas import set_option, read_csv, DataFrame, concat, errors
 
 # Pandas default would cut off any columns beyond 5 so:
 set_option('display.max_rows', 50)
@@ -137,14 +137,17 @@ def parseSamToDF(sam_file: str, keep_non_unique: bool = False,
     #     full file to be parsed into memory, then reads it from there. If the used system is able to
     #     handle this much memory usage, this option can improve performance because there is no
     #     longer any I/O overhead.
-    
-    SAM_df = read_csv(sam_file,
-                      sep="\t",
-                      header=headerlines,
-                      names=range(15),
-                      dtype=sam_dtypes_dict,
-                      )
-    
+    try:
+        SAM_df = read_csv(sam_file,
+                          sep="\t",
+                          header=headerlines,
+                          names=range(15),
+                          dtype=sam_dtypes_dict,
+                          )
+    except errors.ParserError as error_message:
+        print(f'Error: {error_message}\nThe SAM files passed to assignReadsToGenes has no reads,\n'
+              f'please check previous steps.')
+        exit()
     # Sort my chr (2) and chr_pos (3)
     SAM_df = SAM_df.sort_values(by=[2, 3])
     
