@@ -55,34 +55,12 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     umi5,umi3,optString,filterMap,optString2,genomeDir2,genomeAnnots2,misMatchMax2,
     keep_non_unique,output_joshSAM,**otherkwargs):
     
-    ############################################################################################################
-    """First set some parameters-- all of this can be deleted if we're good""" 
-    ############################################################################################################
-    #adaptorSeq='CTGTAGGCACCATCAAT'#adaptor for Komili loc1 dataset (looks same as rachel's adaptor)
-    #adaptorSeq='AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'#oJA126
-    #adaptorSeq='AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCGTATCATT'#revCompl of forward adaptor
-    #adaptorSeq='CACTCGGGCACCAAGGAC'#from BZ boris oligos
-    #adaptorSeq='CTGTAGGCACCATCAATC'#Jonathan Gent
-    #adaptorSeq='TGGAATTCTCGGGTGCCAAGG'#hendriks 3'adaptor for Ribo-seq time course
-    #adaptorSeq='AGATGACGGGAAATAAAAGACACGTGCTGAAGTCAA'#another possibility for nextSeq adaptor from NEB
-    #adaptorSeq='AGATCGGAAGAGCACACGTCTGAACTCC'#possibly the nextSeq adaptor from NEB
-    # Atail
-    #adaptorSeq='AAAAAAAAAAAAAAAAAA'
-    #adaptorSeq='CTGTAGGCACCATCAA'#this is rachel's adaptor
-    
-    ############################################################################################################
-    
-    # print(f'adaptorseq: {adaptorSeq}\n'
-    #       f'minimumReadLength (not including UMI): {minimumReadLength}\n'
-    #       f'maximumReadLength (not including UMI): {maximumReadLength}\n'
-    #       f'5\' UMI length: {umi5}\n'
-    #       f'3\' UMI length: {umi3}\n'
-    #       f'genomeDir: {genomeDir}\n'
-    #       f'genomeAnnots: {genomeAnnots}\n'
-    #       f'cores To Use: {cores}\n'
-    #       f'misMatchMax: {misMatchMax}\n'
-    #       )
-    
+    """First check to ensure fastq file exists, cutadapt WILL NOT throw an error if a non-existant fastq is passed"""
+    if not os.path.isfile(fastqFile):
+        print(f"\033[31;1m\nThe fastq file does not exist at: {fastqFile}, Terminating Script\n\033[0m\n")
+        exit()
+    elif os.stat(fastqFile).st_size == 0:
+        print(f"\033[31;1m\nThe fastq file appears to be empty (at: {fastqFile}), Terminating Script\n\033[0m\n")
     ############################################################################################################
     """Trim adaptor from reads and sort by desired length"""
     ############################################################################################################
@@ -176,6 +154,7 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
         print('allowing for multiply-mapping reads...')
     else:
         print('only allowing uniquely-mapping reads...')
+    
     genomeAnnotProcessed=genomeAnnots.strip('gtf')+'allChrs.txt'
     # This currently is dramatically slowed by rRNA locus especially when keeping non-unique,
     # filter-mapping would be really great
