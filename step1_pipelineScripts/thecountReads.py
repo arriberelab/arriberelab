@@ -37,7 +37,7 @@ def main(args):
     #     print(f'ERROR: {e}')
     #     print('Running now')
     input_files = {}
-    l = ['.trimmed.collapsed.selfDestruct.fastq', '.trimmed.selfDestruct.tooShort.fastq', '.trimmed.selfDestruct.tooLong.fastq', '.jam'] #list of filenames
+    l = ['.trimmed.collapsed.selfDestruct.fastq', '.trimmed.selfDestruct.tooShort.fastq', '.trimmed.selfDestruct.tooLong.fastq', '.allChrs.jam'] #list of filenames
     input_files[outPrefix] = {} #dictionary of outPrefixes
     fastqCount = countTrimmed(fastq) #passing fastq through countTrimmed and assign to variable fastq
     input_files[outPrefix]['.fastq'] = fastqCount #save fastqcount to '.fastq' key in outPrefix dictionary
