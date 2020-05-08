@@ -25,7 +25,7 @@ def getPosition(txtList,index):
     the txts is all the same, then will return that
     position. Else will return 'na'. Will also require
     that all be Sense (not Antisense)."""
-    SorAS=[entry.split(':')[3] for entry in txtList]
+    SorAS=[entry.split(':')[3] for entry in txtList]  # TODO: Error
     SorAS=list(set(SorAS))
     if len(SorAS)==1 and SorAS[0]=='S':
         positions=[entry.split(':')[index] for entry in \
@@ -61,7 +61,7 @@ def parseJoshSAMToDataFrame(inFile,
         for line in f:
             if not line.startswith('@'):
                 line=line.strip().split('\t')
-                position=getPosition(line[9:],startOrStop)
+                position=getPosition(line[9:],startOrStop)  # TODO: Error
                 if position!='na':
                     readLength=len(line[6])
                     if line[7]=='1:1' and line[3]=='-':
