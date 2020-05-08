@@ -439,6 +439,8 @@ def finalFixers(sam_df_dict: CHR_DF_DICT, **kwargs) -> CHR_DF_DICT:
         HINH = hit_index + ':' + number_of_hits
         return HINH, new_gene
     
+    # TODO: This is more than just the HI:NH stuff. Is it worth fixing the print outs? I don't know how to say what's
+    #       happening is a concise way
     print(f"\nCreating HI:NH column for {len(sam_df_dict.keys())} chromosomes:")
     # Apply it to each chr DF:
     for chr_key, df in sam_df_dict.items():

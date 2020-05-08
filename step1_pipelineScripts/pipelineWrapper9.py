@@ -181,7 +181,7 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     """Creating infographic"""
     ############################################################################################################
     print('Making infographic')
-    infoGraphQC.main([outPrefix+'allChrs.jam',minimumReadLength,maximumReadLength,-21,21,-30,12,outPrefix+'.qc'])
+    infoGraphQC.main([outPrefix+'.allChrs.jam',minimumReadLength,maximumReadLength,-21,21,-30,12,outPrefix+'.qc'])
     thecountReads.main([fastqFile, outPrefix])
 
 def parseArguments():
