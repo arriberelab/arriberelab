@@ -103,7 +103,7 @@ def parseSamToDF(sam_file: str, keep_non_unique: bool = False,
     """
     # Quick check to ensure the passed file path exists
     if not path.isfile(sam_file):
-        print(f"\nFile does not exist at: {sam_file}, Terminating Script\n")
+        print(f"\n\033[31;1mFile does not exist at: {sam_file}, Terminating Script\033[0m\n")
         exit()
     else:
         print(f"\nParsing read file at: {sam_file}")
@@ -201,7 +201,7 @@ def parseAllChrsToDF(annot_file: str,
     
     # Quick check to ensure the passed file path exists
     if not path.isfile(annot_file):
-        print(f"\nFile does not exist at: {annot_file}, Terminating Script\n")
+        print(f"\n\033[31;1mFile does not exist at: {annot_file}, Terminating Script\n\033[0m")
         exit()
     else:
         print(f"\nParsing annotation file at: {annot_file}")

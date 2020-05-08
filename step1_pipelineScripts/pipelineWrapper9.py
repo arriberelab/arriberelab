@@ -144,10 +144,10 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
                       f'--runThreadN {cores} '
                       f'--outFileNamePrefix {outPrefix}.trimmed.collapsed.mapped.filter'
                       )
-            #Now rewrite the read file to map from the unmapped reads
+            # Now rewrite the read file to map from the unmapped reads
             readFile=outPrefix+'.trimmed.collapsed.mapped.filterUnmapped.out.mate1'
         else:
-            print('No file given for genomeDir2 or genomeAnnots2')
+            print('No file given for genomeDir2 or genomeAnnots2, skipping filter round of mapping...')
     else:
         print('skipping filter round of mapping...')
     
@@ -283,7 +283,7 @@ def parseSettings(settings,print_arguments=False,**other_kwargs):
                     if len(line) == 2:
                         settingsDict[line[0]] = line[1]
                     else:
-                        print("Remove pipes ('|') from settings file arguments (or rewrite parser)")
+                        print("\033[31;1mRemove pipes ('|') from settings file arguments (or rewrite parser)\033[0m")
                         raise ImportError
     if print_arguments:
         print(f"\nSettings Arguments (file: '{settings}')")
@@ -317,6 +317,7 @@ def combineSettingsAndArguments():
     os.system('cutadapt --version')
     print(f"STAR version:")
     os.system('STAR --version')
+    print('\n\n')
     return finalArgDict
 
 if __name__ == '__main__':
