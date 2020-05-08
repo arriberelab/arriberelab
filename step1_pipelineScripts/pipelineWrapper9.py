@@ -36,10 +36,11 @@ from logJosh import Tee
 
 # Absolute defaults are overwritten by the given settings file and any command line arguments given
 ABSOLUTE_DEFAULT_DICT = {'cores': 7, 'misMatchMax': 0,
-                         'optString': '--outFilterScoreMinOverLread 1'
-                                      '--outFilterMatchNminOverLread 1'
-                                      '--outReadsUnmapped Fastx'
+                         'optString': '--outFilterScoreMinOverLread 1 '
+                                      '--outFilterMatchNminOverLread 1 '
+                                      '--outReadsUnmapped Fastx '
                                       '--outSJfilterOverhangMin 6 6 6 6',
+                         'regenerate': False,
                          'misMatchMax2': 3,
                          'optString2': f'--outFilterScoreMin 14 '
                                        f'--outFilterScoreMinOverLread 0.3 '
@@ -53,7 +54,7 @@ ABSOLUTE_DEFAULT_DICT = {'cores': 7, 'misMatchMax': 0,
 def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
          maximumReadLength, genomeDir, genomeAnnots, cores, misMatchMax,
          umi5, umi3, optString, filterMap, optString2, genomeDir2, genomeAnnots2, misMatchMax2,
-         keepNonUnique, outputJoshSAM, **otherkwargs):
+         keepNonUnique, outputJoshSAM, regenerate, **otherkwargs):
     
     """First check to ensure fastq file exists, cutadapt WILL NOT throw an error if a non-existant fastq is passed"""
     if not os.path.isfile(fastqFile):
@@ -64,19 +65,25 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
     ############################################################################################################
     # print('skipping trimming of any kind, so min/maximumReadLength restrictions ignored.')
     # os.system(f'cp {fastqFile} {outPrefix}.trimmed')
-    print(f'read length restriction does not include {umi5}Ns and {umi3}Ns.')
-    print(f'to accommodate UMI length, this program will add {umi5 + umi3}nts to acceptable length.')
-    
-    os.system(f'cutadapt -a {adaptorSeq} '
-              f'-j {cores} '
-              f'-m {minimumReadLength+umi5+umi3} '
-              f'-M {maximumReadLength+umi5+umi3} '
-              f'--too-short-output {outPrefix + ".trimmed.selfDestruct.tooShort.fastq"} '
-              f'--too-long-output {outPrefix + ".trimmed.selfDestruct.tooLong.fastq"} '
-              f'{fastqFile} > {outPrefix + ".trimmed.selfDestruct.fastq"} '
-              f'2>/dev/null'
-              )
-    ############################################################################################################ implementing
+    cutadaptOutput = outPrefix + ".trimmed.selfDestruct.fastq"
+    if not os.path.isfile(cutadaptOutput) or regenerate:
+        print(f'Read length restriction does not include {umi5}Ns and {umi3}Ns.')
+        print(f'To accommodate UMI length, this program will add {umi5 + umi3}nts to acceptable length.')
+        os.system(f'cutadapt -a {adaptorSeq} '
+                  f'-j {cores} '
+                  f'-m {minimumReadLength+umi5+umi3} '
+                  f'-M {maximumReadLength+umi5+umi3} '
+                  f'--too-short-output {outPrefix + ".trimmed.selfDestruct.tooShort.fastq"} '
+                  f'--too-long-output {outPrefix + ".trimmed.selfDestruct.tooLong.fastq"} '
+                  f'{fastqFile} > {cutadaptOutput} '
+                  f'2>/dev/null'
+                  )
+    else:
+        print(f"Reusing cutadapt output from {os.stat(cutadaptOutput).st_mtime}\n"
+              f"(file: {cutadaptOutput})\n"
+              f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n"
+              f"\033[1mThis functionality does not take into account changes in run parameters!!\033[0m")
+    ############################################################################################################
     """Collapse reads and trim off UMIs"""
     ############################################################################################################
     ##it doesn't make sense to run readCollapser if there's no UMI
@@ -87,11 +94,17 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
               f"go find someone who can help you.\n")
     ##
     if umi5+umi3!=0:
-        readCollapser4.main([outPrefix+'.trimmed.selfDestruct.fastq', 
-                         umi5, umi3, 
-                         outPrefix+'.trimmed.collapsed.selfDestruct.fastq'])
+        readCollapsedOutput = outPrefix+".trimmed.collapsed.selfDestruct.fastq"
+        if not os.path.isfile(readCollapsedOutput) or regenerate:
+            readCollapser4.main([outPrefix+'.trimmed.selfDestruct.fastq',
+                                 umi5, umi3, readCollapsedOutput])
+        else:
+            print(f"Reusing readCollapser output from {os.stat(readCollapsedOutput).st_mtime}\n"
+                  f"(file: {readCollapsedOutput})\n"
+                  f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n"
+                  f"\033[1mThis functionality does not take into account changes in run parameters!!\033[0m")
     else:
-        print('Skipping collapsing...')
+        print('No UMI length given: Skipping collapsing...')
         # The next line creates a symbolic link for the .collapsed file location
         # instead of the prior way, which copied them.
         os.system(f'ln -s {outPrefix}.trimmed.selfDestruct.fastq '
@@ -107,21 +120,28 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
     ############################################################################################################
     if filterMap:
         if genomeDir2 and genomeAnnots2:
-            print(f'performing filter round of mapping to {genomeDir2}')
-            print(f'Only running on {cores} cores.')
-            print(f'{misMatchMax2} mismatch max!')
-            print(f'Length/Score parameters: {optString2}')
-            os.system(f'STAR {optString2} '
-                      f'--outFilterMismatchNmax {misMatchMax2} '
-                      f'--alignIntronMax 1 '
-                      f'--sjdbGTFfile {genomeAnnots2} '
-                      f'--genomeDir {genomeDir2} '
-                      f'--readFilesIn {readFile} '
-                      f'--runThreadN {cores} '
-                      f'--outFileNamePrefix {outPrefix}.trimmed.collapsed.mapped.filter'
-                      )
+            filterMapOutput = outPrefix+'.trimmed.collapsed.mapped.filterUnmapped.out.mate1'
+            if not os.path.isfile(filterMapOutput) or regenerate:
+                print(f'Performing filter round of mapping to {genomeDir2}')
+                print(f'Only running on {cores} cores.')
+                print(f'{misMatchMax2} mismatch max!')
+                print(f'Length/Score parameters: --outFilterMismatchNmax {misMatchMax2} {optString2}')
+                os.system(f'STAR {optString2} '
+                          f'--outFilterMismatchNmax {misMatchMax2} '
+                          f'--alignIntronMax 1 '
+                          f'--sjdbGTFfile {genomeAnnots2} '
+                          f'--genomeDir {genomeDir2} '
+                          f'--readFilesIn {readFile} '
+                          f'--runThreadN {cores} '
+                          f'--outFileNamePrefix {outPrefix}.trimmed.collapsed.mapped.filter'
+                          )
+            else:
+                print(f"Reusing filterMap output from {os.stat(filterMapOutput).st_mtime}\n"
+                      f"(file: {filterMapOutput})\n"
+                      f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n"
+                      f"\033[1mThis functionality does not take into account changes in run parameters!!\033[0m")
             # Now rewrite the read file to map from the unmapped reads
-            readFile=outPrefix+'.trimmed.collapsed.mapped.filterUnmapped.out.mate1'
+            readFile = outPrefix + '.trimmed.collapsed.mapped.filterUnmapped.out.mate1'
         else:
             print('No file given for genomeDir2 or genomeAnnots2, skipping filter round of mapping...')
     else:
@@ -130,17 +150,24 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
     ############################################################################################################
     """Commence read mapping"""
     ############################################################################################################
-    print(f'Only running on {cores} cores.')
-    print(f'{misMatchMax} mismatch max!')
-    print(f'Length/Score parameters: {optString} --outFilterMismatchNmax {misMatchMax}')
-    os.system(f'STAR {optString} '
-              f'--outFilterMismatchNmax {misMatchMax} '
-              f'--alignIntronMax 1 '
-              f'--sjdbGTFfile {genomeAnnots} '
-              f'--genomeDir {genomeDir} '
-              f'--readFilesIn {readFile} '
-              f'--runThreadN {cores} '
-              f'--outFileNamePrefix {outPrefix}.finalMapped.')
+    starCheckFile = outPrefix + ".finalMapped.Aligned.out.sam"
+    if not os.path.isfile(starCheckFile) or regenerate:
+        print(f'Only running on {cores} cores.')
+        print(f'{misMatchMax} mismatch max!')
+        print(f'Length/Score parameters: {optString} --outFilterMismatchNmax {misMatchMax}')
+        os.system(f'STAR {optString} '
+                  f'--outFilterMismatchNmax {misMatchMax} '
+                  f'--alignIntronMax 1 '
+                  f'--sjdbGTFfile {genomeAnnots} '
+                  f'--genomeDir {genomeDir} '
+                  f'--readFilesIn {readFile} '
+                  f'--runThreadN {cores} '
+                  f'--outFileNamePrefix {outPrefix}.finalMapped.')
+    else:
+        print(f"Reusing STAR run output from {os.stat(starCheckFile).st_mtime}\n"
+              f"(file checked: {starCheckFile})\n"
+              f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n"
+              f"\033[1mThis functionality does not take into account changes in run parameters!!\033[0m")
     
     # print(f'Printing file {outPrefix}Log.final.out')
     # os.system(f'lpr -p {outPrefix}Log.final.out')
@@ -148,24 +175,30 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
     """Assign reads to genes"""
     ############################################################################################################
     print('\nAssigning reads to genes', end=' ')
-    if keepNonUnique:
-        print('allowing for multiply-mapping reads...')
+    assignReadsOutput = outPrefix + ".allChrs.jam"
+    if not os.path.isfile(assignReadsOutput) or regenerate:
+        if keepNonUnique:
+            print('allowing for multiply-mapping reads...')
+        else:
+            print('only allowing uniquely-mapping reads...')
+        
+        genomeAnnotProcessed=genomeAnnots.strip('gtf')+'allChrs.txt'
+        assignReadsToGenesDF.main(outPrefix +'.finalMapped.Aligned.out.sam',
+                                  genomeAnnotProcessed,
+                                  outPrefix,
+                                  keep_non_unique=keepNonUnique,  # If this flag is passed from argParse
+                                  #                                   (or settings.txt) assignReadsToGenesDF will *also*
+                                  #                                   output a file titled:
+                                  #                                   outputPrefix.redundantAndUnique.allChrs.jam
+                                  output_joshSAM=outputJoshSAM,  # Output old format joshSAM file in addition to .jam if
+                                  #                                 this flag is passed. Also stacks with keepNonUnique
+                                  )
+        print('Done with read assignment!')
     else:
-        print('only allowing uniquely-mapping reads...')
-    
-    genomeAnnotProcessed=genomeAnnots.strip('gtf')+'allChrs.txt'
-    # This currently is dramatically slowed by rRNA locus especially when keeping non-unique,
-    # filter-mapping would be really great
-    assignReadsToGenesDF.main(outPrefix +'.finalMapped.Aligned.out.sam',
-                              genomeAnnotProcessed,
-                              outPrefix,
-                              keep_non_unique=keepNonUnique,  # If this flag is passed from argParse (or settings.txt)
-                              #                                   assignReadsToGenesDF will *also* output a file titled:
-                              #                                   outputPrefix.redundantAndUnique.allChrs.jam
-                              output_joshSAM=outputJoshSAM,  # Output old format joshSAM file in addition to .jam if
-                              #                                 this flag is passed. Also stacks with keepNonUnique
-                              )
-    print('Done with read assignment!')
+        print(f"Reusing assignReadsToGenes output from {os.stat(assignReadsOutput).st_mtime}\n"
+              f"(file checked: {assignReadsOutput})\n"
+              f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n"
+              f"\033[1mThis functionality does not take into account changes in run parameters!!\033[0m")
     ############################################################################################################
     """Additional filtering of reads by length"""
     ############################################################################################################
@@ -227,6 +260,8 @@ def parseArguments():
                         help="Boolean flag to show how arguments are overwritten/accepted")
     parser.add_argument('-f', '--filterMap', action='store_true',
                         help="Boolean flag to perform filter mapping")
+    parser.add_argument('-r', '--regenerate', action='store_true',
+                        help="Boolean flag to ignore previously produced files and generate all files anew")
     
     # Spit out namespace object from argParse
     args = parser.parse_args()
