@@ -50,10 +50,10 @@ ABSOLUTE_DEFAULT_DICT = {'cores': 7, 'misMatchMax': 0,
                          'genomeDir2': False, 'genomeAnnots2': False}
 
 
-def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
-    maximumReadLength,genomeDir,genomeAnnots,cores,misMatchMax,
-    umi5,umi3,optString,filterMap,optString2,genomeDir2,genomeAnnots2,misMatchMax2,
-    keep_non_unique,output_joshSAM,**otherkwargs):
+def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
+         maximumReadLength, genomeDir, genomeAnnots, cores, misMatchMax,
+         umi5, umi3, optString, filterMap, optString2, genomeDir2, genomeAnnots2, misMatchMax2,
+         keepNonUnique, outputJoshSAM, **otherkwargs):
     
     """First check to ensure fastq file exists, cutadapt WILL NOT throw an error if a non-existant fastq is passed"""
     if not os.path.isfile(fastqFile):
@@ -148,7 +148,7 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     """Assign reads to genes"""
     ############################################################################################################
     print('\nAssigning reads to genes', end=' ')
-    if keep_non_unique:
+    if keepNonUnique:
         print('allowing for multiply-mapping reads...')
     else:
         print('only allowing uniquely-mapping reads...')
@@ -156,14 +156,14 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     genomeAnnotProcessed=genomeAnnots.strip('gtf')+'allChrs.txt'
     # This currently is dramatically slowed by rRNA locus especially when keeping non-unique,
     # filter-mapping would be really great
-    assignReadsToGenesDF.main(outPrefix+'.finalMapped.Aligned.out.sam',
+    assignReadsToGenesDF.main(outPrefix +'.finalMapped.Aligned.out.sam',
                               genomeAnnotProcessed,
                               outPrefix,
-                              keep_non_unique=keep_non_unique,  # If this flag is passed from argParse (or settings.txt)
+                              keep_non_unique=keepNonUnique,  # If this flag is passed from argParse (or settings.txt)
                               #                                   assignReadsToGenesDF will *also* output a file titled:
                               #                                   outputPrefix.redundantAndUnique.allChrs.jam
-                              output_joshSAM=output_joshSAM,  # Output old format joshSAM file in addition to .jam if
-                              #                                 this flag is passed. Also stacks with keep_non_unique
+                              output_joshSAM=outputJoshSAM,  # Output old format joshSAM file in addition to .jam if
+                              #                                 this flag is passed. Also stacks with keepNonUnique
                               )
     print('Done with read assignment!')
     ############################################################################################################
@@ -219,9 +219,9 @@ def parseArguments():
     parser.add_argument('--misMatchMax', metavar='misMatchMax', type=int, default=None,
                         help='Number of mismatches to tolerate during mapping.')
     # Flag Arguments: (just add these as tags to change pipeline functionality)
-    parser.add_argument('-u', '--keep_non_unique', action='store_true',
+    parser.add_argument('-u', '--keepNonUnique', action='store_true',
                         help="Boolean flag to allow non-unique reads in the final .jam file(s).")
-    parser.add_argument('-j', '--output_joshSAM', action='store_true',
+    parser.add_argument('-j', '--outputJoshSAM', action='store_true',
                         help="Boolean flag to also output joshSAM format files in addition to the jam")
     parser.add_argument('-p', '--print_arguments', action='store_true',
                         help="Boolean flag to show how arguments are overwritten/accepted")
