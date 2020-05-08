@@ -283,7 +283,7 @@ def parseSettings(settings,print_arguments=False,**other_kwargs):
                     if len(line) == 2:
                         settingsDict[line[0]] = line[1]
                     else:
-                        print("\033[31;1mRemove pipes ('|') from settings file arguments (or rewrite parser)\033[0m")
+                        print("\033[31;1m\nRemove pipes ('|') from settings file arguments (or rewrite parser)\n\033[0m")
                         raise ImportError
     if print_arguments:
         print(f"\nSettings Arguments (file: '{settings}')")

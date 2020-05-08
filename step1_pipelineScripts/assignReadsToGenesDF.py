@@ -103,7 +103,7 @@ def parseSamToDF(sam_file: str, keep_non_unique: bool = False,
     """
     # Quick check to ensure the passed file path exists
     if not path.isfile(sam_file):
-        print(f"\n\033[31;1mFile does not exist at: {sam_file}, Terminating Script\033[0m\n")
+        print(f"\033[31;1m\nFile does not exist at: {sam_file}, Terminating Script\n\033[0m\n")
         exit()
     else:
         print(f"\nParsing read file at: {sam_file}")
@@ -145,8 +145,8 @@ def parseSamToDF(sam_file: str, keep_non_unique: bool = False,
                           dtype=sam_dtypes_dict,
                           )
     except errors.ParserError as error_message:
-        print(f'\033[31;1mError: {error_message}\nThe SAM files passed to assignReadsToGenes has no reads, '
-              f'please check previous steps.\033[0m')
+        print(f'\033[31;1m\nError: {error_message}\nThe SAM files passed to assignReadsToGenes has no reads, '
+              f'please check previous steps.\n\033[0m')
         exit()
     # Sort my chr (2) and chr_pos (3)
     SAM_df = SAM_df.sort_values(by=[2, 3])
@@ -201,7 +201,7 @@ def parseAllChrsToDF(annot_file: str,
     
     # Quick check to ensure the passed file path exists
     if not path.isfile(annot_file):
-        print(f"\n\033[31;1mFile does not exist at: {annot_file}, Terminating Script\n\033[0m")
+        print(f"\033[31;1m\nFile does not exist at: {annot_file}, Terminating Script\n\033[0m")
         exit()
     else:
         print(f"\nParsing annotation file at: {annot_file}")
@@ -230,7 +230,7 @@ def parseAllChrsToDF(annot_file: str,
     except ValueError as error:
         with open(annot_file, 'r') as file:
             line_one = file.readline()
-        print(f"\n\n\033[31;1mError: \"{error}\"\n"
+        print(f"\n\033[31;1m\nError: \"{error}\"\n"
               f"\tLikely that genome annotation file is in incorrect format (file: {annot_file})\n"
               f"\tPlease ensure that format is:\tchr_chr-pos\tgene\ttranscript(s)(separated by '|')\n"
               f"\tFirst line of passed file:   \t{line_one}\n"
