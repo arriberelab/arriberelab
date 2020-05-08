@@ -79,9 +79,9 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
                   f'2>/dev/null'
                   )
     else:
-        print(f"Reusing cutadapt output from {os.stat(cutadaptOutput).st_mtime}\n"
-              f"(file: {cutadaptOutput})\n"
-              f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n"
+        print(f"Reusing cutadapt output from {os.stat(cutadaptOutput).st_mtime}\n\t"
+              f"(file: {cutadaptOutput})\n\t"
+              f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n\t"
               f"\033[1mThis functionality does not take into account changes in run parameters!!\033[0m")
     ############################################################################################################
     """Collapse reads and trim off UMIs"""
@@ -99,9 +99,9 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
             readCollapser4.main([outPrefix+'.trimmed.selfDestruct.fastq',
                                  umi5, umi3, readCollapsedOutput])
         else:
-            print(f"Reusing readCollapser output from {os.stat(readCollapsedOutput).st_mtime}\n"
-                  f"(file: {readCollapsedOutput})\n"
-                  f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n"
+            print(f"Reusing readCollapser output from {os.stat(readCollapsedOutput).st_mtime}\n\t"
+                  f"(file: {readCollapsedOutput})\n\t"
+                  f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n\t"
                   f"\033[1mThis functionality does not take into account changes in run parameters!!\033[0m")
     else:
         print('No UMI length given: Skipping collapsing...')
@@ -136,9 +136,9 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
                           f'--outFileNamePrefix {outPrefix}.trimmed.collapsed.mapped.filter'
                           )
             else:
-                print(f"Reusing filterMap output from {os.stat(filterMapOutput).st_mtime}\n"
-                      f"(file: {filterMapOutput})\n"
-                      f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n"
+                print(f"Reusing filterMap output from {os.stat(filterMapOutput).st_mtime}\n\t"
+                      f"(file: {filterMapOutput})\n\t"
+                      f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n\t"
                       f"\033[1mThis functionality does not take into account changes in run parameters!!\033[0m")
             # Now rewrite the read file to map from the unmapped reads
             readFile = outPrefix + '.trimmed.collapsed.mapped.filterUnmapped.out.mate1'
@@ -164,9 +164,9 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
                   f'--runThreadN {cores} '
                   f'--outFileNamePrefix {outPrefix}.finalMapped.')
     else:
-        print(f"Reusing STAR run output from {os.stat(starCheckFile).st_mtime}\n"
-              f"(file checked: {starCheckFile})\n"
-              f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n"
+        print(f"Reusing STAR run output from {os.stat(starCheckFile).st_mtime}\n\t"
+              f"(file checked: {starCheckFile})\n\t"
+              f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n\t"
               f"\033[1mThis functionality does not take into account changes in run parameters!!\033[0m")
     
     # print(f'Printing file {outPrefix}Log.final.out')
@@ -174,9 +174,9 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
     ############################################################################################################
     """Assign reads to genes"""
     ############################################################################################################
-    print('\nAssigning reads to genes', end=' ')
     assignReadsOutput = outPrefix + ".allChrs.jam"
     if not os.path.isfile(assignReadsOutput) or regenerate:
+        print('\nAssigning reads to genes', end=' ')
         if keepNonUnique:
             print('allowing for multiply-mapping reads...')
         else:
@@ -195,9 +195,9 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
                                   )
         print('Done with read assignment!')
     else:
-        print(f"Reusing assignReadsToGenes output from {os.stat(assignReadsOutput).st_mtime}\n"
-              f"(file checked: {assignReadsOutput})\n"
-              f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n"
+        print(f"Reusing assignReadsToGenes output from {os.stat(assignReadsOutput).st_mtime}\n\t"
+              f"(file checked: {assignReadsOutput})\n\t"
+              f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n\t"
               f"\033[1mThis functionality does not take into account changes in run parameters!!\033[0m")
     ############################################################################################################
     """Additional filtering of reads by length"""
