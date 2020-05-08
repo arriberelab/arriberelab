@@ -294,7 +294,7 @@ def combineSettingsAndArguments():
     os.system('cutadapt --version')
     print(f"STAR version:")
     os.system('STAR --version')
-    print('\n\033[1m\n')
+    print('\n\033[0m\n')
     return finalArgDict
 
 if __name__ == '__main__':
