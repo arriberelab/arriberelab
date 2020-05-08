@@ -281,7 +281,8 @@ def combineSettingsAndArguments():
     finalArgDict.update(absoluteDefDict)
     finalArgDict.update(settingsDict)
     finalArgDict.update(argDict)
-    print("\033[1m\nFinal Arguments: (absolute defaults overwritten by settings.txt then overwritten by CLI arguments)")
+    print("\033[1m\nPipeline Arguments:")
+    # Absolute defaults overwritten by settings.txt then overwritten by CLI args
     for key, arg in finalArgDict.items():
         print(f"\t{key} = {arg}")
         try:
