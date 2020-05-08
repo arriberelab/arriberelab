@@ -25,16 +25,13 @@ def getFrame(txtList,index):
     the txts is all the same, then will return that
     position. Else will return 'na'. Will also require
     that all be Sense (not Antisense)."""
-    SorAS=[entry.split(':')[3] for entry in txtList]
-    SorAS=list(set(SorAS))
-    if len(SorAS)==1 and SorAS[0]=='S':
-        positions=[entry.split(':')[index] for entry in \
-                txtList]
-        positions=map(int,positions)
-        positions=[entry%3 for entry in positions]
-        positions=list(set(positions))
-        if len(positions)==1:
-            return positions[0]
+    transciptList = txtList.split('|')
+    positions = [entry.split(':')[index] for entry in transciptList]
+    positions = map(int, positions)
+    positions = [entry % 3 for entry in positions]
+    positions = list(set(positions))
+    if len(positions) == 1:
+        return positions[0]
     return 'na'
 
 def getReadLengthAndFrameInfo(inFile,X,Y):
@@ -62,8 +59,8 @@ def getReadLengthAndFrameInfo(inFile,X,Y):
         for line in f:
             if not line.startswith('@'):
                 line=line.strip().split('\t')
-                if line[7]=='1:1' and line[3]=='-':
-                    frame=getFrame(line[9:],1)
+                if line[7]=='1:1' and line[8].endswith(':S'):
+                    frame=getFrame(line[9],1)
                     if frame!='na':
                         readLength=len(line[6])
                         if readLength in range(X,Y+1):
