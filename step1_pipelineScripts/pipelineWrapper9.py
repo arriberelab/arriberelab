@@ -78,6 +78,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
                   f'{fastqFile} > {cutadaptOutput} '
                   f'2>/dev/null'
                   )
+        regenerate = True
     else:
         print(f"Reusing cutadapt output from {os.stat(cutadaptOutput).st_mtime}\n\t"
               f"(file: {cutadaptOutput})\n\t"
@@ -98,6 +99,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
         if not os.path.isfile(readCollapsedOutput) or regenerate:
             readCollapser4.main([outPrefix+'.trimmed.selfDestruct.fastq',
                                  umi5, umi3, readCollapsedOutput])
+            regenerate = True
         else:
             print(f"Reusing readCollapser output from {os.stat(readCollapsedOutput).st_mtime}\n\t"
                   f"(file: {readCollapsedOutput})\n\t"
@@ -135,6 +137,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
                           f'--runThreadN {cores} '
                           f'--outFileNamePrefix {outPrefix}.trimmed.collapsed.mapped.filter'
                           )
+                regenerate = True
             else:
                 print(f"Reusing filterMap output from {os.stat(filterMapOutput).st_mtime}\n\t"
                       f"(file: {filterMapOutput})\n\t"
@@ -163,6 +166,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
                   f'--readFilesIn {readFile} '
                   f'--runThreadN {cores} '
                   f'--outFileNamePrefix {outPrefix}.finalMapped.')
+        regenerate = True
     else:
         print(f"Reusing STAR run output from {os.stat(starCheckFile).st_mtime}\n\t"
               f"(file checked: {starCheckFile})\n\t"
@@ -194,6 +198,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
                                   #                                 this flag is passed. Also stacks with keepNonUnique
                                   )
         print('Done with read assignment!')
+        regenerate = True
     else:
         print(f"Reusing assignReadsToGenes output from {os.stat(assignReadsOutput).st_mtime}\n\t"
               f"(file checked: {assignReadsOutput})\n\t"
