@@ -143,7 +143,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
                       f"(file: {filterMapOutput})\n\t"
                       f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n\t"
                       f"\033[1mThis functionality does not take into account changes in run parameters!!\033[0m")
-            # Now rewrite the read file to map from the unmapped reads
+            # Now rewrite the read file to map from the unmapped reads (regen or not!)
             readFile = outPrefix + '.trimmed.collapsed.mapped.filterUnmapped.out.mate1'
         else:
             print('No file given for genomeDir2 or genomeAnnots2, skipping filter round of mapping...')
@@ -173,8 +173,6 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
               f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n\t"
               f"\033[1mThis functionality does not take into account changes in run parameters!!\033[0m")
     
-    # print(f'Printing file {outPrefix}Log.final.out')
-    # os.system(f'lpr -p {outPrefix}Log.final.out')
     ############################################################################################################
     """Assign reads to genes"""
     ############################################################################################################
@@ -204,16 +202,15 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
               f"(file checked: {assignReadsOutput})\n\t"
               f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n\t"
               f"\033[1mThis functionality does not take into account changes in run parameters!!\033[0m")
+    
     ############################################################################################################
     """Additional filtering of reads by length"""
     ############################################################################################################
-    # print('Quitting early!!!'), sys.exit()
     print('filtering read lengths again...')
     filterJamByReadLength.main([outPrefix+'.allChrs.jam',
                                 minimumReadLength,
                                 maximumReadLength,
                                 outPrefix+'.filtered_%s-%snt.jam'%(minimumReadLength,maximumReadLength)])
-    #print('Quitting early!!!'), sys.exit()
     
     ############################################################################################################
     """Creating infographic"""
