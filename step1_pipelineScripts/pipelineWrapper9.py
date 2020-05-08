@@ -59,8 +59,6 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     if not os.path.isfile(fastqFile):
         print(f"\033[31;1m\nThe fastq file does not exist at: {fastqFile}, Terminating Script\n\033[0m\n")
         exit()
-    elif os.stat(fastqFile).st_size == 0:
-        print(f"\033[31;1m\nThe fastq file appears to be empty (at: {fastqFile}), Terminating Script\n\033[0m\n")
     ############################################################################################################
     """Trim adaptor from reads and sort by desired length"""
     ############################################################################################################
@@ -183,7 +181,7 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     """Creating infographic"""
     ############################################################################################################
     print('Making infographic')
-    infoGraphQC.main([outPrefix+'.jam',minimumReadLength,maximumReadLength,-21,21,-30,12,outPrefix+'.qc'])
+    infoGraphQC.main([outPrefix+'allChrs.jam',minimumReadLength,maximumReadLength,-21,21,-30,12,outPrefix+'.qc'])
     thecountReads.main([fastqFile, outPrefix])
 
 def parseArguments():
@@ -283,7 +281,7 @@ def combineSettingsAndArguments():
     finalArgDict.update(absoluteDefDict)
     finalArgDict.update(settingsDict)
     finalArgDict.update(argDict)
-    print("\nFinal Arguments: (absolute defaults overwritten by settings.txt then overwritten by CLI arguments)")
+    print("\033[1m\nFinal Arguments: (absolute defaults overwritten by settings.txt then overwritten by CLI arguments)")
     for key, arg in finalArgDict.items():
         print(f"\t{key} = {arg}")
         try:
@@ -296,7 +294,7 @@ def combineSettingsAndArguments():
     os.system('cutadapt --version')
     print(f"STAR version:")
     os.system('STAR --version')
-    print('\n\n')
+    print('\n\033[1m\n')
     return finalArgDict
 
 if __name__ == '__main__':
