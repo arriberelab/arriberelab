@@ -26,7 +26,7 @@ def getPosition(txtList,index):
     position. Else will return 'na'. Will also require
     that all be Sense (not Antisense)."""
     # SorAS=[entry.split(':')[3] for entry in txtList]  # TODO: Error
-    SorAS = txtList.split(':')[2]  # MJV 200508 - Quickfix
+    SorAS = txtList.split(':')[-1]  # MJV 200508 - Quickfix
     SorAS=list(set(SorAS))
     if len(SorAS)==1 and SorAS[0]=='S':
         positions=[entry.split(':')[index] for entry in txtList]
