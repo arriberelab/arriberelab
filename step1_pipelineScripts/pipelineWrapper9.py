@@ -73,7 +73,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
         exit()
     
     # For printing headers:
-    colorIn = '\033[1;30;41m'
+    colorIn = '\033[1m'
     colorOut = '\033[0m'
     lineWidth = 75
     
