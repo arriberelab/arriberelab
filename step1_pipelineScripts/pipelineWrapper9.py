@@ -33,7 +33,7 @@ import assignReadsToGenesDF
 import infoGraphQC
 # import metaStartStop
 from logJosh import Tee
-import datetime.fromtimestamp as fromtimestamp
+import datetime as dt
 
 # Absolute defaults are overwritten by the given settings file and any command line arguments given
 ABSOLUTE_DEFAULT_DICT = {'cores': 7, 'misMatchMax': 0,
@@ -97,7 +97,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
                   )
         regenerate = True
     else:
-        print(f"Reusing cutadapt output from {fromtimestamp(os.path.getmtime(cutadaptOutput))}\n\t"
+        print(f"Reusing cutadapt output from {dt.datetime.fromtimestamp(os.path.getmtime(cutadaptOutput))}\n\t"
               f"(file: {cutadaptOutput})\n\t"
               f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n\t"
               f"\033[1mThis functionality does not take into account changes in run parameters!!\n\033[0m")
@@ -119,7 +119,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
                                  umi5, umi3, readCollapsedOutput])
             regenerate = True
         else:
-            print(f"Reusing readCollapser output from {fromtimestamp(os.path.getmtime(readCollapsedOutput))}\n\t"
+            print(f"Reusing readCollapser output from {dt.datetime.fromtimestamp(os.path.getmtime(readCollapsedOutput))}\n\t"
                   f"(file: {readCollapsedOutput})\n\t"
                   f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n\t"
                   f"\033[1mThis functionality does not take into account changes in run parameters!!\n\033[0m")
@@ -158,7 +158,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
                           )
                 regenerate = True
             else:
-                print(f"Reusing filterMap output from {fromtimestamp(os.path.getmtime(filterMapOutput))}\n\t"
+                print(f"Reusing filterMap output from {dt.datetime.fromtimestamp(os.path.getmtime(filterMapOutput))}\n\t"
                       f"(file: {filterMapOutput})\n\t"
                       f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n\t"
                       f"\033[1mThis functionality does not take into account changes in run parameters!!\n\033[0m")
@@ -188,7 +188,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
                   f'--outFileNamePrefix {outPrefix}.finalMapped.')
         regenerate = True
     else:
-        print(f"Reusing STAR run output from {fromtimestamp(os.path.getmtime(starCheckFile))}\n\t"
+        print(f"Reusing STAR run output from {dt.datetime.fromtimestamp(os.path.getmtime(starCheckFile))}\n\t"
               f"(file checked: {starCheckFile})\n\t"
               f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n\t"
               f"\033[1mThis functionality does not take into account changes in run parameters!!\n\033[0m")
@@ -219,7 +219,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
         print('Done with read assignment!')
         regenerate = True
     else:
-        print(f"Reusing assignReadsToGenes output from {fromtimestamp(os.path.getmtime(assignReadsOutput))}\n\t"
+        print(f"Reusing assignReadsToGenes output from {dt.datetime.fromtimestamp(os.path.getmtime(assignReadsOutput))}\n\t"
               f"(file checked: {assignReadsOutput})\n\t"
               f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n\t"
               f"\033[1mThis functionality does not take into account changes in run parameters!!\n\033[0m")
