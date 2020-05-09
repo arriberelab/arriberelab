@@ -55,11 +55,23 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
          maximumReadLength, genomeDir, genomeAnnots, cores, misMatchMax,
          umi5, umi3, optString, filterMap, optString2, genomeDir2, genomeAnnots2, misMatchMax2,
          keepNonUnique, outputJoshSAM, regenerate, **otherkwargs):
+    """
+    Main: Does the work of the pipeline. Large number of parameters accepts input from combineSettingsAndArguments as a
+    keyword dictionary
     
-    """First check to ensure fastq file exists, cutadapt WILL NOT throw an error if a non-existant fastq is passed"""
+    WARNING: if changing parameter names here, they will need to be changed:
+        - in ABSOLUTE_DEFAULT_DICT,
+        - in the settings files
+        - in the argParse options
+    """
+    
+    ############################################################################################################
+    """First check to ensure fastq file exists, cutadapt WILL NOT throw an error if a non-existent fastq is passed"""
+    ############################################################################################################
     if not os.path.isfile(fastqFile):
         print(f"\033[31;1m\nThe fastq file does not exist at: {fastqFile}, Terminating Script\n\033[0m\n")
         exit()
+    
     ############################################################################################################
     """Trim adaptor from reads and sort by desired length"""
     ############################################################################################################
@@ -87,13 +99,13 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
     ############################################################################################################
     """Collapse reads and trim off UMIs"""
     ############################################################################################################
-    ##it doesn't make sense to run readCollapser if there's no UMI
+    # It doesn't make sense to run readCollapser if there's no UMI
     if 0<umi5+umi3<=6:
         print(f"\nYour combined UMI length is {umi5 + umi3}, which is pretty short.\n"
               f"I'm going to try and collapse based on it, assuming you know what\n"
               f"you are doing. But if you do not understand this message, please\n"
               f"go find someone who can help you.\n")
-    ##
+    # Need UMIs in order to run readCollapser
     if umi5+umi3!=0:
         readCollapsedOutput = outPrefix+".trimmed.collapsed.selfDestruct.fastq"
         if not os.path.isfile(readCollapsedOutput) or regenerate:
