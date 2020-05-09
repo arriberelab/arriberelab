@@ -33,7 +33,7 @@ import assignReadsToGenesDF
 import infoGraphQC
 # import metaStartStop
 from logJosh import Tee
-import datetime.datetime.fromtimestamp as fromtimestamp
+import datetime.fromtimestamp as fromtimestamp
 
 # Absolute defaults are overwritten by the given settings file and any command line arguments given
 ABSOLUTE_DEFAULT_DICT = {'cores': 7, 'misMatchMax': 0,
