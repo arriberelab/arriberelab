@@ -33,6 +33,7 @@ import assignReadsToGenesDF
 import infoGraphQC
 # import metaStartStop
 from logJosh import Tee
+import datetime.datetime.fromtimestamp as fromtimestamp
 
 # Absolute defaults are overwritten by the given settings file and any command line arguments given
 ABSOLUTE_DEFAULT_DICT = {'cores': 7, 'misMatchMax': 0,
@@ -79,7 +80,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
     
     ############################################################################################################
     """Trim adaptor from reads and sort by desired length"""
-    print(f"{colorIn}\n{'CUTADAPT':=^{lineWidth}}{colorOut}\n")
+    print(f"{colorIn}\n{'CUTADAPT':=^{lineWidth}}{colorOut}")
     ############################################################################################################
     cutadaptOutput = outPrefix + ".trimmed.selfDestruct.fastq"
     if not os.path.isfile(cutadaptOutput) or regenerate:
@@ -96,13 +97,13 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
                   )
         regenerate = True
     else:
-        print(f"Reusing cutadapt output from {os.stat(cutadaptOutput).st_mtime}\n\t"
+        print(f"Reusing cutadapt output from {fromtimestamp(os.path.getmtime(cutadaptOutput))}\n\t"
               f"(file: {cutadaptOutput})\n\t"
               f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n\t"
               f"\033[1mThis functionality does not take into account changes in run parameters!!\n\033[0m")
     ############################################################################################################
     """Collapse reads and trim off UMIs"""
-    print(f"{colorIn}\n{'readCollapser':=^{lineWidth}}{colorOut}\n")
+    print(f"{colorIn}\n{'readCollapser':=^{lineWidth}}{colorOut}")
     ############################################################################################################
     # It doesn't make sense to run readCollapser if there's no UMI
     if 0<umi5+umi3<=6:
@@ -118,7 +119,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
                                  umi5, umi3, readCollapsedOutput])
             regenerate = True
         else:
-            print(f"Reusing readCollapser output from {os.stat(readCollapsedOutput).st_mtime}\n\t"
+            print(f"Reusing readCollapser output from {fromtimestamp(os.path.getmtime(readCollapsedOutput))}\n\t"
                   f"(file: {readCollapsedOutput})\n\t"
                   f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n\t"
                   f"\033[1mThis functionality does not take into account changes in run parameters!!\n\033[0m")
@@ -138,7 +139,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
     """Perform a filter round of mapping. e.g. to rDNA or RNAi trigger"""
     ############################################################################################################
     if filterMap:
-        print(f"{colorIn}\n{'filterMapping':=^{lineWidth}}{colorOut}\n")
+        print(f"{colorIn}\n{'filterMapping':=^{lineWidth}}{colorOut}")
         if genomeDir2 and genomeAnnots2:
             filterMapOutput = outPrefix+'.trimmed.collapsed.mapped.filterUnmapped.out.mate1'
             if not os.path.isfile(filterMapOutput) or regenerate:
@@ -157,7 +158,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
                           )
                 regenerate = True
             else:
-                print(f"Reusing filterMap output from {os.stat(filterMapOutput).st_mtime}\n\t"
+                print(f"Reusing filterMap output from {fromtimestamp(os.path.getmtime(filterMapOutput))}\n\t"
                       f"(file: {filterMapOutput})\n\t"
                       f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n\t"
                       f"\033[1mThis functionality does not take into account changes in run parameters!!\n\033[0m")
@@ -170,7 +171,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
     
     ############################################################################################################
     """Commence read mapping"""
-    print(f"{colorIn}\n{'STAR':=^{lineWidth}}{colorOut}\n")
+    print(f"{colorIn}\n{'STAR':=^{lineWidth}}{colorOut}")
     ############################################################################################################
     starCheckFile = outPrefix + ".finalMapped.Aligned.out.sam"
     if not os.path.isfile(starCheckFile) or regenerate:
@@ -187,14 +188,14 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
                   f'--outFileNamePrefix {outPrefix}.finalMapped.')
         regenerate = True
     else:
-        print(f"Reusing STAR run output from {os.stat(starCheckFile).st_mtime}\n\t"
+        print(f"Reusing STAR run output from {fromtimestamp(os.path.getmtime(starCheckFile))}\n\t"
               f"(file checked: {starCheckFile})\n\t"
               f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n\t"
               f"\033[1mThis functionality does not take into account changes in run parameters!!\n\033[0m")
     
     ############################################################################################################
     """Assign reads to genes"""
-    print(f"{colorIn}\n{'assignReadsToGenes':=^{lineWidth}}{colorOut}\n")
+    print(f"{colorIn}\n{'assignReadsToGenes':=^{lineWidth}}{colorOut}")
     ############################################################################################################
     assignReadsOutput = outPrefix + ".allChrs.jam"
     if not os.path.isfile(assignReadsOutput) or regenerate:
@@ -218,7 +219,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
         print('Done with read assignment!')
         regenerate = True
     else:
-        print(f"Reusing assignReadsToGenes output from {os.stat(assignReadsOutput).st_mtime}\n\t"
+        print(f"Reusing assignReadsToGenes output from {fromtimestamp(os.path.getmtime(assignReadsOutput))}\n\t"
               f"(file checked: {assignReadsOutput})\n\t"
               f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n\t"
               f"\033[1mThis functionality does not take into account changes in run parameters!!\n\033[0m")
