@@ -41,7 +41,6 @@ ABSOLUTE_DEFAULT_DICT = {'cores': 7, 'misMatchMax': 0,
                                       '--outReadsUnmapped Fastx '
                                       '--outSJfilterOverhangMin 6 6 6 6',
                          'regenerate': False,
-                         'colorIn': '\033[1;30;44m', 'colorOut': '\033[0m',  # For printing headers
                          'misMatchMax2': 3,
                          'optString2': f'--outFilterScoreMin 14 '
                                        f'--outFilterScoreMinOverLread 0.3 '
@@ -55,7 +54,7 @@ ABSOLUTE_DEFAULT_DICT = {'cores': 7, 'misMatchMax': 0,
 def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
          maximumReadLength, genomeDir, genomeAnnots, cores, misMatchMax,
          umi5, umi3, optString, filterMap, optString2, genomeDir2, genomeAnnots2, misMatchMax2,
-         keepNonUnique, outputJoshSAM, regenerate, colorIn, colorOut, **otherkwargs):
+         keepNonUnique, outputJoshSAM, regenerate, **otherkwargs):
     """
     Main: Does the work of the pipeline. Large number of parameters accepts input from combineSettingsAndArguments as a
     keyword dictionary
@@ -72,6 +71,9 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
     if not os.path.isfile(fastqFile):
         print(f"\033[31;1m\nThe fastq file does not exist at: {fastqFile}, Terminating Script\n\033[0m\n")
         exit()
+    # For printing headers:
+    colorIn = '\033[1;30;44m'
+    colorOut = '\033[0m'
     
     ############################################################################################################
     """Trim adaptor from reads and sort by desired length"""
