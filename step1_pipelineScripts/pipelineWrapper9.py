@@ -41,7 +41,7 @@ ABSOLUTE_DEFAULT_DICT = {'cores': 7, 'misMatchMax': 0,
                                       '--outReadsUnmapped Fastx '
                                       '--outSJfilterOverhangMin 6 6 6 6',
                          'regenerate': False,
-                         'colorIn': '\033[1;30;47m', 'colorOut': '\033[0m',  # For printing headers
+                         'colorIn': '\033[1;30;44m', 'colorOut': '\033[0m',  # For printing headers
                          'misMatchMax2': 3,
                          'optString2': f'--outFilterScoreMin 14 '
                                        f'--outFilterScoreMinOverLread 0.3 '
