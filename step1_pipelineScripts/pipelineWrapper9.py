@@ -71,13 +71,15 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
     if not os.path.isfile(fastqFile):
         print(f"\033[31;1m\nThe fastq file does not exist at: {fastqFile}, Terminating Script\n\033[0m\n")
         exit()
+    
     # For printing headers:
-    colorIn = '\033[1;30;44m'
+    colorIn = '\033[1;30;41m'
     colorOut = '\033[0m'
+    lineWidth = 75
     
     ############################################################################################################
     """Trim adaptor from reads and sort by desired length"""
-    print(f"{colorIn}\n{'CUTADAPT':^50}{colorOut}\n")
+    print(f"{colorIn}\n{'CUTADAPT':^{lineWidth}}{colorOut}\n")
     ############################################################################################################
     cutadaptOutput = outPrefix + ".trimmed.selfDestruct.fastq"
     if not os.path.isfile(cutadaptOutput) or regenerate:
@@ -100,7 +102,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
               f"\033[1mThis functionality does not take into account changes in run parameters!!\n\033[0m")
     ############################################################################################################
     """Collapse reads and trim off UMIs"""
-    print(f"{colorIn}\n{'readCollapser':^50}{colorOut}\n")
+    print(f"{colorIn}\n{'readCollapser':^{lineWidth}}{colorOut}\n")
     ############################################################################################################
     # It doesn't make sense to run readCollapser if there's no UMI
     if 0<umi5+umi3<=6:
@@ -136,7 +138,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
     """Perform a filter round of mapping. e.g. to rDNA or RNAi trigger"""
     ############################################################################################################
     if filterMap:
-        print(f"{colorIn}\n{'filterMapping':^50}{colorOut}\n")
+        print(f"{colorIn}\n{'filterMapping':^{lineWidth}}{colorOut}\n")
         if genomeDir2 and genomeAnnots2:
             filterMapOutput = outPrefix+'.trimmed.collapsed.mapped.filterUnmapped.out.mate1'
             if not os.path.isfile(filterMapOutput) or regenerate:
@@ -168,7 +170,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
     
     ############################################################################################################
     """Commence read mapping"""
-    print(f"{colorIn}\n{'STAR':^50}{colorOut}\n")
+    print(f"{colorIn}\n{'STAR':^{lineWidth}}{colorOut}\n")
     ############################################################################################################
     starCheckFile = outPrefix + ".finalMapped.Aligned.out.sam"
     if not os.path.isfile(starCheckFile) or regenerate:
@@ -192,7 +194,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
     
     ############################################################################################################
     """Assign reads to genes"""
-    print(f"{colorIn}\n{'assignReadsToGenes':^50}{colorOut}\n")
+    print(f"{colorIn}\n{'assignReadsToGenes':^{lineWidth}}{colorOut}\n")
     ############################################################################################################
     assignReadsOutput = outPrefix + ".allChrs.jam"
     if not os.path.isfile(assignReadsOutput) or regenerate:
