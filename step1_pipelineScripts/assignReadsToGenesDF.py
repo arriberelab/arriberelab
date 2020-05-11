@@ -63,8 +63,12 @@ def parseArgs() -> ARG_DICT:
     parser.add_argument('-p', '--print_rows', metavar='print_rows', type=int,
                         default=None, help="Option to print 'n' number of lines of final dataframe,"
                                            "can get lengthy fast as each split chromosome will print this many lines")
+    parser.add_argument('-m', '--min', '--minLength', metavar='minLength', type=int,
+                        default=None, help="Minimum post read recovery length")
+    parser.add_argument('-M', '--max', '--maxLength', metavar='minLength', type=int,
+                        default=None, help="Maximum post read recovery length")
     # Flag arguments which turn on functionality if passed:
-    parser.add_argument('-m', '--deep_memory', action='store_true',
+    parser.add_argument('--deep_memory', action='store_true',
                         help="Boolean flag to print dataframe deep memory info\n"
                              "(this can be very CPU/time intensive, but informative)")
     parser.add_argument('-u', '--keep_non_unique', action='store_true',
@@ -448,8 +452,9 @@ def finalFixers(sam_df_dict: CHR_DF_DICT, **kwargs) -> CHR_DF_DICT:
                                                                                                    x['HI'],
                                                                                                    x['NH']),
                                                                          axis=1).tolist(), index=df.index)
-            sam_df_dict[chr_key]['final_length'] = sam_df_dict[chr_key]['map_read_seq'].str.len()
-            print(f"Average read length in Chr-{chr_key:->4}: {sam_df_dict[chr_key]['final_length'].mean()}")
+            # Add read_length column for filtering and joshSAM output (if flagged for)
+            sam_df_dict[chr_key]['read_length'] = sam_df_dict[chr_key]['map_read_seq'].str.len()
+            print(f"Average read length in Chr-{chr_key:->4}: {sam_df_dict[chr_key]['read_length'].mean()}")
             print(f'Chr-{chr_key:->4} finalized, '
                   f'read count={len(sam_df_dict[chr_key].index)}')
         else:
@@ -463,7 +468,8 @@ def outputToCSV(dataframe, outputprefix):
 
 def main(sam_file: str, annot_file: str, output_prefix: str,
          print_rows: int = None, keep_non_unique: bool = False,
-         output_joshSAM: bool = False, **kwargs) -> None:
+         output_joshSAM: bool = False, minLength: int = None,
+         maxLength: int = None, **kwargs) -> None:
     
     start_time = default_timer()  # Timer
     
@@ -509,17 +515,23 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
     jam_all_chrs = concat(jam_df_dict.values(), ignore_index=True)
     # Sort by chromosome and chr_pos
     jam_all_chrs.sort_values(by=['chr', 'chr_pos'], inplace=True)
-    # This solves some issue with pandas error relating to copying a slice:
-    if output_joshSAM:
-        # joshSAM files need a read_length column
-        jam_all_chrs['read_length'] = DataFrame(jam_all_chrs.apply(lambda x: len(x['map_read_seq']),
-                                                                   axis=1).tolist(), index=jam_all_chrs.index)
-    # New DF with only unique reads (Not sure if this is an isolated DF... the deep copy should prevent pointer issues?)
-    jam_unique_all_chrs = jam_all_chrs[jam_all_chrs['NH'].str.endswith(':1')].copy(deep=True)
-    # Write unique reads to .jam file >>>
-    jam_unique_all_chrs.to_csv(f"{output_prefix}.allChrs.jam",
-                               index=False, sep='\t',
-                               columns=jam_columns)
+    # Filter out reads that are too long or too short:
+    if minLength >= 0 and maxLength >= 0:
+        print(f"Filtering out reads shorter than {minLength} or longer than {maxLength} to file: "
+              f"{output_prefix}.selfDestruct.tooShortOrLong.jelly (They will be in a jam format)")
+        # Output the jelly format for reads that are too short/long:
+        jam_all_chrs[jam_all_chrs['read_length'] > maxLength or jam_all_chrs['read_length'] < minLength].\
+            to_csv(f"{output_prefix}.selfDestruct.tooShortOrLong.jelly",
+                   index=False, sep='\t',
+                   columns=jam_columns)
+        # Overwrite the main dataframe to remove all the reads that were just written:
+        jam_all_chrs = jam_all_chrs[minLength <= jam_all_chrs['read_length'] <= maxLength]
+    # Write unique reads to .jam file:
+    #   Everything before the '.to_csv' is the filter action to only output unique reads
+    jam_all_chrs[jam_all_chrs['NH'].str.endswith(':1')].to_csv(f"{output_prefix}.allChrs.jam",
+                                                               index=False, sep='\t',
+                                                               columns=jam_columns)
+    # Below is to handle the other cases of wanting to keep multiply-mapping reads or a joshSAM output
     if keep_non_unique:
         # If flag is called, write non-unique reads and unique reads to another .jam file
         jam_all_chrs.to_csv(f"{output_prefix}.redundantAndUnique.allChrs.jam",
@@ -534,11 +546,12 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
                                 columns=joshSAM_columns)
     if output_joshSAM:
         # joshSAM files are organized based on the original SAM file (this info should be retained by the indexes)
-        jam_unique_all_chrs.sort_index(inplace=True)
-        # Write joshSAM file with only unique reads >>>
-        jam_unique_all_chrs.to_csv(f"{output_prefix}.allChrs.joshSAM",
-                                   index=False, sep='\t',
-                                   columns=joshSAM_columns)
+        jam_all_chrs.sort_index(inplace=True)
+        # Write joshSAM file with only unique reads:
+        #   Everything before the '.to_csv' is the filter action to only output unique reads
+        jam_all_chrs[jam_all_chrs['NH'].str.endswith(':1')].to_csv(f"{output_prefix}.allChrs.joshSAM",
+                                                                   index=False, sep='\t',
+                                                                   columns=joshSAM_columns)
     end_time = default_timer()  # Timer
     print(f"\nTotal Time for assignReadsToGenesDF: {end_time - start_time:<6.2f} seconds\n\t")
 
