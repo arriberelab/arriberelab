@@ -519,7 +519,7 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
         print(f"Filtering out reads shorter than {minLength} or longer than {maxLength} to file: "
               f"{output_prefix}.selfDestruct.tooShortOrLong.jelly (They will be in a jam format)")
         # Output the jelly format for reads that are too short/long:
-        jam_all_chrs[jam_all_chrs['read_length'] > maxLength or jam_all_chrs['read_length'] < minLength].\
+        jam_all_chrs[(jam_all_chrs['read_length'] > maxLength) | (jam_all_chrs['read_length'] < minLength)].\
             to_csv(f"{output_prefix}.selfDestruct.tooShortOrLong.jelly",
                    index=False, sep='\t',
                    columns=jam_columns)
