@@ -454,7 +454,6 @@ def finalFixers(sam_df_dict: CHR_DF_DICT, **kwargs) -> CHR_DF_DICT:
                                                                          axis=1).tolist(), index=df.index)
             # Add read_length column for filtering and joshSAM output (if flagged for)
             sam_df_dict[chr_key]['read_length'] = sam_df_dict[chr_key]['map_read_seq'].str.len()
-            print(f"Average read length in Chr-{chr_key:->4}: {sam_df_dict[chr_key]['read_length'].mean()}")
             print(f'Chr-{chr_key:->4} finalized, '
                   f'read count={len(sam_df_dict[chr_key].index)}')
         else:
