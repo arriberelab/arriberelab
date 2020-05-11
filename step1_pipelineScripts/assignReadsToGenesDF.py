@@ -439,9 +439,7 @@ def finalFixers(sam_df_dict: CHR_DF_DICT, **kwargs) -> CHR_DF_DICT:
         HINH = hit_index + ':' + number_of_hits
         return HINH, new_gene
     
-    # TODO: This is more than just the HI:NH stuff. Is it worth fixing the print outs? I don't know how to say what's
-    #       happening is a concise way
-    print(f"\nCreating HI:NH column for {len(sam_df_dict.keys())} chromosomes:")
+    print(f"\nFinalizing formatting for {len(sam_df_dict.keys())} chromosomes:")
     # Apply it to each chr DF:
     for chr_key, df in sam_df_dict.items():
         if not df.empty:
@@ -450,7 +448,9 @@ def finalFixers(sam_df_dict: CHR_DF_DICT, **kwargs) -> CHR_DF_DICT:
                                                                                                    x['HI'],
                                                                                                    x['NH']),
                                                                          axis=1).tolist(), index=df.index)
-            print(f'Chr-{chr_key:->4} HI:NH column created, '
+            sam_df_dict[chr_key]['final_length'] = sam_df_dict[chr_key]['map_read_seq'].str.len()
+            print(f"Average read length in Chr-{chr_key:->4}: {sam_df_dict[chr_key]['final_length'].mean()}")
+            print(f'Chr-{chr_key:->4} finalized, '
                   f'read count={len(sam_df_dict[chr_key].index)}')
         else:
             print(f'Chr-{chr_key:->4} is empty!')
@@ -514,7 +514,7 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
         # joshSAM files need a read_length column
         jam_all_chrs['read_length'] = DataFrame(jam_all_chrs.apply(lambda x: len(x['map_read_seq']),
                                                                    axis=1).tolist(), index=jam_all_chrs.index)
-    # New DF with only unique reads (this could be a source of memory overload as its creating a full copy(?))
+    # New DF with only unique reads (Not sure if this is an isolated DF... the deep copy should prevent pointer issues?)
     jam_unique_all_chrs = jam_all_chrs[jam_all_chrs['NH'].str.endswith(':1')].copy(deep=True)
     # Write unique reads to .jam file >>>
     jam_unique_all_chrs.to_csv(f"{output_prefix}.allChrs.jam",
