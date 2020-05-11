@@ -516,11 +516,13 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
     jam_all_chrs.sort_values(by=['chr', 'chr_pos'], inplace=True)
     # Filter out reads that are too long or too short:
     if minLength and maxLength:
-        print(f"Filtering out reads shorter than {minLength} or longer than {maxLength} to file: "
-              f"{output_prefix}.selfDestruct.tooShortOrLong.jelly (They will be in a jam format)")
+        print(f"\nFiltering out "
+              f"{len(jam_all_chrs[(jam_all_chrs['read_length'] > maxLength) | (jam_all_chrs['read_length'] < minLength)].index)} "
+              f"reads shorter than {minLength} or longer than {maxLength} to file: "
+              f"{output_prefix}.tooShortOrLong.jelly (They will be in a jam format)")
         # Output the jelly format for reads that are too short/long:
         jam_all_chrs[(jam_all_chrs['read_length'] > maxLength) | (jam_all_chrs['read_length'] < minLength)].\
-            to_csv(f"{output_prefix}.selfDestruct.tooShortOrLong.jelly",
+            to_csv(f"{output_prefix}.tooShortOrLong.jelly",
                    index=False, sep='\t',
                    columns=jam_columns)
         # Overwrite the main dataframe to remove all the reads that were just written:
