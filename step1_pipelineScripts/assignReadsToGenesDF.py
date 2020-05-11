@@ -472,7 +472,7 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
          maxLength: int = None, **kwargs) -> None:
     
     start_time = default_timer()  # Timer
-    print(f"minLengths={minLength}\nmaxLength={maxLength}\n")
+    
     # Load the read and annotation files into pandas DFs
     annot_df_dict = parseAllChrsToDF(annot_file, **kwargs)
     sam_df_dict = parseSamToDF(sam_file, keep_non_unique=keep_non_unique, **kwargs)
