@@ -338,7 +338,7 @@ def recoverMappedPortion_dfWrapper(sam_df_dict: CHR_DF_DICT, print_rows: int = N
 
 
 def assignReadsToGenes(sam_df_dict: CHR_DF_DICT, annot_df_dict: CHR_DF_DICT,
-                       print_rows: int = None, **kwargs) -> CHR_DF_DICT:
+                       print_rows: int = None, **kwargs) -> (CHR_DF_DICT, CHR_DF_DICT):
     """
     assignReadsToGenes
     
@@ -348,7 +348,7 @@ def assignReadsToGenes(sam_df_dict: CHR_DF_DICT, annot_df_dict: CHR_DF_DICT,
         iterating through the reads dataframe because it is able to utilize some of
         the C backend of pandas (which was built with numpy).
     """
-    
+    unassigned_df_dict = {}
     print(f"\nAnnotation alignment for {len(sam_df_dict.keys())} chromosomes:")
     for chr_key, df in sam_df_dict.items():
         try:
@@ -356,9 +356,17 @@ def assignReadsToGenes(sam_df_dict: CHR_DF_DICT, annot_df_dict: CHR_DF_DICT,
             # TODO: In the future we could utilize the parameter: "on='left'" in the merge call. This
             #       will provide the advantage(?) of allowing unmapped reads through, meaning we can
             #       pass these into analysis or QC scripts as needed.
-            sam_df_dict[chr_key] = df.merge(annot_df_dict[chr_key], on=['chr', 'chr_pos'])
+            sam_df_dict[chr_key] = df.merge(annot_df_dict[chr_key], how='left', on=['chr', 'chr_pos'])
+            unassigned_df_dict[chr_key] = sam_df_dict[chr_key][sam_df_dict[chr_key]['gene'] == numpy_nan]
+            sam_df_dict[chr_key] = sam_df_dict[chr_key][sam_df_dict[chr_key]['gene'] != numpy_nan]
             print(f"Chr-{chr_key:->4} genes assigned, read count="
-                  f"{len(sam_df_dict[chr_key][sam_df_dict[chr_key]['gene'] != numpy_nan].index):<7}")
+                  f"{len(sam_df_dict[chr_key].index):>8}", end="")
+            # If there are any unassigned reads, print this in the output
+            if len(unassigned_df_dict[chr_key].index) > 0:
+                print(f", unassigned read count="
+                      f"{len(unassigned_df_dict[chr_key].index):>5}")
+            else:
+                print()
             if print_rows:
                 print(sam_df_dict[chr_key][['read_id',
                                             'chr',
@@ -366,14 +374,14 @@ def assignReadsToGenes(sam_df_dict: CHR_DF_DICT, annot_df_dict: CHR_DF_DICT,
                                             'cigar',
                                             'read_seq',
                                             'gene',
-                                            'gene_tring']].head(print_rows))
+                                            'gene_string']].head(print_rows))
         except KeyError as key:
             if str(key).strip("'") == chr_key:
                 print(f"\t\tChr-{chr_key:->4} not found in annotations! -> Adding empty columns to compensate\n")
                 sam_df_dict[chr_key]['gene'], sam_df_dict[chr_key]['gene_string'] = numpy_nan, numpy_nan
             else:
                 print(f"\tOther KeyError pertaining to:", str(key), chr_key)
-    return sam_df_dict
+    return sam_df_dict, unassigned_df_dict
 
 
 def fixSenseNonsense(sam_df_dict: CHR_DF_DICT,
@@ -476,8 +484,9 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
     annot_df_dict = parseAllChrsToDF(annot_file, **kwargs)
     sam_df_dict = parseSamToDF(sam_file, keep_non_unique=keep_non_unique, **kwargs)
     
-    # TODO: This is currently a little chaotic with all of the steps/naming. The goal was for it to be readable, but...
-    
+    ####################################################################################################################
+    """Treatment + Assignment of reads from SAM file"""
+    ####################################################################################################################
     # Apply the recoverMappedPortion() to dataframe
     post_map_df_dict = recoverMappedPortion_dfWrapper(sam_df_dict, print_rows=print_rows, **kwargs)
     
@@ -485,8 +494,8 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
     post_sense_antisense_df_dict = fixSenseNonsense(post_map_df_dict, print_rows=print_rows, **kwargs)
     
     # Use df.merge() function for mapping annotations onto reads
-    assigned_df_dict = assignReadsToGenes(post_sense_antisense_df_dict, annot_df_dict,
-                                          print_rows=print_rows, **kwargs)
+    assigned_df_dict, unassigned_df_dict = assignReadsToGenes(post_sense_antisense_df_dict, annot_df_dict,
+                                                              print_rows=print_rows, **kwargs)
     
     # Add the HitIndex:NumberOfHits column from the SAM HI and NH columns
     jam_df_dict = finalFixers(assigned_df_dict, **kwargs)
@@ -512,24 +521,48 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
     
     # Bring all chromosomes together
     jam_all_chrs = concat(jam_df_dict.values(), ignore_index=True)
+    unassigned_all_chrs = concat(unassigned_df_dict.values(), ignore_index=True)
     # Sort by chromosome and chr_pos
     jam_all_chrs.sort_values(by=['chr', 'chr_pos'], inplace=True)
-    # Filter out reads that are too long or too short:
-    if minLength and maxLength:
-        print(f"\nFiltering out "
-              f"{len(jam_all_chrs[(jam_all_chrs['read_length'] > maxLength) | (jam_all_chrs['read_length'] < minLength)].index)} "
-              f"reads shorter than {minLength} or longer than {maxLength} to file: "
-              f"{output_prefix}.tooShortOrLong.jelly (They will be in a jam format)")
-        # Output the jelly format for reads that are too short/long:
-        jam_all_chrs[(jam_all_chrs['read_length'] > maxLength) | (jam_all_chrs['read_length'] < minLength)].\
-            to_csv(f"{output_prefix}.tooShortOrLong.jelly",
-                   index=False, sep='\t',
-                   columns=jam_columns)
-        # Overwrite the main dataframe to remove all the reads that were just written:
-        jam_all_chrs = jam_all_chrs[(jam_all_chrs['read_length'] >= minLength) &\
-                                    (jam_all_chrs['read_length'] <= maxLength)]
+    ####################################################################################################################
+    
+    ####################################################################################################################
+    """Output any reads that were not mapped to the annotation file"""
+    ####################################################################################################################
+    if not unassigned_all_chrs.empty:
+        unassigned_all_chrs.sort_values(by=['chr', 'chr_pos'], inplace=True)
+        unassigned_all_chrs.to_csv(f"{output_prefix}.unassignedReads.jelly",
+                                   index=False, sep='\t',
+                                   columns=jam_columns)
     else:
-        print(f"Skipping filtering of final read lengths...")
+        print(f"\nNo unassigned reads. {output_prefix}.unassignedReads.jelly will not be generated.")
+    ####################################################################################################################
+    """Filter out and output reads that are too long or too short:"""
+    ####################################################################################################################
+    if minLength and maxLength:
+        # Create a dataframe copy with all the too short/long reads
+        filter_out = jam_all_chrs[(jam_all_chrs['read_length'] > maxLength) | (jam_all_chrs['read_length'] < minLength)]
+        if len(filter_out.index) > 0:
+            print(f"\nFiltering out {len(filter_out.index)} reads shorter than {minLength}nts or longer "
+                  f"than {maxLength}nts to file: "
+                  f"{output_prefix}.tooShortOrLong.jelly (this will be in a jam format)")
+            # Output the jelly format for reads that are too short/long:
+            filter_out.to_csv(f"{output_prefix}.tooShortOrLong.jelly",
+                              index=False, sep='\t',
+                              columns=jam_columns)
+            # Overwrite the main dataframe to remove all the reads that were just written out to the jelly file:
+            jam_all_chrs = jam_all_chrs[(jam_all_chrs['read_length'] >= minLength) &\
+                                        (jam_all_chrs['read_length'] <= maxLength)]
+        else:
+            print(f"\nNo reads < {minLength}nts or > {maxLength}nts identified. "
+                  f"{output_prefix}.tooShortOrLong.jelly will not be generated")
+    else:
+        print(f"\nSkipping filtering of final read lengths...")
+    ####################################################################################################################
+    
+    ####################################################################################################################
+    """Output of jam file (and other files by request/argument-flag)"""
+    ####################################################################################################################
     # Write unique reads to .jam file:
     #   Everything before the '.to_csv' is the filter action to only output unique reads
     jam_all_chrs[jam_all_chrs['NH'].str.endswith(':1')].to_csv(f"{output_prefix}.allChrs.jam",
@@ -556,8 +589,11 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
         jam_all_chrs[jam_all_chrs['NH'].str.endswith(':1')].to_csv(f"{output_prefix}.allChrs.joshSAM",
                                                                    index=False, sep='\t',
                                                                    columns=joshSAM_columns)
+    ####################################################################################################################
+    
     end_time = default_timer()  # Timer
-    print(f"\nTotal Time for assignReadsToGenesDF: {end_time - start_time:<6.2f} seconds\n\t")
+    total_seconds = end_time - start_time
+    print(f"\nTotal Time for assignReadsToGenesDF:{total_seconds // 60:3.0f}min{total_seconds % 60:3.0f}sec\n")
 
 
 if __name__ == '__main__':
