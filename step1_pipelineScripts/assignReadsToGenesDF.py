@@ -253,7 +253,7 @@ def parseAllChrsToDF(annot_file: str,
     # Quickly reorder columns (completely superficial)
     annot_df = annot_df[['chr', 'chr_pos', 'gene', 'gene_string']]
     
-    print(f'Finished parsing and sorting of file at: {annot_file}')
+    print(f'Finished parsing and sorting of annotations file')
     
     if print_rows and print_rows == int:
         print(f"\nFirst {print_rows} rows of dataframe:\n",
@@ -524,7 +524,8 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
                    index=False, sep='\t',
                    columns=jam_columns)
         # Overwrite the main dataframe to remove all the reads that were just written:
-        jam_all_chrs = jam_all_chrs[minLength <= jam_all_chrs['read_length'] <= maxLength]
+        jam_all_chrs = jam_all_chrs[(jam_all_chrs['read_length'] >= minLength) &\
+                                    (jam_all_chrs['read_length'] <= maxLength)]
     else:
         print(f"Skipping filtering of final read lengths...")
     # Write unique reads to .jam file:
