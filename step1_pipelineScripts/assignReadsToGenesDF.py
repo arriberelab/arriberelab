@@ -523,10 +523,10 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
             to_csv(f"{output_prefix}.selfDestruct.tooShortOrLong.jelly",
                    index=False, sep='\t',
                    columns=jam_columns)
-    else:
-        print(f"Skipping filtering of final read lengths...")
         # Overwrite the main dataframe to remove all the reads that were just written:
         jam_all_chrs = jam_all_chrs[minLength <= jam_all_chrs['read_length'] <= maxLength]
+    else:
+        print(f"Skipping filtering of final read lengths...")
     # Write unique reads to .jam file:
     #   Everything before the '.to_csv' is the filter action to only output unique reads
     jam_all_chrs[jam_all_chrs['NH'].str.endswith(':1')].to_csv(f"{output_prefix}.allChrs.jam",
