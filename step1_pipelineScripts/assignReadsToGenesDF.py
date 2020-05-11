@@ -540,7 +540,7 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
     """Filter out and output reads that are too long or too short:"""
     ####################################################################################################################
     if minLength and maxLength:
-        # Create a dataframe copy with all the too short/long reads
+        # Create a dataframe copy with all of the too short/long reads
         filter_out = jam_all_chrs[(jam_all_chrs['read_length'] > maxLength) | (jam_all_chrs['read_length'] < minLength)]
         if len(filter_out.index) > 0:
             print(f"\nFiltering out {len(filter_out.index)} reads shorter than {minLength}nts or longer "
