@@ -63,9 +63,9 @@ def parseArgs() -> ARG_DICT:
     parser.add_argument('-p', '--print_rows', metavar='print_rows', type=int,
                         default=None, help="Option to print 'n' number of lines of final dataframe,"
                                            "can get lengthy fast as each split chromosome will print this many lines")
-    parser.add_argument('-m', '--min', '--minLength', metavar='minLength', type=int,
+    parser.add_argument('-m', '--minLength', metavar='minLength', type=int,
                         default=None, help="Minimum post read recovery length")
-    parser.add_argument('-M', '--max', '--maxLength', metavar='minLength', type=int,
+    parser.add_argument('-M', '--maxLength', metavar='minLength', type=int,
                         default=None, help="Maximum post read recovery length")
     # Flag arguments which turn on functionality if passed:
     parser.add_argument('--deep_memory', action='store_true',
@@ -472,7 +472,7 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
          maxLength: int = None, **kwargs) -> None:
     
     start_time = default_timer()  # Timer
-    
+    print(f"minLengths={minLength}\nmaxLength={maxLength}\n")
     # Load the read and annotation files into pandas DFs
     annot_df_dict = parseAllChrsToDF(annot_file, **kwargs)
     sam_df_dict = parseSamToDF(sam_file, keep_non_unique=keep_non_unique, **kwargs)
@@ -516,7 +516,7 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
     # Sort by chromosome and chr_pos
     jam_all_chrs.sort_values(by=['chr', 'chr_pos'], inplace=True)
     # Filter out reads that are too long or too short:
-    if minLength >= 0 and maxLength >= 0:
+    if minLength and maxLength:
         print(f"Filtering out reads shorter than {minLength} or longer than {maxLength} to file: "
               f"{output_prefix}.selfDestruct.tooShortOrLong.jelly (They will be in a jam format)")
         # Output the jelly format for reads that are too short/long:
@@ -524,6 +524,8 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
             to_csv(f"{output_prefix}.selfDestruct.tooShortOrLong.jelly",
                    index=False, sep='\t',
                    columns=jam_columns)
+    else:
+        print(f"Skipping filtering of final read lengths...")
         # Overwrite the main dataframe to remove all the reads that were just written:
         jam_all_chrs = jam_all_chrs[minLength <= jam_all_chrs['read_length'] <= maxLength]
     # Write unique reads to .jam file:
