@@ -309,7 +309,7 @@ def parseSettings(settings,print_arguments=False,**other_kwargs):
                     else:
                         print("\033[31;1m\nRemove pipes ('|') from settings "
                               "file arguments (or rewrite parser)\n\033[0m")
-                        raise ImportError
+                        exit()
     if print_arguments:
         print(f"\nSettings Arguments (file: '{settings}')")
         for key, arg in settingsDict.items():
@@ -333,12 +333,17 @@ def combineSettingsAndArguments():
     # Absolute defaults overwritten by settings.txt then overwritten by CLI args
     for key, arg in finalArgDict.items():
         print(f"\t{key} = {arg}")
-        try:
-            finalArgDict[key] = int(arg)
-        except ValueError:
-            finalArgDict[key] = str(arg)
-        except TypeError:
-            finalArgDict[key] = str(arg)
+        if finalArgDict[key] == "True":
+            finalArgDict[key] = True
+        elif finalArgDict[key] == "False":
+            finalArgDict[key] = False
+        else:
+            try:
+                finalArgDict[key] = int(arg)
+            except ValueError:
+                finalArgDict[key] = str(arg)
+            except TypeError:
+                finalArgDict[key] = str(arg)
     print(f"cutadapt version:")
     os.system('cutadapt --version')
     print(f"STAR version:")
