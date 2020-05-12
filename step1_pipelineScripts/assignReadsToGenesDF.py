@@ -550,9 +550,11 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
     ####################################################################################################################
     if not unassigned_all_chrs.empty:
         unassigned_all_chrs.sort_values(by=['chr', 'chr_pos'], inplace=True)
+        unassigned_all_chrs['HI:NH'] = unassigned_all_chrs.apply(lambda row:\
+                                                                 row.HI.split(':')[-1] + row.NH.split(':')[-1])
         unassigned_all_chrs.to_csv(f"{output_prefix}.unassignedReads.jelly",
                                    index=False, sep='\t',
-                                   columns=jam_columns)
+                                   columns=jam_columns.pop('HI:NH'))
     else:
         print(f"\nNo unassigned reads. {output_prefix}.unassignedReads.jelly will not be generated.")
     ####################################################################################################################
