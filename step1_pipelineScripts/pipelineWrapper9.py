@@ -289,7 +289,7 @@ def parseArguments():
             else:
                 print(f"\t{key} = {arg}")
     # Recreate dict without arguments that did not receive any input
-    arg_dict = {k: v for k, v in arg_dict.items() if v is not None}
+    arg_dict = {k: v for k, v in arg_dict.items() if v is not None and v}
     return arg_dict
 
 def parseSettings(settings,print_arguments=False,**other_kwargs):
