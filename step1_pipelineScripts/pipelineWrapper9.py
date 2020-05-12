@@ -117,7 +117,8 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
                                  umi5, umi3, readCollapsedOutput])
             regenerate = True
         else:
-            print(f"Reusing readCollapser output from {dt.datetime.fromtimestamp(os.path.getmtime(readCollapsedOutput))}\n\t"
+            print(f"Reusing readCollapser output from "
+                  f"{dt.datetime.fromtimestamp(os.path.getmtime(readCollapsedOutput))}\n\t"
                   f"(file: {readCollapsedOutput})\n\t"
                   f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n\t"
                   f"\033[1mThis functionality does not take into account changes in run parameters!!\n\033[0m")
@@ -206,7 +207,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
         genomeAnnotProcessed=genomeAnnots.strip('gtf')+'allChrs.txt'
         assignReadsToGenesDF.main(outPrefix +'.finalMapped.Aligned.out.sam',
                                   genomeAnnotProcessed,
-                                  outPrefix,
+                                  outPrefix, minLength=minimumReadLength, maxLength=maximumReadLength,
                                   keep_non_unique=keepNonUnique,  # If this flag is passed from argParse
                                   #                                   (or settings.txt) assignReadsToGenesDF will *also*
                                   #                                   output a file titled:
@@ -221,16 +222,6 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
               f"(file checked: {assignReadsOutput})\n\t"
               f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n\t"
               f"\033[1mThis functionality does not take into account changes in run parameters!!\n\033[0m")
-    
-    ############################################################################################################
-    """Additional filtering of reads by length"""  # TODO: integrate with assignReads
-    ############################################################################################################
-    print('filtering read lengths again...')
-    filterJamByReadLength.main([outPrefix+'.allChrs.jam',
-                                minimumReadLength,
-                                maximumReadLength,
-                                outPrefix+'.filtered_%s-%snt.jam'%(minimumReadLength,maximumReadLength)])
-    
     ############################################################################################################
     """Creating infographic"""
     print(f"\033[1m\n{' QC Infographic ':=^{lineWidth}}\033[0m")
