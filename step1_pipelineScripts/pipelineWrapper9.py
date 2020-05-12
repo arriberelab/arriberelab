@@ -247,9 +247,9 @@ def parseArguments():
                         help='The outPrefix that all files produced will be named as.')
     # Optional Arguments: (None default here allows us to not pass anything that isn't given by user.
     #                      This helps to simplify settings.txt/default overwrites further down the line.)
-    parser.add_argument('-5', '--umi5', metavar='umi5', type=int, default=None,
+    parser.add_argument('--umi5', metavar='umi5', type=int, default=None,
                         help='The number of nucleotides to be trimmed from the 5prime end of reads.')
-    parser.add_argument('-3', '--umi3', metavar='umi3', type=int, default=None,
+    parser.add_argument('--umi3', metavar='umi3', type=int, default=None,
                         help='The number of nucleotides to be trimmed from the 3prime end of reads.')
     parser.add_argument('--minimumReadLength', '--min', type=int, default=None,
                         help='The shortest reads to be mapped to the genome.')
