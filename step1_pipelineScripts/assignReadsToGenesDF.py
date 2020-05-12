@@ -552,7 +552,8 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
         print(unassigned_all_chrs.head(10))
         unassigned_all_chrs.sort_values(by=['chr', 'chr_pos'], inplace=True)
         unassigned_all_chrs['HI:NH'] = unassigned_all_chrs.apply(lambda row:\
-                                                                 row['HI'].split(':')[-1] + row['NH'].split(':')[-1])
+                                                                 row['HI'].split(':')[-1] + row['NH'].split(':')[-1],
+                                                                 axis=1)
         unassigned_all_chrs.to_csv(f"{output_prefix}.unassignedReads.jelly",
                                    index=False, sep='\t',
                                    columns=jam_columns)
