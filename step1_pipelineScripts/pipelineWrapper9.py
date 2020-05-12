@@ -247,9 +247,9 @@ def parseArguments():
                         help='The outPrefix that all files produced will be named as.')
     # Optional Arguments: (None default here allows us to not pass anything that isn't given by user.
     #                      This helps to simplify settings.txt/default overwrites further down the line.)
-    parser.add_argument('--umi5', metavar='umi5', type=int, default=None,
+    parser.add_argument('-5', '--umi5', metavar='umi5', type=int, default=None,
                         help='The number of nucleotides to be trimmed from the 5prime end of reads.')
-    parser.add_argument('--umi3', metavar='umi3', type=int, default=None,
+    parser.add_argument('-3', '--umi3', metavar='umi3', type=int, default=None,
                         help='The number of nucleotides to be trimmed from the 3prime end of reads.')
     parser.add_argument('--minimumReadLength', '--min', type=int, default=None,
                         help='The shortest reads to be mapped to the genome.')
@@ -266,7 +266,7 @@ def parseArguments():
     parser.add_argument('--misMatchMax', metavar='misMatchMax', type=int, default=None,
                         help='Number of mismatches to tolerate during mapping.')
     # Flag Arguments: (just add these as tags to change pipeline functionality)
-    parser.add_argument('-u', '--keepNonUnique', action='store_true',
+    parser.add_argument('-k', '--keepNonUnique', action='store_true',
                         help="Boolean flag to allow non-unique reads in the final .jam file(s).")
     parser.add_argument('-j', '--outputJoshSAM', action='store_true',
                         help="Boolean flag to also output joshSAM format files in addition to the jam")
