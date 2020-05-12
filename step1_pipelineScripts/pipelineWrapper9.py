@@ -41,7 +41,6 @@ ABSOLUTE_DEFAULT_DICT = {'cores': 7, 'misMatchMax': 0,
                                       '--outFilterMatchNminOverLread 1 '
                                       '--outReadsUnmapped Fastx '
                                       '--outSJfilterOverhangMin 6 6 6 6',
-                         'regenerate': False,
                          'misMatchMax2': 3,
                          'optString2': f'--outFilterScoreMin 14 '
                                        f'--outFilterScoreMinOverLread 0.3 '
@@ -297,7 +296,7 @@ def parseSettings(settings,print_arguments=False,**other_kwargs):
     """
     Will loop through and replace variables that are None
     """
-    ##first, parse the settings file to a dictionary called settingsDict
+    # first, parse the settings file to a dictionary called settingsDict
     settingsDict={}
     with open(settings,'r') as f:
         for line in f:
@@ -308,7 +307,8 @@ def parseSettings(settings,print_arguments=False,**other_kwargs):
                     if len(line) == 2:
                         settingsDict[line[0]] = line[1]
                     else:
-                        print("\033[31;1m\nRemove pipes ('|') from settings file arguments (or rewrite parser)\n\033[0m")
+                        print("\033[31;1m\nRemove pipes ('|') from settings "
+                              "file arguments (or rewrite parser)\n\033[0m")
                         raise ImportError
     if print_arguments:
         print(f"\nSettings Arguments (file: '{settings}')")
