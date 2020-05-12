@@ -357,8 +357,8 @@ def assignReadsToGenes(sam_df_dict: CHR_DF_DICT, annot_df_dict: CHR_DF_DICT,
             #       will provide the advantage(?) of allowing unmapped reads through, meaning we can
             #       pass these into analysis or QC scripts as needed.
             sam_df_dict[chr_key] = df.merge(annot_df_dict[chr_key], how='left', on=['chr', 'chr_pos'])
-            unassigned_df_dict[chr_key] = sam_df_dict[chr_key][sam_df_dict[chr_key]['gene'].isnull]
-            sam_df_dict[chr_key] = sam_df_dict[chr_key][sam_df_dict[chr_key]['gene'].notnull]
+            unassigned_df_dict[chr_key] = sam_df_dict[chr_key][sam_df_dict[chr_key]['gene'].isnull()]
+            sam_df_dict[chr_key] = sam_df_dict[chr_key][sam_df_dict[chr_key]['gene'].notnull()]
             print(f"Chr-{chr_key:->4} genes assigned, read count="
                   f"{len(sam_df_dict[chr_key].index):>8}", end="")
             # If there are any unassigned reads, print this in the output
