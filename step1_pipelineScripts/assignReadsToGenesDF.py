@@ -357,8 +357,8 @@ def assignReadsToGenes(sam_df_dict: CHR_DF_DICT, annot_df_dict: CHR_DF_DICT,
             #       will provide the advantage(?) of allowing unmapped reads through, meaning we can
             #       pass these into analysis or QC scripts as needed.
             sam_df_dict[chr_key] = df.merge(annot_df_dict[chr_key], how='left', on=['chr', 'chr_pos'])
-            unassigned_df_dict[chr_key] = sam_df_dict[chr_key][sam_df_dict[chr_key]['gene'] == numpy_nan]
-            sam_df_dict[chr_key] = sam_df_dict[chr_key][sam_df_dict[chr_key]['gene'] != numpy_nan]
+            unassigned_df_dict[chr_key] = sam_df_dict[chr_key][sam_df_dict[chr_key]['gene'].isnull]
+            sam_df_dict[chr_key] = sam_df_dict[chr_key][sam_df_dict[chr_key]['gene'].notnull]
             print(f"Chr-{chr_key:->4} genes assigned, read count="
                   f"{len(sam_df_dict[chr_key].index):>8}", end="")
             # If there are any unassigned reads, print this in the output
@@ -469,8 +469,27 @@ def finalFixers(sam_df_dict: CHR_DF_DICT, **kwargs) -> CHR_DF_DICT:
     return sam_df_dict
 
 
-def outputToCSV(dataframe, outputprefix):
-    pass
+def filterByReadLength(jam_all_chrs: DataFrame, jam_columns: list, maxLength: int, minLength: int, output_prefix: str):
+    if minLength and maxLength:
+        # Create a dataframe copy with all of the too short/long reads
+        filter_out = jam_all_chrs[(jam_all_chrs['read_length'] > maxLength) | (jam_all_chrs['read_length'] < minLength)]
+        if len(filter_out.index) > 0:
+            print(f"\nFiltering out {len(filter_out.index)} reads shorter than {minLength}nts or longer "
+                  f"than {maxLength}nts to file: "
+                  f"{output_prefix}.tooShortOrLong.jelly (this will be in a jam format)")
+            # Output the jelly format for reads that are too short/long:
+            filter_out.to_csv(f"{output_prefix}.tooShortOrLong.jelly",
+                              index=False, sep='\t',
+                              columns=jam_columns)
+            # Overwrite the main dataframe to remove all the reads that were just written out to the jelly file:
+            jam_all_chrs = jam_all_chrs[(jam_all_chrs['read_length'] >= minLength) & \
+                                        (jam_all_chrs['read_length'] <= maxLength)]
+        else:
+            print(f"\nNo reads < {minLength}nts or > {maxLength}nts identified. "
+                  f"{output_prefix}.tooShortOrLong.jelly will not be generated")
+    else:
+        print(f"\nSkipping filtering of final read lengths...")
+    return jam_all_chrs
 
 
 def main(sam_file: str, annot_file: str, output_prefix: str,
@@ -539,25 +558,7 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
     ####################################################################################################################
     """Filter out and output reads that are too long or too short:"""
     ####################################################################################################################
-    if minLength and maxLength:
-        # Create a dataframe copy with all of the too short/long reads
-        filter_out = jam_all_chrs[(jam_all_chrs['read_length'] > maxLength) | (jam_all_chrs['read_length'] < minLength)]
-        if len(filter_out.index) > 0:
-            print(f"\nFiltering out {len(filter_out.index)} reads shorter than {minLength}nts or longer "
-                  f"than {maxLength}nts to file: "
-                  f"{output_prefix}.tooShortOrLong.jelly (this will be in a jam format)")
-            # Output the jelly format for reads that are too short/long:
-            filter_out.to_csv(f"{output_prefix}.tooShortOrLong.jelly",
-                              index=False, sep='\t',
-                              columns=jam_columns)
-            # Overwrite the main dataframe to remove all the reads that were just written out to the jelly file:
-            jam_all_chrs = jam_all_chrs[(jam_all_chrs['read_length'] >= minLength) &\
-                                        (jam_all_chrs['read_length'] <= maxLength)]
-        else:
-            print(f"\nNo reads < {minLength}nts or > {maxLength}nts identified. "
-                  f"{output_prefix}.tooShortOrLong.jelly will not be generated")
-    else:
-        print(f"\nSkipping filtering of final read lengths...")
+    jam_all_chrs = filterByReadLength(jam_all_chrs, jam_columns, maxLength, minLength, output_prefix)
     ####################################################################################################################
     
     ####################################################################################################################
