@@ -165,7 +165,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
         else:
             print('No file given for genomeDir2 or genomeAnnots2, skipping filter round of mapping...')
     else:
-        print('skipping filter round of mapping...')
+        print(f"\033[1m\n{' Skipping filterMapping ':=^{lineWidth}}\033[0m")
     
     ############################################################################################################
     """Commence read mapping"""
