@@ -36,7 +36,9 @@ from logJosh import Tee
 import datetime as dt
 
 # Absolute defaults are overwritten by the given settings file and any command line arguments given
-ABSOLUTE_DEFAULT_DICT = {'cores': 7, 'misMatchMax': 0,
+ABSOLUTE_DEFAULT_DICT = {'keepNonUnique': False, 'outputJoshSAM': False,
+                         'printArgs': False, 'filterMap': False, 'regenerate': False,
+                         'cores': 7, 'misMatchMax': 0,
                          'optString': '--outFilterScoreMinOverLread 1 '
                                       '--outFilterMatchNminOverLread 1 '
                                       '--outReadsUnmapped Fastx '
@@ -268,7 +270,7 @@ def parseArguments():
                         help="Boolean flag to allow non-unique reads in the final .jam file(s).")
     parser.add_argument('-j', '--outputJoshSAM', action='store_true',
                         help="Boolean flag to also output joshSAM format files in addition to the jam")
-    parser.add_argument('-p', '--print_arguments', action='store_true',
+    parser.add_argument('-p', '--printArgs', action='store_true',
                         help="Boolean flag to show how arguments are overwritten/accepted")
     parser.add_argument('-f', '--filterMap', action='store_true',
                         help="Boolean flag to perform filter mapping")
@@ -280,7 +282,7 @@ def parseArguments():
     # Quickly convert Namespace object to dictionary
     arg_dict = {arg: vars(args)[arg] for arg in vars(args)}
     
-    if arg_dict['print_arguments']:
+    if arg_dict['printArgs']:
         # Print arguments, specifies arguments which will not be passed in the arg_dict
         print("\nGiven Arguments (ArgParse):")
         for key, arg in arg_dict.items():
@@ -292,7 +294,7 @@ def parseArguments():
     arg_dict = {k: v for k, v in arg_dict.items() if v is not None and v}
     return arg_dict
 
-def parseSettings(settings,print_arguments=False,**other_kwargs):
+def parseSettings(settings,printArgs=False,**other_kwargs):
     """
     Will loop through and replace variables that are None
     """
@@ -310,7 +312,7 @@ def parseSettings(settings,print_arguments=False,**other_kwargs):
                         print("\033[31;1m\nRemove pipes ('|') from settings "
                               "file arguments (or rewrite parser)\n\033[0m")
                         exit()
-    if print_arguments:
+    if printArgs:
         print(f"\nSettings Arguments (file: '{settings}')")
         for key, arg in settingsDict.items():
             if not arg:
