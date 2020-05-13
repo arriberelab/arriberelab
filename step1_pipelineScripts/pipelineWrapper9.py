@@ -229,7 +229,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
     ############################################################################################################
     print('Making infographic')
     infoGraphQC2.main([outPrefix+'.allChrs.jam',minimumReadLength,maximumReadLength,-21,21,-30,12,outPrefix+'.qc'])
-    thecountReads.main([fastqFile, outPrefix])
+    thecountReads2.main([fastqFile, outPrefix])
 
 def parseArguments():
     """
