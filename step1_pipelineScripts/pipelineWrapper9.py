@@ -75,7 +75,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
         exit()
     
     # For printing headers:
-    lineWidth = 75
+    lineWidth = 85
     
     ############################################################################################################
     """Trim adaptor from reads and sort by desired length"""
