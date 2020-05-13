@@ -2,32 +2,25 @@
 """
 Joshua Arribere, July 25, 2014
 Mar 23, 2020: Converted to python 3
-April 2, 2020: Now accepts settings via a line-delimited txt file
+April 2, 2020: Now accepts settings via a txt file
 
-Input: settings.txt - a line-delimited settings file in the format:
-    adaptorSeq (raw sequence of adaptor)
-    minReadLength (min length after adaptor and UMI trimming)
-    maxReadLength (max length after adaptor and UMI trimming)
-    UMI5 (5' UMI length in nts)
-    UMI3 (3' UMI length in nts)
-    genomeDir (full path to genome directory)
-    genomeAnnots (full path to genome annotation file in gtf format)
-    cores (number of cores to use--ground control has 16 cores total)
-    misMatchMax (number of allowed mismatches)
-    optString (parameters for STAR run)
-    optional:
-        genomeDir2 (full path to genome directory for filter round of mapping)
-        genomeAnnots2 (full path to genome annotation file for filter mapping)
-        optString2 (parameters for filter mapping STAR run)
+Input:
+    inputReads.fastq - fastq file of reads
+    settings.txt - a line-delimited file with labels of the format:
+        adaptorSeq sequence
+        minimumReadLength length
+        maximumReadLength length
+        genomeDir /path/to/genome/directory/
+        gneomeAnnots /path/to/genome/directory/annots.gtf
+        umi5 length
+        umi3 length
+    outPrefix - prefix for all output files
 
-    inputReads.fastq - a fastq file of reads
-
-run as python3 pipelineWrapper8.py settings.txt inputReads.fastq outPrefix
+run as python3 pipelineWrapper8.py inputReads.fastq settings.txt [options] outPrefix
 """
 
-import sys, common, os, assignReadsToGenes4, readCollapser4, filterJoshSAMByReadLength, thecountReads
-import argparse
-import assignReadsToGenes5
+import sys, common, os, argparse, assignReadsToGenes4, assignReadsToGenes5
+import readCollapser4, filterJoshSAMByReadLength, thecountReads
 import infoGraphQC
 #import metaStartStop
 from logJosh import Tee
@@ -67,28 +60,21 @@ def parseSettings(settingsFile,adaptorSeq,minimumReadLength,\
         umi3=int(settingsDict['umi3'])
     ##
     return adaptorSeq,minimumReadLength,maximumReadLength,\
-        genomeDir,genomeAnnots,cores,misMatchMax,umi5,umi3,\
-        settingsDict['optString']
+        genomeDir,genomeAnnots,cores,misMatchMax,umi5,umi3
 
 def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     maximumReadLength,genomeDir,genomeAnnots,cores,misMatchMax,
     umi5,umi3):
     ##parse the settings file w/ override from the command line
     adaptorSeq,minimumReadLength,maximumReadLength,genomeDir,\
-        genomeAnnots,cores,misMatchMax,umi5,umi3,optString=\
+        genomeAnnots,cores,misMatchMax,umi5,umi3=\
         parseSettings(settings,adaptorSeq,minimumReadLength,\
         maximumReadLength,genomeDir,genomeAnnots,cores,\
         misMatchMax,umi5,umi3)
     ##
     
-    #Uncomment the following for filter round of mapping:
-    """
-    genomeDir2=setList[10]
-    genomeAnnots2=setList[11]
-    optString2=setList[12]
-    """
     ############################################################################################################
-    """First set some parameters-- all of this can be deleted if we're good""" 
+    """Some common adaptor sequences to use in settings file"""
     ############################################################################################################
     #adaptorSeq='CTGTAGGCACCATCAAT'#adaptor for Komili loc1 dataset (looks same as rachel's adaptor)
     #adaptorSeq='AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'#oJA126
@@ -98,10 +84,8 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     #adaptorSeq='TGGAATTCTCGGGTGCCAAGG'#hendriks 3'adaptor for Ribo-seq time course
     #adaptorSeq='AGATGACGGGAAATAAAAGACACGTGCTGAAGTCAA'#another possibility for nextSeq adaptor from NEB
     #adaptorSeq='AGATCGGAAGAGCACACGTCTGAACTCC'#possibly the nextSeq adaptor from NEB
-    # Atail
     #adaptorSeq='AAAAAAAAAAAAAAAAAA'
     #adaptorSeq='CTGTAGGCACCATCAA'#this is rachel's adaptor
-    
     ############################################################################################################
     
     print(f'adaptorseq: {adaptorSeq}\n'
@@ -165,7 +149,10 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     
     ##uncomment to do filter round of mapping
     """
-    misMatchMax2=0
+    misMatchMax2=3
+    genomeDir2 = #path to filter genome dir
+    genomeAnnots2 = #path to filter genome annots
+    
     print(f'performing filter round of mapping to {genomeDir2}')
     print(f'Only running on {cores} cores.')
     print(f'{misMatchMax2} mismatch max!')
@@ -186,7 +173,7 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
               f'--outFileNamePrefix {outPrefix}.trimmed.collapsed.mapped.filter'
               )
     #Now rewrite the read file to map from the unmapped reads
-    #readFile=outPrefix+'.trimmed.collapsed.mapped.filterUnmapped.out.mate1'
+    readFile=outPrefix+'.trimmed.collapsed.mapped.filterUnmapped.out.mate1'
     """
     
     ############################################################################################################
@@ -194,15 +181,14 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     ############################################################################################################
     print(f'Only running on {cores} cores.')
     print(f'{misMatchMax} mismatch max!')
-    """
-    optString= f'--outFilterScoreMin 14 ' \
-        f'--outFilterScoreMinOverLread 0.3 ' \
-        f'--outFilterMatchNmin 14 ' \
-        f'--outFilterMatchNminOverLread 0.3 ' \
+    
+    #optString for normal pipeline:
+    optString= f'--outFilterScoreMinOverLread 1 ' \
+        f'--outFilterMatchNminOverLread 1 ' \
         f'--outReadsUnmapped Fastx ' \
         f'--outFilterMismatchNmax {misMatchMax} ' \
         f'--outSJfilterOverhangMin 6 6 6 6'
-    """
+    
     print(f'Length/Score parameters: {optString}')
     os.system(f'STAR {optString} '
               f'--alignIntronMax 1 '
@@ -239,6 +225,19 @@ def main(fastqFile,settings,outPrefix,adaptorSeq,minimumReadLength,
     #print('Quitting early!!!'), sys.exit()
     
     ############################################################################################################
+    """Create .bam and .bai files"""
+    ############################################################################################################
+    picardPath = '/home/annie/programs/picard.jar'
+    print('Making BAM file')
+    #converting to .bam file
+    os.system('samtools view -S -b %s.finalMapped.Aligned.out.sam > %s.finalMapped.Aligned.out.bam' % (outPrefix, outPrefix))
+    #sort
+    os.system('samtools sort %s.finalMapped.Aligned.out.bam -o %s.finalMapped.Aligned.out.sorted.bam' % (outPrefix, outPrefix))
+    #index .bam file
+    print('Indexing BAM file')
+    os.system('samtools index %s.finalMapped.Aligned.out.sorted.bam' % (outPrefix))
+    
+    ############################################################################################################
     """Creating infographic"""
     ############################################################################################################
     print('Making infographic')
@@ -249,17 +248,17 @@ def parseArguments():
     """
     Still learning how to do argparse.
     """
-    parser=argparse.ArgumentParser(description='Wrapper for the handling of libraries starting from fastq files.')
-    parser.add_argument('fastqFile', help='The fastq file input')
-    parser.add_argument('settings', help='A text file containing a line-delimited input of adaptorSeq, genomeDir, and genomeAnnots.')
-    parser.add_argument('outPrefix', type=str, help='The outPrefix that all files produced will be named as.')
-    parser.add_argument('--umi5', type=int, default=None, help='The number of nucleotides to be trimmed from the 5prime end of reads.')
-    parser.add_argument('--umi3', type=int, default=None, help='The number of nucleotides to be trimmed from the 3prime end of reads.')
-    parser.add_argument('--minimumReadLength','--min', type=int, default=None, help='The shortest reads to be mapped to the genome.')
-    parser.add_argument('--maximumReadLength','--max', type=int, default=None, help='The longest reads to be mapped to the genome.')
-    parser.add_argument('--adaptorSeq','--adaptor', type=str, default=None, help='3\' adaptor to be trimmed off.')
+    parser=argparse.ArgumentParser(description='Wrapper for handling libraries starting from fastq files.')
+    parser.add_argument('fastqFile', help='Input reads in fastq format.')
+    parser.add_argument('settings', help='Line-delimited text file with adaptorSeq, genomeDir, genomeAnnots, 5\' UMI, and 3\' UMI.')
+    parser.add_argument('outPrefix', type=str, help='Prefix to name all output files.')
+    parser.add_argument('--umi5', type=int, default=None, help='Number of nts to trim from the 5\' end of reads.')
+    parser.add_argument('--umi3', type=int, default=None, help='Number of nts to trim from 3\' end of reads.')
+    parser.add_argument('--minimumReadLength','--min', type=int, default=None, help='Shortest reads to map to the genome.')
+    parser.add_argument('--maximumReadLength','--max', type=int, default=None, help='Longest reads to map to the genome.')
+    parser.add_argument('--adaptorSeq','--adaptor', type=str, default=None, help='3\' adaptor to trim off.')
     parser.add_argument('--genomeDir', type=str, default=None, help='Genome directory where STAR index can be found.')
-    parser.add_argument('--genomeAnnots', type=str, default=None, help='Genome annotations (gtf format).')
+    parser.add_argument('--genomeAnnots', type=str, default=None, help='Genome annotations in gtf format.')
     parser.add_argument('--cores', type=int, default=7, help='Number of cores to use.')
     parser.add_argument('--misMatchMax', type=int, default=0, help='Number of mismatches to tolerate during mapping.')
     return parser.parse_args()

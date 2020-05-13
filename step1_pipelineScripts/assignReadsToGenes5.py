@@ -11,7 +11,7 @@ Input: annots.allChrs.txt - output of prepareReadAssignmentFile2.py
 Output: outPrefix.jam - Output will be just like input, but will include a
     last column with the gene at that position, if applicable.
 
-run as python assignReadsToGenes5.py annots.txt reads.jam outPrefix
+run as python assignReadsToGenes.py annots.txt reads.jam outPrefix
 """
 import sys, os, collections, csv, common, re, time, pickle, copy, linecache
 import pandas
