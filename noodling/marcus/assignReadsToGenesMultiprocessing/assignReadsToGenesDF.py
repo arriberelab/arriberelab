@@ -15,8 +15,10 @@ from argparse import ArgumentParser
 from re import findall
 from typing import Dict, Any
 
+from timeit import default_timer
 from numpy import nan as numpy_nan
 from pandas import set_option, read_csv, DataFrame, concat
+
 # Pandas default would cut off any columns beyond 5 so:
 set_option('display.max_rows', 50)
 set_option('display.max_columns', 20)
@@ -287,14 +289,14 @@ def recoverMappedPortion_dfWrapper(sam_df_dict: CHR_DF_DICT, print_rows: int = N
     
     def recoverMappedPortion_perRead(Cigar, Read):
         # April 15, 2020: Stolen verbatim (+ my comments) from assignReadsToGenes4.py
-
+        
         """Given a Cigar string and a Read, will return the sequence of the read that mapped to the genome."""
         # Edit Oct 10, 2013 to include skipped portions of reference sequence (introns)
-
+        
         # first process the CIGAR string
         cigarSplit = findall('(\d+|[a-zA-Z]+)', Cigar)  # RE func: matches sets of digits or letters
         cigarSplit = [[int(cigarSplit[ii]), cigarSplit[ii + 1]] for ii in range(0, len(cigarSplit), 2)]
-
+        
         # Then use that information to parse out nts of the read sequence
         mappedRead = ''
         ii = 0
@@ -375,7 +377,7 @@ def assignReadsToGenes(sam_df_dict: CHR_DF_DICT, annot_df_dict: CHR_DF_DICT,
                                             'read_seq',
                                             'gene',
                                             'gene_string']].head(print_rows))
-            
+                
             # TODO: some functionality to drop full df if nothing is assigned at all, this is only an issue when
             #       trying to work with a small slice of a annotations file for testing
         except KeyError as key:
@@ -394,6 +396,7 @@ def fixSenseNonsense(sam_df_dict: CHR_DF_DICT,
     
     Check for strand and sense/antisense, create rev-compliment as needed, and edits gene_string
     """
+    
     def revCompl(seq: str):
         """
         Stolen from assignReadsToGenes4.py
@@ -434,60 +437,89 @@ def fixSenseNonsense(sam_df_dict: CHR_DF_DICT,
     return sam_df_dict
 
 
-def outputToCSV(jam_file):
+def hitIndexAndHitNumber(sam_df_dict: CHR_DF_DICT,
+                         **kwargs) -> CHR_DF_DICT:
+    # Define the internal function to be used per DF line:
+    def parseHIandNH_perRead(HI: str, NH: str):
+        # Pull out everything after the last ':'
+        hit_index = HI.split(':')[-1]
+        number_of_hits = NH.split(':')[-1]
+        # This is marginally faster than f-string concatenation
+        HINH = hit_index + ':' + number_of_hits
+        return HINH
+    # Apply it to each chr DF:
+    for chr_key, df in sam_df_dict.items():
+        sam_df_dict[chr_key]['HI:NH'] = DataFrame(df.apply(lambda x: parseHIandNH_perRead(x['HI'], x['NH']),
+                                                           axis=1).tolist(), index=df.index)
+    return sam_df_dict
+
+
+def outputToCSV(dataframe, outputprefix):
     pass
 
 
 def main(sam_file: str, annot_file: str, output_prefix: str,
          print_rows: int = None, concatenate_output: bool = False,
          keep_non_unique: bool = False, **kwargs) -> None:
+    
+    start_time = default_timer()  # Timer
+    
+    # Load the read and annotation files into pandas DFs
     sam_df_dict = parseSamToDF(sam_file, **kwargs)
     annot_df_dict = parseAllChrsToDF(annot_file, **kwargs)
-    unassigned_df = DataFrame()
+    
+    end_of_imports = default_timer()  # Timer
+    
+    # TODO: This is currently a little chaotic with all of the steps/naming. The goal was for it to be readable, but...
     
     # Going for the df.merge() function for mapping annotations onto reads
-    annotated_sam_df_dict = assignReadsToGenes(sam_df_dict, annot_df_dict,
-                                     print_rows=print_rows, keep_non_unique=keep_non_unique, **kwargs)
+    annotated_sam_df_dict = assignReadsToGenes(sam_df_dict, annot_df_dict, print_rows=print_rows,
+                                               keep_non_unique=keep_non_unique, **kwargs)
+    
+    end_of_assignment = default_timer()  # Timer
     
     # Apply the recoverMappedPortion() to dataframe to see how it does
-    #  Currently doing this after dropping unassigned reads as this is a more time intensive step.
+    #  Currently doing this after dropping unassigned reads as it seems to be the time intensive step.
     fixed_annotated_sam_df_dict = recoverMappedPortion_dfWrapper(annotated_sam_df_dict, print_rows=print_rows, **kwargs)
     
-    jam_df_dict = fixSenseNonsense(fixed_annotated_sam_df_dict, print_rows=print_rows, **kwargs)
+    # Add the HitIndex:NumberOfHits column from the SAM HI and NH columns
+    final_annotated_sam_df_dict = hitIndexAndHitNumber(fixed_annotated_sam_df_dict, **kwargs)
     
-    # Output to file
+    # Handle +/- and Sense/Antisense issues from SAM format
+    jam_df_dict = fixSenseNonsense(final_annotated_sam_df_dict, print_rows=print_rows, **kwargs)
+    
+    end_of_cleanup = default_timer()  # Timer
+    
+    # Output to file:
+    jam_columns = ['read_id',
+                      'chr',
+                      'chr_pos',
+                      'strand',
+                      'mapq',
+                      'cigar',
+                      'map_read_seq',
+                      'HI:NH',
+                      'gene',
+                      'gene_string']
     if not concatenate_output:
         for chr_key, df in jam_df_dict.items():
             jam_df_dict[chr_key].sort_values(by=['read_id', 'chr', 'chr_pos'])
             jam_df_dict[chr_key].to_csv(f"{output_prefix}.chr{chr_key}.jam",
                                         index=False, sep='\t',
-                                        columns=['read_id',
-                                                 'chr',
-                                                 'chr_pos',
-                                                 'strand',
-                                                 'mapq',
-                                                 'cigar',
-                                                 'map_read_seq',
-                                                 'NH', 'HI',
-                                                 'gene',
-                                                 'gene_string'])
+                                        columns=jam_columns)
     else:
         jam_all_chrs = concat(jam_df_dict.values(), ignore_index=True)
         jam_all_chrs.sort_values(by=['read_id', 'chr', 'chr_pos'])
         jam_all_chrs.to_csv(f"{output_prefix}.allChrs.jam",
                             index=False, sep='\t',
-                            columns=['read_id',
-                                     'chr',
-                                     'chr_pos',
-                                     'strand',
-                                     'mapq',
-                                     'cigar',
-                                     'map_read_seq',
-                                     'NH', 'HI',
-                                     'gene',
-                                     'gene_string'])
-    
-    print("\n\nDone?!")
+                            columns=jam_columns)
+    end_time = default_timer() # Timer
+    print(f"\n\nDone?!\n"
+          f"Total Time: {end_time - start_time:<6.2f}\n\t"
+          f"Imports:    {end_of_imports - start_time:<6.2f}\n\t"
+          f"Assignment: {end_of_assignment - end_of_imports:<6.2f}\n\t"
+          f"Clean Up:   {end_of_cleanup - end_of_assignment:<6.2f}\n\t"
+          f"Write:      {end_time - end_of_cleanup:<6.2f}")
 
 
 if __name__ == '__main__':

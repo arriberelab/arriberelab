@@ -1,13 +1,13 @@
 """
 John Kim April 8, 2020
 
-Script will return number of reads and percentages relative to the raw .fastq file that enters pipelineWrapper8.py
+Script will return number of reads and percentages relative to the raw .fastq file that enters pipelineWrapper9.py
  
 Input: reads.fastq, reads.trimmed.collapsed.fastq, reads.trimmed.tooShort.fastq, reads.trimmed.tooLong.fastq, reads.joshSAM  
 
 Output: outPrefix.summary.txt
  
-run as python3 thecountReads.py reads.fastq outPrefix
+run as python3 thecountReads2.py reads.fastq outPrefix
 """
 
 import os, sys

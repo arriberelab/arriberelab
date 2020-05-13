@@ -34,16 +34,16 @@ def parseAnnotationFile(annotFile):
                         ##for later
                         geneID=line[8].split('gene_id "')[1].\
                                     split('"')[0]
-                        geneVersion=line[8].\
-                                    split('gene_version "')[1].\
-                                    split('"')[0]
+                        #geneVersion=line[8].\
+                        #            split('gene_version "')[1].\
+                        #            split('"')[0]
                         #geneID=geneID+'.'+geneVersion
                         ##
                         txtID=line[8].split('transcript_id "')[1].\
                                     split('"')[0]
-                        txtVersion=line[8].\
-                                    split('transcript_version "')[1].\
-                                    split('"')[0]
+                        #txtVersion=line[8].\
+                        #            split('transcript_version "')[1].\
+                        #            split('"')[0]
                         #txtID=txtID+'.'+txtVersion
                         ##
                         if geneID not in aa:

@@ -1,26 +1,17 @@
-#adaptorSeq:
-CACTCGGGCACCAAGGAC
-#minReadLength:
-15
-#maxReadLength:
-34
-#5' UMI:
-4
-#3' UMI:
-6
-#genomeDir:
-/data14/parissa/genomes/200329_cerevisiae/
-#genomeAnnots:
-/data14/parissa/genomes/200329_cerevisiae/Saccharomyces_cerevisiae.R64-1-1.99.gtf
-#cores:
-10
-#misMatchMax:
-0
-#optSring:
---outFilterScoreMin 14 --outFilterScoreMinOverLread 0.3 --outFilterMatchNmin 14 --outFilterMatchNminOverLread 0.3 --outReadsUnmapped Fastx --outFilterMismatchNmax 0 --outSJfilterOverhangMin 6 6 6 6
-#genomeDir2 (filter mapping):
-
-#genomeAnnots2 (filter mapping):
-
-#optString2 (filter mapping)
-
+# Test settings file, argument names before the pipe ('|') must match the variable names within the pipeline wrapper.
+# Arguments given here can be overwritten by command line options when running the pipeline
+# Unused arguments can either be completly deleted or left blank
+adaptorSeq|CACTCGGGCACCAAGGAC
+minimumReadLength|15
+maximumReadLength|34
+umi5|4
+umi3|6
+genomeDir|/data14/parissa/genomes/200329_cerevisiae/
+genomeAnnots|/data14/parissa/genomes/200329_cerevisiae/Saccharomyces_cerevisiae.R64-1-1.99.gtf
+cores|
+misMatchMax|0
+optString|
+# Filter Mapping:
+genomeDir2|
+genomeAnnots2|
+optString2|

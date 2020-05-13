@@ -21,7 +21,7 @@ Input: annots.gtf - gtf-formatted annotations. Will also get output name from th
 
 Output: a txt file where each line contains a position on a chr, and the txts at that site
     as:
-        position|txt1:posRelStart:posRelStop:+\tgene:+\n
+        position\tgene:+\ttxt1:posRelStart:posRelStop|txt2:posRelStart:posRelStop|...
 
 run as python prepareReadAssignmentFile.py annots.gtf
 """
@@ -155,12 +155,12 @@ def writeOutput2(someDict,annotFileName):
                         pass
                     else:
                         if ct==0:
-                            f.write('%s_%s|'%(Chr,ii))
+                            f.write('%s_%s\t'%(Chr,ii))
                             ct+=1
                         elif ct!=0:
-                            f.write('\n%s_%s|'%(Chr,ii))
-                        for entry in dict1[ii]:
-                            f.write('%s\t'%entry)
+                            f.write('\n%s_%s\t'%(Chr,ii))
+                        temp='\t'.join([dict1[ii][0],'|'.join(dict1[ii][1:])])
+                        f.write('%s'%temp)
             except ValueError:
                 print(dict1)
                 pass
@@ -197,7 +197,8 @@ def positionReadsOnTxts(annots,readPositions,annotFileName):
                 if len(positionInfo)==0:#then it's not assignable to a single txt--maybe b/c no txts are annotated for that gene, or b/c they all lack a CDS annotation
                     pass#don't care about it if there's no CDS annotated for the txts
                 else:#then we've got a gene and at least one transcript
-                    positionInfo.append(gene_id+':'+txtStrand)
+                    #positionInfo.append(gene_id+':'+txtStrand)
+                    positionInfo.insert(0,gene_id+':'+txtStrand)
                     outputPositions[Chr][position]=positionInfo
             elif len(readPositions[Chr][position])>1:#then it's multiply mapping
                 pass
@@ -209,7 +210,7 @@ def positionReadsOnTxts(annots,readPositions,annotFileName):
     
     
     #If you already have a processed.p file. comment out 137 to 157, and uncomment 160 to 162.
-
+    
     print('Unpickling...')
     tempFile='.'.join(annotFileName.split('.')[:-1])+'.processed.p'
     with open(tempFile,'rb') as f:
@@ -219,12 +220,13 @@ def positionReadsOnTxts(annots,readPositions,annotFileName):
     ##now output .txt file
     #p=multiprocessing.Pool(len(outputPositions)) #do not do multiprocessing because it will max out memory
     #p.map(writeOutput,[(Chr,outputPositions[Chr],annotFileName) for Chr in outputPositions])
-    
+    """
     for Chr in outputPositions:
         if len(outputPositions[Chr])>0:
             print('Working on %s...'%(Chr))
             writeOutput((Chr,outputPositions[Chr],annotFileName))
             print('Finished %s.'%(Chr))
+    """
     #added this to see if I can later process everything in one pd DataFrame
     print('Working on all chromsome-file...')
     writeOutput2(outputPositions,annotFileName)
