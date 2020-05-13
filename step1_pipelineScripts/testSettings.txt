@@ -1,29 +1,17 @@
 # Test settings file, argument names before the pipe ('|') must match the variable names within the pipeline wrapper.
 # Arguments given here can be overwritten by command line options when running the pipeline
-# Unused arguments can either be completly deleted or left blank 
-#adaptorSeq:
+# Unused arguments can either be completly deleted or left blank
 adaptorSeq|CACTCGGGCACCAAGGAC
-#minReadLength:
 minimumReadLength|15
-#maxReadLength:
 maximumReadLength|34
-#5' UMI:
 umi5|4
-#3' UMI:
 umi3|6
-#genomeDir:
 genomeDir|/data14/parissa/genomes/200329_cerevisiae/
-#genomeAnnots:
 genomeAnnots|/data14/parissa/genomes/200329_cerevisiae/Saccharomyces_cerevisiae.R64-1-1.99.gtf
-#cores:
 cores|
-#misMatchMax:
 misMatchMax|0
-#optString:
 optString|
-#genomeDir2 (filter mapping):
+# Filter Mapping:
 genomeDir2|
-#genomeAnnots2 (filter mapping):
 genomeAnnots2|
-#optString2 (filter mapping)
 optString2|

@@ -12,7 +12,7 @@ Input: inFile.jam - .jam file
 
 Output: heatmap of reads per million
 
-run as python metaStartStopHeatMap.py inFile.jam 15 18 
+run as python metaStartStopHeatMap2.py inFile.jam 15 18 
     -10 50 -50 20 outPrefix
 """
 import sys, seaborn, matplotlib.pyplot

@@ -11,13 +11,13 @@ Output: two plots, one a histogram of readLength (x-axis) and read count
     (y-axis). Second plot will be readLength (x-axis) and fraction in
     frame (y-axis). Second plot will be a stacked bar graph.
 
-run as python readLengthAndPhasingAnalysis.py inFile.jam X Y
+run as python readLengthAndPhasingAnalysis2.py inFile.jam X Y
     outPrefix
 """
 import sys, common, pickle
 from logJosh import Tee
 import pandas
-import seaborn,matplotlib
+import seaborn, matplotlib
 
 def getFrame(txtList,index):
     """txtList is a list of txtInfo a la jam. Will

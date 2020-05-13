@@ -7,7 +7,7 @@ Input: reads.fastq, reads.trimmed.collapsed.fastq, reads.trimmed.tooShort.fastq,
 
 Output: outPrefix.summary.txt
  
-run as python3 thecountReads.py reads.fastq outPrefix
+run as python3 thecountReads2.py reads.fastq outPrefix
 """
 
 import os, sys

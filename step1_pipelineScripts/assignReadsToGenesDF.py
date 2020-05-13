@@ -111,7 +111,6 @@ def parseSamToDF(sam_file: str, keep_non_unique: bool = False,
         exit()
     else:
         print(f"\nParsing read file at: {sam_file}")
-        pass
     
     # Assign known order of datatypes for .SAM file, this helps to speed up parsing
     o = 'object'
@@ -209,7 +208,6 @@ def parseAllChrsToDF(annot_file: str,
         exit()
     else:
         print(f"\nParsing annotation file at: {annot_file}")
-        pass
     
     # Parse annotations file using pandas.read_csv function
     #   There is currently more work that can be front-loaded into this function call:
@@ -512,7 +510,7 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
     # Handle +/- and Sense/Antisense issues from SAM format
     post_sense_antisense_df_dict = fixSenseNonsense(post_map_df_dict, print_rows=print_rows, **kwargs)
     
-    # Use df.merge() function for mapping annotations onto reads
+    # Use df.merge() function for mapping annotations onto reads, also spits out unassigned reads
     assigned_df_dict, unassigned_df_dict = assignReadsToGenes(post_sense_antisense_df_dict, annot_df_dict,
                                                               print_rows=print_rows, **kwargs)
     

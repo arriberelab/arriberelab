@@ -27,10 +27,10 @@ run as python3 pipelineWrapper9.py inputReads.fastq settings.txt outPrefix
 
 # import sys, common
 import sys
-import os, readCollapser4, filterJamByReadLength, thecountReads
+import os, readCollapser4, filterJamByReadLength
 import argparse
-import assignReadsToGenesDF
-import infoGraphQC
+import assignReadsToGenesDF, thecountReads2
+import infoGraphQC2
 # import metaStartStop
 from logJosh import Tee
 import datetime as dt
@@ -228,7 +228,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
     print(f"\033[1m\n{' QC Infographic ':=^{lineWidth}}\033[0m")
     ############################################################################################################
     print('Making infographic')
-    infoGraphQC.main([outPrefix+'.allChrs.jam',minimumReadLength,maximumReadLength,-21,21,-30,12,outPrefix+'.qc'])
+    infoGraphQC2.main([outPrefix+'.allChrs.jam',minimumReadLength,maximumReadLength,-21,21,-30,12,outPrefix+'.qc'])
     thecountReads.main([fastqFile, outPrefix])
 
 def parseArguments():

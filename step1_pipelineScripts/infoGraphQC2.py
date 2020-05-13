@@ -13,11 +13,11 @@ Output: a file showing the metaStart, metaStop, fraction of reads of each
     read length in [lower,upper], and the fraction in frame for each read
     length
 
-run as python infoGraphQC.py file.jam lower upper upStart downStart upStop
+run as python infoGraphQC2.py file.jam lower upper upStart downStart upStop
     downStop outPrefix
 """
 import sys, common
-import metaStartStopHeatMap, readLengthAndPhasingAnalysis
+import metaStartStopHeatMap2, readLengthAndPhasingAnalysis2
 import seaborn, matplotlib, pandas
 from logJosh import Tee
 
@@ -87,7 +87,7 @@ def main(args):
     inFile,lowerBound,upperBound,upStart,downStart,upStop,downStop,\
         outPrefix=args[0:]
     ##first call the metaStartStop function
-    dfStart,dfStop=metaStartStopHeatMap.main([inFile,lowerBound,\
+    dfStart,dfStop=metaStartStopHeatMap2.main([inFile,lowerBound,\
         upperBound,upStart,downStart,upStop,downStop,'blah'])
     ##now call the readLengthAndPhasingAnalysis function
     df=readLengthAndPhasingAnalysis.main([inFile,lowerBound,upperBound,\
