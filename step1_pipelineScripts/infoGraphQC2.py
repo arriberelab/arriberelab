@@ -89,8 +89,8 @@ def main(args):
     ##first call the metaStartStop function
     dfStart,dfStop=metaStartStopHeatMap2.main([inFile,lowerBound,\
         upperBound,upStart,downStart,upStop,downStop,'blah'])
-    ##now call the readLengthAndPhasingAnalysis function
-    df=readLengthAndPhasingAnalysis.main([inFile,lowerBound,upperBound,\
+    ##now call the readLengthAndPhasingAnalysis2 function
+    df=readLengthAndPhasingAnalysis2.main([inFile,lowerBound,upperBound,\
         'blah'])
     ##now plot everything
     mkPlot(dfStart,dfStop,df,outPrefix)
