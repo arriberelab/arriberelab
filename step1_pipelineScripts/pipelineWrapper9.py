@@ -223,6 +223,21 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
               f"(file checked: {assignReadsOutput})\n\t"
               f"If this is not intended: use -r or --regenerate flag to regenerate all files.\n\t"
               f"\033[1mThis functionality does not take into account changes in run parameters!!\n\033[0m")
+        
+    ############################################################################################################
+    """Create .bam and .bai files"""
+    print(f"\033[1m\n{' Create .bam and .bai files ':=^{lineWidth}}\033[0m")
+    ############################################################################################################
+    print('Making BAM file')
+    # converting to .bam file
+    os.system(f'samtools view -S -b {outPrefix}.finalMapped.Aligned.out.sam > {outPrefix}.finalMapped.Aligned.out.bam')
+    # sort
+    os.system(
+        f'samtools sort {outPrefix}.finalMapped.Aligned.out.bam -o {outPrefix}.finalMapped.Aligned.out.sorted.bam')
+    # index .bam file
+    print('Indexing BAM file')
+    os.system(f'samtools index {outPrefix}.finalMapped.Aligned.out.sorted.bam')
+    
     ############################################################################################################
     """Creating infographic"""
     print(f"\033[1m\n{' QC Infographic ':=^{lineWidth}}\033[0m")
