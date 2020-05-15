@@ -59,7 +59,7 @@ def getReadLengthAndFrameInfo(inFile,X,Y):
         for line in f:
             if not line.startswith('@'):
                 line=line.strip().split('\t')
-                if line[7]=='1:1' and line[8].endswith(':S'):
+                if line[7]=='1:1' and line[8].endswith(':S') and len(line)>=10:
                     frame=getFrame(line[9],1)
                     if frame!='na':
                         readLength=len(line[6])
