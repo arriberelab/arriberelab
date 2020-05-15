@@ -58,16 +58,17 @@ def parseJoshSAMToDataFrame(inFile,
         for line in f:
             if not line.startswith('@'):
                 line=line.strip().split('\t')
-                position=getPosition(line[9],startOrStop)
-                if position!='na' and line[8].endswith(':S'):
-                    readLength=len(line[6])
-                    if line[7]=='1:1' and line[3]=='-':
-                        if readLength in range(readLengthLower,
-                                               readLengthUpper+1):
-                            cntr+=1
-                            if position in range(leftBound,
-                                                 rightBound+1):
-                                df.loc[readLength,position]+=1
+                if len(line)>=10:
+                    position=getPosition(line[9],startOrStop)
+                    if position!='na' and line[8].endswith(':S'):
+                        readLength=len(line[6])
+                        if line[7]=='1:1' and line[3]=='-':
+                            if readLength in range(readLengthLower,
+                                                   readLengthUpper+1):
+                                cntr+=1
+                                if position in range(leftBound,
+                                                     rightBound+1):
+                                    df.loc[readLength,position]+=1
     #now normalize to make rpm
     norm=float(cntr)/1000000.
     for ii in range(readLengthLower,readLengthUpper+1):
