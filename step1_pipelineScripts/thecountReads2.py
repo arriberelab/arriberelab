@@ -45,7 +45,7 @@ def main(args):
         input_files[outPrefix][i] = 0 #initialize to 0
         filename = outPrefix+i
         
-        if i == '.jam':
+        if i == '.allChrs.jam':
             readCount = countSAMS(filename)
         elif i == '.trimmed.tooLong.selfDestruct.fastq' or '.trimmed.tooShort.selfDestruct.fastq' or '.trimmed.collapsed.selfDestruct.fastq':
             readCount = countTrimmed(filename)
