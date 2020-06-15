@@ -229,14 +229,11 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
     print(f"\033[1m\n{' Create .bam and .bai files ':=^{lineWidth}}\033[0m")
     ############################################################################################################
     print('Making BAM file')
-    # converting to .bam file
-    os.system(f'samtools view -S -b {outPrefix}.finalMapped.Aligned.out.sam > {outPrefix}.finalMapped.Aligned.out.bam')
-    # sort
-    os.system(
-        f'samtools sort {outPrefix}.finalMapped.Aligned.out.bam -o {outPrefix}.finalMapped.Aligned.out.sorted.bam')
+    # convert to .bam file and sort
+    os.system('samtools view -bS %s.finalMapped.Aligned.out.sam | samtools sort - %s'%(outPrefix, outPrefix))
     # index .bam file
     print('Indexing BAM file')
-    os.system(f'samtools index {outPrefix}.finalMapped.Aligned.out.sorted.bam')
+    os.system('samtools index %s.finalMapped.Aligned.out.sorted.bam'%(outPrefix))
     
     ############################################################################################################
     """Creating infographic"""
