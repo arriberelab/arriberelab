@@ -18,11 +18,11 @@ First goal will be to get a toy version of the chr_df_dict working with some sor
 import sys
 import os
 import multiprocessing as mp
-from argparse import ArgumentParser
 import timeit
-import json
 
 import matplotlib.pyplot as plt
+import json
+from multiprocessing import cpu_count
 
 import numpy as np
 from pandas import set_option, read_csv, DataFrame, concat, Series
@@ -102,14 +102,22 @@ if __name__ == '__main__':
     sp_speed_dict = {}
     total_lines = 10**6
     max_divisions = 24
-    min_divisions = 0
+    min_divisions = 5
+    sp_runs = 2
+
+    # Run {sp_runs} single processor runs to be used for an average
+    print(f"Running {sp_runs} single processor run(s) to average as a baseline:")
+    for i in range(sp_runs):
+        speed = one_by_one(chromosomes=i, length=total_lines)
+        sp_speed_dict[i] = speed
+        print(i+1, end=' ')
+    print()
+
+    print(f"Running multiprocessed runs, using {min_divisions} to {max_divisions} processors:")
     for n in range(max_divisions)[min_divisions:]:
         processes = n+1
         speed = all_at_once(chromosomes=processes, length=total_lines)
         mp_speed_dict[processes] = speed
-        speed = one_by_one(chromosomes=processes, length=total_lines)
-        sp_speed_dict[processes] = speed
-        # print(f'Finished {n} dataframes run.')
         print(processes, end=' ')
     print()
     for proc, speed in mp_speed_dict.items():
@@ -120,7 +128,30 @@ if __name__ == '__main__':
     sp_x = [int(x) for x in sp_speed_dict.keys()]
     sp_y = [float(y) for y in sp_speed_dict.values()]
     
-    with open('./mp_speeds.json', 'w') as mp_file:
-        json.dump(mp_speed_dict, mp_file)
-    with open('./sp_speeds.json', 'w') as sp_file:
-        json.dump(sp_speed_dict, sp_file)
+    # with open('./mp_speeds.json', 'w') as mp_file:
+    #     json.dump(mp_speed_dict, mp_file)
+    # with open('./sp_speeds.json', 'w') as sp_file:
+    #     json.dump(sp_speed_dict, sp_file)
+    #
+    # with open('./sp_speeds.json', 'r') as sp_file:
+    #     sp_speed_dict = json.load(sp_file)
+    # with open('./mp_speeds.json', 'r') as mp_file:
+    #     mp_speed_dict = json.load(mp_file)
+
+    ####################################################################################################################
+    # mp_x = [int(x) for x in mp_speed_dict.keys()]
+    # mp_y = [float(y) for y in mp_speed_dict.values()]
+    # sp_x = [int(x) for x in sp_speed_dict.keys()]
+    # sp_y = [float(y) for y in sp_speed_dict.values()]
+    sp_average = sum(sp_y)/len(sp_y)
+
+    fig, axs = plt.subplots(1, 1, sharey=True)
+    axs.set(title='Multiprocessed:\nOne process per DF',
+             ylabel=f'Time to process $10^{6}$ DF lines (seconds)',
+             xlabel=f'Number of DFs used to subdivide $10^{6}$ lines')
+    axs.axvline(cpu_count(), 0, 1, c='gray', ls='--', label=f'{cpu_count()} '
+                                                            f'core processor\n(ideal number of processes?)')
+    axs.axhline(sp_average, 0, 1, c='gray',)
+    axs.legend()
+    axs.plot(mp_x, mp_y, '.-')
+    plt.show()
