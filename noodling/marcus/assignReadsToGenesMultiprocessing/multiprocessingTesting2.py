@@ -101,9 +101,9 @@ if __name__ == '__main__':
     mp_speed_dict = {}
     sp_speed_dict = {}
     total_lines = 10**6
-    max_divisions = 24
-    min_divisions = 5
-    sp_runs = 2
+    max_divisions = 48
+    min_divisions = 0
+    sp_runs = 5
 
     # Run {sp_runs} single processor runs to be used for an average
     print(f"Running {sp_runs} single processor run(s) to average as a baseline:")
@@ -151,7 +151,7 @@ if __name__ == '__main__':
              xlabel=f'Number of DFs used to subdivide $10^{6}$ lines')
     axs.axvline(cpu_count(), 0, 1, c='gray', ls='--', label=f'{cpu_count()} '
                                                             f'core processor\n(ideal number of processes?)')
-    axs.axhline(sp_average, 0, 1, c='gray',)
+    axs.axhline(sp_average, 0, 1, c='blue', label=f'Average single processor time across {sp_runs} trial(s)')
     axs.legend()
     axs.plot(mp_x, mp_y, '.-')
     plt.show()
