@@ -331,7 +331,7 @@ def parseSettings(settings,printArgs=False,**other_kwargs):
                 print(f"\t{key} = {arg} -> (Will not be passed)")
             else:
                 print(f"\t{key} = {arg}")
-    settingsDict = {k: v for k, v in settingsDict.items() if v is not None and v is not ''}
+    settingsDict = {k: v for k, v in settingsDict.items() if v is not None and v != ''}
     return settingsDict
 
 def combineSettingsAndArguments():
@@ -365,7 +365,16 @@ def combineSettingsAndArguments():
     print('\n\033[0m\n')
     return finalArgDict
 
+
 if __name__ == '__main__':
-    Tee()
+    try:
+        if not sys.argv[1] == "-h":
+            print()
+            Tee()
+            print()
+        else:
+            print(f"\nHelp request passed, not logging this script call!\n")
+    except IndexError:
+        print(f"Nothing passed to PipelineWrapper.\nPlease add '-h' to your script call if you need help!\n")
     argument_dict = combineSettingsAndArguments()
     main(**argument_dict)
