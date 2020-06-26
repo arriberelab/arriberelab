@@ -25,7 +25,7 @@ run as python genePlotter.py [options] inFiles.txt chr left right outPrefix
 EDIT: Added option to plot as bar graph
 EDIT: 10/25/2016 - JOSH added option to highlight some features
 EDIT: 11/8/2016 - JOSH added option to plot heat map of read frames
-EDIT: Go to line 518 to change Y-axis
+EDIT: Go to line 521 to change Y-axis
 """
 import sys, common, csv, re, collections, os, pyx
 from random import shuffle
