@@ -230,10 +230,10 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
     ############################################################################################################
     print('Making BAM file')
     # convert to .bam file and sort
-    os.system('samtools view -bS %s.finalMapped.Aligned.out.sam | samtools sort - %s'%(outPrefix, outPrefix))
+    os.system(f'samtools view -bS {outPrefix}.finalMapped.Aligned.out.sam | samtools sort -o {outPrefix}.finalMapped.Alighed.out.sorted.bam')
     # index .bam file
     print('Indexing BAM file')
-    os.system('samtools index %s.finalMapped.Aligned.out.sorted.bam'%(outPrefix))
+    os.system(f'samtools index {outPrefix}.finalMapped.Aligned.out.sorted.bam')
     
     ############################################################################################################
     """Creating infographic"""
