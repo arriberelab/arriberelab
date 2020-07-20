@@ -4,21 +4,22 @@ Joshua Arribere, July 25, 2014
 Mar 23, 2020: Converted to python 3
 April 2, 2020: Now accepts settings via a line-delimited txt file
 
-Input: settings.txt - a line-delimited settings file in the format:
-    adaptorSeq|(raw sequence of adaptor)
-    minimumReadLength|(min length after adaptor and UMI trimming)
-    maximumReadLength|(max length after adaptor and UMI trimming)
-    UMI5|(5' UMI length in nts)
-    UMI3|(3' UMI length in nts)
-    genomeDir|(full path to genome directory)
-    genomeAnnots|(full path to genome annotation file in gtf format)
-    cores|(number of cores to use--ground control has 16 cores total)
-    misMatchMax|(number of allowed mismatches)
-    optString|(parameters for STAR run)
-    optional:
-        genomeDir2|(full path to genome directory for filter round of mapping)
-        genomeAnnots2|(full path to genome annotation file for filter mapping)
-        optString2|(parameters for filter mapping STAR run)
+Input:
+    settings.txt - a line-delimited settings file in the format:
+        adaptorSeq|(raw sequence of adaptor)
+        minimumReadLength|(min length after adaptor and UMI trimming)
+        maximumReadLength|(max length after adaptor and UMI trimming)
+        UMI5|(5' UMI length in nts)
+        UMI3|(3' UMI length in nts)
+        genomeDir|(full path to genome directory)
+        genomeAnnots|(full path to genome annotation file in gtf format)
+        cores|(number of cores to use--ground control has 16 cores total)
+        misMatchMax|(number of allowed mismatches)
+        optString|(parameters for STAR run)
+        optional:
+            genomeDir2|(full path to genome directory for filter round of mapping)
+            genomeAnnots2|(full path to genome annotation file for filter mapping)
+            optString2|(parameters for filter mapping STAR run)
 
     inputReads.fastq - a fastq file of reads
 
