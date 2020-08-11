@@ -4,21 +4,22 @@ Joshua Arribere, July 25, 2014
 Mar 23, 2020: Converted to python 3
 April 2, 2020: Now accepts settings via a line-delimited txt file
 
-Input: settings.txt - a line-delimited settings file in the format:
-    adaptorSeq|(raw sequence of adaptor)
-    minimumReadLength|(min length after adaptor and UMI trimming)
-    maximumReadLength|(max length after adaptor and UMI trimming)
-    UMI5|(5' UMI length in nts)
-    UMI3|(3' UMI length in nts)
-    genomeDir|(full path to genome directory)
-    genomeAnnots|(full path to genome annotation file in gtf format)
-    cores|(number of cores to use--ground control has 16 cores total)
-    misMatchMax|(number of allowed mismatches)
-    optString|(parameters for STAR run)
-    optional:
-        genomeDir2|(full path to genome directory for filter round of mapping)
-        genomeAnnots2|(full path to genome annotation file for filter mapping)
-        optString2|(parameters for filter mapping STAR run)
+Input:
+    settings.txt - a line-delimited settings file in the format:
+        adaptorSeq|(raw sequence of adaptor)
+        minimumReadLength|(min length after adaptor and UMI trimming)
+        maximumReadLength|(max length after adaptor and UMI trimming)
+        UMI5|(5' UMI length in nts)
+        UMI3|(3' UMI length in nts)
+        genomeDir|(full path to genome directory)
+        genomeAnnots|(full path to genome annotation file in gtf format)
+        cores|(number of cores to use--ground control has 16 cores total)
+        misMatchMax|(number of allowed mismatches)
+        optString|(parameters for STAR run)
+        optional:
+            genomeDir2|(full path to genome directory for filter round of mapping)
+            genomeAnnots2|(full path to genome annotation file for filter mapping)
+            optString2|(parameters for filter mapping STAR run)
 
     inputReads.fastq - a fastq file of reads
 
@@ -229,13 +230,8 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
     print(f"\033[1m\n{' Create .bam and .bai files ':=^{lineWidth}}\033[0m")
     ############################################################################################################
     print('Making BAM file')
-    # # converting to .bam file
-    # os.system(f'samtools view -S -b {outPrefix}.finalMapped.Aligned.out.sam > {outPrefix}.finalMapped.Aligned.out.bam')
-    # # sort
-    # os.system(
-    #     f'samtools sort {outPrefix}.finalMapped.Aligned.out.bam -o {outPrefix}.finalMapped.Aligned.out.sorted.bam')
-    os.system(f'samtools sort {outPrefix}.finalMapped.Aligned.out.sam -o {outPrefix}.finalMapped.Aligned.out.sorted.bam')
-    
+    # convert to .bam file and sort
+    os.system(f'samtools view -bS {outPrefix}.finalMapped.Aligned.out.sam | samtools sort -o {outPrefix}.finalMapped.Aligned.out.sorted.bam')
     # index .bam file
     print('Indexing BAM file')
     os.system(f'samtools index {outPrefix}.finalMapped.Aligned.out.sorted.bam')
@@ -371,6 +367,14 @@ def combineSettingsAndArguments():
     return finalArgDict
 
 if __name__ == '__main__':
-    Tee()
+    try:
+        if not sys.argv[1] == "-h":
+            print()
+            Tee()
+            print()
+        else:
+            print(f"\nHelp request passed, not logging this script call!\n")
+    except IndexError:
+        print(f"Nothing passed to PipelineWrapper.\nPlease add '-h' to your script call if you need help!\n")
     argument_dict = combineSettingsAndArguments()
     main(**argument_dict)
