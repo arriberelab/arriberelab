@@ -12,7 +12,8 @@ Input: annots.gtf - gtf formatted annotation file (used to get txt lengths)
 
 Output: Plot of metaStart, metaStop
 
-run as python3 metaStartStop.py annots.gtf outPrefix infile1.jam name1 ... infilen.jam namen
+run as python3 metaStartStop.py annots.gtf outPrefix infile1.jam name1 GeneList.txt
+Matt edited 8/31/20
 """
 import sys, common, csv, collections, numpy
 from logJosh import Tee
@@ -74,7 +75,7 @@ def metaAverage(metaDict, N):
             metaDict[key][position] = sum(metaDict[key][position]) / float(N)
 
 
-def getMetaStartStop(inFile, txtLengths, txtGroups, readLengthRestriction=None):
+def getMetaStartStop(inFile, txtLengths, txtGroups, nmdReadLength=None, readLengthRestriction=None):
     """Will get distribution of reads about start/stop codon. To do this it will first:
     (1) Add up the total number of reads mapping to each gene
     (2) Will find the normalization factor s.t. the mean read count across a gene per kb is 1
@@ -115,7 +116,14 @@ def getMetaStartStop(inFile, txtLengths, txtGroups, readLengthRestriction=None):
                         passed = False
                 else:
                     passed = True
-                    
+                if nmdReadLength:
+                    if gene_id in nmdReadLength:
+                        passtwo = True
+                    else:
+                        passtwo = False
+                else:
+                    passtwo = True
+                #print(passtwo)
                 for txt in assocTxts:
                     pipe = '|' #New joshSAMs have all isoforms listed. Chopping off everything except first listed isoform.
                     newcurr = txt.split(pipe,1)[0]
@@ -124,13 +132,13 @@ def getMetaStartStop(inFile, txtLengths, txtGroups, readLengthRestriction=None):
                     relStart = int(curr[1])
                     relStop = int(curr[2])
                     #SorAS = curr[3]
-                    if SorAS == 'S' and passed:
+                    if SorAS == 'S' and passed and passtwo:
                         if relStart % 3. == 0:
                             inFrame += 1
                         else:
                             outOfFrame += 1
                             
-                    if passed:
+                    if passed and passtwo:
                         # EDIT: Mar 30, 2015 Josh changed from plotting over entire read length to just 5' most end
                         """
                         for ii in range(readLength):
@@ -160,18 +168,18 @@ def processMeta(dict1, flip=0):
         return [(key, -dict1[key]) for key in a]
 
 
-def mkStartStopPlot(names, metaData, outPrefix):
+def mkStartStopPlot(names, metaData, nmdMetaData, outPrefix):
     """metaData={name:({'S':metaStartSense,'AS':metaStartAS},{'S':metaStopSense,'AS':metaStopAS})}.
     Will plot sense above x=0, antisense below x=0, Start plot on left and Stop plot on right"""
-    #print(metaData)
+    #print(nmdMetaData)
     #print(names)
     start = pyx.graph.graphxy(width=8, height=8,
-                              x=pyx.graph.axis.linear(min=-200, max=200,
+                              x=pyx.graph.axis.linear(min=-100, max=100,
                                                       title='Position Relative to Start Codon'),
                               y=pyx.graph.axis.linear(title='Normalized Read Density'))
     stop = pyx.graph.graphxy(width=8, height=8, xpos=start.width * 1.1,
                              key=pyx.graph.key.key(pos='tr'),
-                             x=pyx.graph.axis.linear(min=-200, max=200,
+                             x=pyx.graph.axis.linear(min=-100, max=100,
                                                      title='Position Relative to Stop Codon'),
                              y=pyx.graph.axis.linkedaxis(start.axes["y"]))
     
@@ -188,6 +196,7 @@ def mkStartStopPlot(names, metaData, outPrefix):
         
         metaStopSense = processMeta(metaData[name][1]['S'])
         metaStopSense.sort()
+        #print(metaStopSense)
         stop.plot(pyx.graph.data.points(metaStopSense, x=1, y=2, title=name),
                   [pyx.graph.style.line([common.colors(ii)])])
         metaStopAS = processMeta(metaData[name][1]['AS'], flip=1)
@@ -195,17 +204,35 @@ def mkStartStopPlot(names, metaData, outPrefix):
         stop.plot(pyx.graph.data.points(metaStopAS, x=1, y=2, title=name),
                   [pyx.graph.style.line([common.colors(ii)])])
         
+        nmdMetaStopSense = processMeta(nmdMetaData[name][1]['S'])
+        nmdMetaStopSense.sort()
+        print(nmdMetaStopSense)
+        stop.plot(pyx.graph.data.points(nmdMetaStopSense, x=1, y=2, title=name),
+                  [pyx.graph.style.line([common.colors(ii)])])
+        
     c = pyx.canvas.canvas()
     c.insert(start)
     c.insert(stop)
     c.writePDFfile(outPrefix)
 
-
+def parseNMDgeneList(nmdList):
+    GeneList = []
+    with open(nmdList, 'r') as f:
+        freader = csv.reader(f)
+        for row in freader:
+            if not row in GeneList:
+                GeneList.append(row)
+    flattened = [val for sublist in GeneList for val in sublist]
+    WBGene = dict.fromkeys(flattened, 1)
+    return WBGene
 def main(args):
+    print('WARNING: Will break with multiple inFiles')
     annots, outPrefix = args[:2]
     inFiles = args[2::2]
     names = args[3::2]
-    #print(names)
+    nmdList = args[4]
+    nmdReadLength = parseNMDgeneList(nmdList)  
+    #print(nmdReadLength)
     # add a variable for read length restriction
     exactLength = None
     # exactLength=[28,29,30]
@@ -215,14 +242,21 @@ def main(args):
     txtLengths, cdsLengths, txtGroups = getLengths(annots)
     
     metaData = {}
+    nmdMetaData = {}
     for i in range(len(names)):
         name = names[i]
+        print(name)
         inFile = inFiles[i]
-        
         metaData[name] = getMetaStartStop(inFile, txtLengths, txtGroups, readLengthRestriction=exactLength)
-        #nmdMetaData[name] = getMetaStartStop(inFile, txtLengths, txtGroups, nmdRestriction, readLengthRestriction=exactLength) 
-    mkStartStopPlot(names, metaData, outPrefix)
-
+        nmdMetaData[name] = getMetaStartStop(inFile, txtLengths, txtGroups, nmdReadLength, readLengthRestriction=exactLength)
+        #print(nmdMetaData)
+    '''for i in range(len(names)):
+        name = names[i]
+        inFile = inFiles[i]
+        nmdMetaData[name] = getMetaStartStop(inFile, txtLengths, txtGroups, nmdRestriction, readLengthRestriction=exactLength) 
+    '''
+    mkStartStopPlot(names, metaData, nmdMetaData, outPrefix)
+    
 
 if __name__ == '__main__':
     Tee()
