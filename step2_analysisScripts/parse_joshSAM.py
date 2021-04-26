@@ -67,6 +67,7 @@ def getGeneReadCts(inFile,side=False,ligCorrect=False,antisenseOnly=False,senseO
     only be used if ligCorrect passed"""
     a=collections.defaultdict(float)
     with open(inFile,'r') as f:
+        f.readline()##skips the first line
         freader=csv.reader(f,delimiter='\t')
         for row in freader:
             if len(row)>5:# and row[3].startswith('G') and row[4]=='26':
@@ -81,15 +82,16 @@ def getGeneReadCts(inFile,side=False,ligCorrect=False,antisenseOnly=False,senseO
                     withinCDS=True#assumed true
                 
                 if withinCDS:
+                    geneID,strand=row[8].split(':')
                     if not antisenseOnly and not senseOnly:
-                        a[row[5]]+=ct
+                        a[geneID]+=ct
                     else:
                         if antisenseOnly:
-                            if row[-1].endswith('AS'):
-                                a[row[5]]+=ct
+                            if strand=='AS':
+                                a[geneID]+=ct
                         elif senseOnly:
-                            if row[-1].endswith('S') and (not row[-1].endswith('AS')):
-                                a[row[5]]+=ct
+                            if strand=='S':
+                                a[geneID]+=ct
     return dict(a)
 
 def getNormFactor(geneReadCts,txtLengths,txtGroups):
