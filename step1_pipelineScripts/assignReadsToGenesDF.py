@@ -615,7 +615,8 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
         #   Everything before the '.to_csv' is the filter action to only output unique reads
         adjustForJoshSAM(jam_all_chrs[jam_all_chrs['NH'].str.endswith(':1')]).to_csv(f"{output_prefix}.allChrs.joshSAM",
                                                                                      index=False, sep='\t',
-                                                                                     columns=joshSAM_columns)
+                                                                                     columns=joshSAM_columns,
+                                                                                     header=False)
     ####################################################################################################################
     
     end_time = default_timer()  # Timer
