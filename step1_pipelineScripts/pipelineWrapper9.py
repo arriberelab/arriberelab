@@ -240,7 +240,7 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
     """Creating infographic"""
     print(f"\033[1m\n{' QC Infographic ':=^{lineWidth}}\033[0m")
     ############################################################################################################
-    print('Making infographic')
+    print('Making infographic ')
     infoGraphQC2.main([outPrefix+'.allChrs.jam',minimumReadLength,maximumReadLength,-21,21,-30,12,outPrefix+'.qc'])
     thecountReads2.main([fastqFile, outPrefix])
 
