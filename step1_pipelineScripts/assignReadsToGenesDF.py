@@ -490,6 +490,30 @@ def filterByReadLength(jam_all_chrs: DataFrame, jam_columns: list, maxLength: in
     return jam_all_chrs
 
 
+def adjustForJoshSAM(jam_all_chrs: DataFrame) -> DataFrame:
+    """
+    4/26/2021     Parissa noticed that downstream files didn't work with the new joshSAM outputs
+    To fix this I am adjusting the data in the main dataframe as it's being outputted so that it
+    will look EXACTLY like the old joshSAM files
+    
+    The main issue seems to be with the gene and gene_string columns
+        old style:
+            gene column:        gene_id
+            gene_string col:    hit1:S/AS\thit2:S/AS
+        new (broken style):
+            gene column:        gene_id:S/AS
+            gene_string col:    hit1|hit2|hit3
+            
+    Plan:
+        Replace Pipe characters with SorAS+\t
+        
+    *Note: I think Matt also noticed this issue at one point... I said I would fix it and forgot to...
+    """
+    jam_all_chrs["gene_string"] = jam_all_chrs.apply(lambda row: row["gene_string"].replace("|", f":{row['gene'].split(':')[-1]}\t") + f":{row['gene'].split(':')[-1]}", axis=1)
+    jam_all_chrs["gene"] = jam_all_chrs.apply(lambda row: row["gene"].split(":")[0], axis=1)
+    return jam_all_chrs
+
+
 def main(sam_file: str, annot_file: str, output_prefix: str,
          print_rows: int = None, keep_non_unique: bool = False,
          output_joshSAM: bool = False, minLength: int = None,
@@ -581,17 +605,17 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
             # joshSAM files are organized based on the original SAM file (this info should be retained by the indexes)
             jam_all_chrs.sort_index(inplace=True)
             # Write joshSAM file with non-unique reads and unique reads >>>
-            jam_all_chrs.to_csv(f"{output_prefix}.redundantAndUnique.allChrs.joshSAM",
-                                index=False, sep='\t',
-                                columns=joshSAM_columns)
+            adjustForJoshSAM(jam_all_chrs).to_csv(f"{output_prefix}.redundantAndUnique.allChrs.joshSAM",
+                                                  index=False, sep='\t',
+                                                  columns=joshSAM_columns, header=False)
     if output_joshSAM:
         # joshSAM files are organized based on the original SAM file (this info should be retained by the indexes)
         jam_all_chrs.sort_index(inplace=True)
         # Write joshSAM file with only unique reads:
         #   Everything before the '.to_csv' is the filter action to only output unique reads
-        jam_all_chrs[jam_all_chrs['NH'].str.endswith(':1')].to_csv(f"{output_prefix}.allChrs.joshSAM",
-                                                                   index=False, sep='\t',
-                                                                   columns=joshSAM_columns)
+        adjustForJoshSAM(jam_all_chrs[jam_all_chrs['NH'].str.endswith(':1')]).to_csv(f"{output_prefix}.allChrs.joshSAM",
+                                                                                     index=False, sep='\t',
+                                                                                     columns=joshSAM_columns)
     ####################################################################################################################
     
     end_time = default_timer()  # Timer
