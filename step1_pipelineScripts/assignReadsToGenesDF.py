@@ -510,7 +510,9 @@ def adjustForJoshSAM(jam_all_chrs: DataFrame) -> DataFrame:
         
     *Note: I think Matt also noticed this issue at one point... I said I would fix it and forgot to...
     """
-    jam_all_chrs["gene_string"] = jam_all_chrs.apply(lambda row: row["gene_string"].replace("|", f":{row['gene'].split(':')[-1]}\t") + f":{row['gene'].split(':')[-1]}", axis=1)
+    jam_all_chrs["gene_string"] = jam_all_chrs.apply(lambda row:
+                                                     row["gene_string"].replace("|", f":{row['gene'].split(':')[-1]}\t")
+                                                     + f":{row['gene'].split(':')[-1]}", axis=1)
     jam_all_chrs["gene"] = jam_all_chrs.apply(lambda row: row["gene"].split(":")[0], axis=1)
     return jam_all_chrs
 
