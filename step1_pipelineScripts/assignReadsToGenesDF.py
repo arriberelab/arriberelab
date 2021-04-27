@@ -15,6 +15,7 @@ from sys import exit
 from argparse import ArgumentParser
 from re import findall
 from typing import Dict, Any
+from csv import QUOTE_NONE
 
 from timeit import default_timer
 from numpy import nan as numpy_nan
@@ -607,7 +608,8 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
             # Write joshSAM file with non-unique reads and unique reads >>>
             adjustForJoshSAM(jam_all_chrs).to_csv(f"{output_prefix}.redundantAndUnique.allChrs.joshSAM",
                                                   index=False, sep='\t',
-                                                  columns=joshSAM_columns, header=False)
+                                                  columns=joshSAM_columns, header=False,
+                                                  quoting=QUOTE_NONE, quotechar="", escapechar=" ")
     if output_joshSAM:
         # joshSAM files are organized based on the original SAM file (this info should be retained by the indexes)
         jam_all_chrs.sort_index(inplace=True)
@@ -616,7 +618,9 @@ def main(sam_file: str, annot_file: str, output_prefix: str,
         adjustForJoshSAM(jam_all_chrs[jam_all_chrs['NH'].str.endswith(':1')]).to_csv(f"{output_prefix}.allChrs.joshSAM",
                                                                                      index=False, sep='\t',
                                                                                      columns=joshSAM_columns,
-                                                                                     header=False)
+                                                                                     header=False,
+                                                                                     quoting=QUOTE_NONE, quotechar="",
+                                                                                     escapechar=" ")
     ####################################################################################################################
     
     end_time = default_timer()  # Timer
