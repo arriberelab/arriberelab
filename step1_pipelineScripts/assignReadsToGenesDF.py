@@ -493,7 +493,8 @@ def filterByReadLength(jam_all_chrs: DataFrame, jam_columns: list, maxLength: in
 
 def adjustForJoshSAM(jam_all_chrs: DataFrame) -> DataFrame:
     """
-    4/26/2021     Parissa noticed that downstream files didn't work with the new joshSAM outputs
+    4/26/2021     Marcus Viscardi
+    Parissa noticed that downstream files didn't work with the new joshSAM outputs
     To fix this I am adjusting the data in the main dataframe as it's being outputted so that it
     will look EXACTLY like the old joshSAM files
     
@@ -508,6 +509,12 @@ def adjustForJoshSAM(jam_all_chrs: DataFrame) -> DataFrame:
     Plan:
         Replace Pipe characters with SorAS+\t
         
+    Implementation issues:
+        Because the pandas .to_csv function uses the python csv writer tool we had to add spaces
+        to the internal tabs that separate mapped transcript ids in the gene_string column. This
+        shouldn't cause problems in downstream scripts, but if it does the python string method:
+        *transcript_id*.strip() will drop the spaces and make it look EXACTLY like the old joshSAMS.
+    
     *Note: I think Matt also noticed this issue at one point... I said I would fix it and forgot to...
     """
     jam_all_chrs["gene_string"] = jam_all_chrs.apply(lambda row:
