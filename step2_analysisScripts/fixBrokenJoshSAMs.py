@@ -15,11 +15,13 @@ THIS DOES NOT MEAN YOU SHOULD WRITE NEWER SCRIPTS TO USE joshSAMS FILES!!
     the line. So please do you're best to write anything new to work with
     the jam files. <3
 """
-from pandas import read_csv, DataFrame
-import argparse
+from pandas import read_csv
+from csv import QUOTE_NONE
+from argparse import ArgumentParser
+
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Wrapper for the handling of libraries starting from fastq files.')
+    parser = ArgumentParser(description='Wrapper for the handling of libraries starting from fastq files.')
     # Required Arguments:
     parser.add_argument('joshSAM_input', metavar='joshSAM_input',
                         type=str, help='joshSAM file from previous version of pipeline9 that were broken')
@@ -37,5 +39,5 @@ if __name__ == '__main__':
     
     # Save the file!!
     df.to_csv(f"{args.output_file}.joshSAM", sep="\t",
-              header=False, index=False, quotechar="")
+              header=False, index=False, quoting=QUOTE_NONE)
     print(f"Done! Look for your fixed joshSAM file at: {args.output_file}.joshSAM")
