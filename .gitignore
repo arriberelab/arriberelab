@@ -1,0 +1,17 @@
+# 4/27/2021     Marcus Viscardi
+# This file points to what types of files can be ignored
+#   and go untracked on our repo. Saving space when updating
+#   or making minor changes!
+
+# pycache is unessessary to track and changes every time any
+#   scripts are run
+__pychache__/
+
+# swp files come from people editing with vi/vim/nano/etc.
+*.swp
+
+# .idea directories come from pycharm
+.idea/
+
+# .pyc files show up when certain types of python files are run
+*.pyc
