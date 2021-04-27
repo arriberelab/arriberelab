@@ -31,11 +31,11 @@ if __name__ == '__main__':
     df = read_csv(args.joshSAM_input, sep="\t")
     print(f"Loaded joshSAM file from: {args.joshSAM_input}")
     # Add the :ASorS and replace pipe separators with tabs:
-    df["gene_string"] = df.apply(lambda row: str(row["gene_string"].replace("|", f":{row['gene'].split(':')[-1]}\t") + f":{row['gene'].split(':')[-1]}").strip("\""), axis=1)
+    df["gene_string"] = df.apply(lambda row: row["gene_string"].replace("|", f":{row['gene'].split(':')[-1]}\t") + f":{row['gene'].split(':')[-1]}", axis=1)
     # Remove the :ASorS from the gene IDs:
     df["gene"] = df.apply(lambda row: row["gene"].split(":")[0], axis=1)
     
     # Save the file!!
     df.to_csv(f"{args.output_file}.joshSAM", sep="\t",
-              header=False, index=False)
+              header=False, index=False, quotechar="")
     print(f"Done! Look for your fixed joshSAM file at: {args.output_file}.joshSAM")
