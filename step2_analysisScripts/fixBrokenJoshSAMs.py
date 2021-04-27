@@ -38,6 +38,8 @@ if __name__ == '__main__':
     df["gene"] = df.apply(lambda row: row["gene"].split(":")[0], axis=1)
     
     # Save the file!!
+    # This currently adds a space before the tabs within the transcript identities.
+    #   Annoyingly this was the only way to get the csv_writer to be okay with internal tabs!
     df.to_csv(f"{args.output_file}.joshSAM", sep="\t",
               header=False, index=False, quoting=QUOTE_NONE, quotechar="",  escapechar=" ")
     print(f"Done! Look for your fixed joshSAM file at: {args.output_file}.joshSAM")
