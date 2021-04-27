@@ -39,5 +39,5 @@ if __name__ == '__main__':
     
     # Save the file!!
     df.to_csv(f"{args.output_file}.joshSAM", sep="\t",
-              header=False, index=False, quoting=QUOTE_NONE)
+              header=False, index=False, quoting=QUOTE_NONE, quotechar="",  escapechar="\\")
     print(f"Done! Look for your fixed joshSAM file at: {args.output_file}.joshSAM")
