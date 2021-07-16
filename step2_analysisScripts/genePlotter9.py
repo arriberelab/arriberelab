@@ -448,6 +448,7 @@ def prepareReadsForBarGraph(blockList,leftBound,rightBound,readCt,strand='+'):
         ct=1.
         if strand=='+':
             position=block[0][0]
+            #position=block[-1][0]##this maps + strand reads by their 3'end
         elif strand=='-':
             position=block[-1][0]
             ct=-1
@@ -517,9 +518,9 @@ def plotBarGraph2(barGraphData,verticalPosition,Height,pixelPerNt):
     theMin=min([entry[1] for entry in barGraphData['-']])
     theMax=max([entry[1] for entry in barGraphData['+']])
     #comment out the below three lines to remove this
-    theMin=0
-    theMax=35
-    print('Min and Max ordinate scale hard-coded as %s and %s.'%(theMin,theMax))
+    #theMin=0
+    #theMax=190
+    #print('Min and Max ordinate scale hard-coded as %s and %s.'%(theMin,theMax))
     
     c=canvas.canvas()
     unit.set(defaultunit="pt")
@@ -696,7 +697,7 @@ def main(args):
                         [style.linestyle.dashed])
     pixelPerNt=float(plotWidth)/(rightBound-leftBound)
     #draw a scale bar
-    N=10#bps
+    N=15#bps
     c.fill(path.rect(plotWidth-N*pixelPerNt,0,pixelPerNt*N,5),[pyx.color.cmyk.black])
     c.text(plotWidth-(N/2.)*pixelPerNt,-5,'%s bp'%(N),[text.halign.boxcenter,text.valign.top])
     if os.path.isfile(readFiles):

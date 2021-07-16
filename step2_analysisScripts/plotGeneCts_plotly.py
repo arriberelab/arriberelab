@@ -1,6 +1,8 @@
 """
 Joshua Arribere, Jan 4, 2018
 Converted to python3: April 15, 2020
+Marcus Viscardi, July 16, 2021
+    Added plotly support, so that you can just highlight genes to see differences
 
 Script to plot select columns of a geneCt file, as output
     from median_normalizer
@@ -15,8 +17,7 @@ Input: inFile.geneCt - tab-delimited file of format:
 
 Output: scatter plot with myFavoriteGenes highlighted
 
-run as python3 plotGeneCts.py inFile.geneCt myFavoriteGenes.txt
-    outPrefix colName colName 
+run as python3 plotGeneCts_plotly.py inFile.geneCt outPrefix colName1 colName2
 """
 import sys, common, csv
 from logJosh import Tee
@@ -27,7 +28,7 @@ def parseGenes(myFavoriteGenes):
     with open(myFavoriteGenes,'r') as f:
         for line in f:
             line=line.strip().split('\t')
-            aa[line[0]]=line[1]
+            aa[line[0]]=common.parseGeneList(line[1])
     return aa
 
 def parseGeneCtFile(inFile,columns):
@@ -78,10 +79,11 @@ def mkScatterPlot(geneCts,counter,xAxis,yAxis,genesToHighlight):
     #highlight myFavoriteGenes
     ct=0
     for geneTuple in genesToHighlight:
-        gene=geneTuple[0]
-        point=[(geneCts[gene][xAxis],geneCts[gene][yAxis])]
+        #gene=geneTuple[0]
+        #point=[(geneCts[gene][xAxis],geneCts[gene][yAxis])]
+        point=[(geneCts[gene][xAxis],geneCts[gene][yAxis]) for gene in geneTuple[1] if gene in geneCts]
         g.plot(graph.data.points(point,x=1,y=2,
-            title=geneTuple[1]),
+            title=geneTuple[0]),
             [graph.style.symbol(graph.style.symbol.circle,
                 symbolattrs=[common.colors(ct),deco.filled],
                 size=0.05)])
@@ -112,16 +114,12 @@ def mkScatterPlots(geneCts,columns,genesToHighlight,outPrefix):
     #if you want to print genes in a specific read count range:
     yLib=columns[0]
     xLib=columns[1]
-    print('skipping printing...')
-    """
     for gene in geneCts:
         yval=geneCts[gene][yLib]
         xval=geneCts[gene][xLib]
-        if yval>10:
-            if xval>10:
-                if xval/yval>2:
-                    print (gene,xval,yval)
-    """
+        if yval>300:
+            if xval<300:
+                print (gene,yval,xval)
 
 def main(args):
     inFile,myFavoriteGenes,outPrefix=args[0:3]
@@ -134,6 +132,39 @@ def main(args):
     #plot the data
     mkScatterPlots(geneCts,columns,genesToHighlight,outPrefix)
 
+
+def pdParseGeneCtFile(inFile):
+    import pandas as pd
+    dataframe = pd.read_csv(inFile, sep="\t")
+    dataframe.rename(columns={"Unnamed: 0": "gene_id"}, inplace=True)
+    gene_name_df = pd.read_csv("../geneNames_and_WBGenes.tsv", sep="\t")
+    dataframe = dataframe.merge(gene_name_df[["gene_id", "gene_name"]], how="left")
+    dataframe["identity"] = dataframe["gene_id"] + " (" + dataframe["gene_name"] + ")"
+    return dataframe
+
+
+def plotlyMkScatterplots(geneCtDF, columns_to_plot):
+    import plotly.express as px
+    fig = px.scatter(geneCtDF,
+                     x=columns_to_plot[0], y=columns_to_plot[1],
+                     hover_name="identity")
+    fig.update_xaxes(type="log")
+    fig.update_yaxes(type="log")
+    fig.show()
+
+
+def main_plotly_and_pandas(args):
+    inFile,outPrefix=args[0:2]
+    columns_to_plot = args[2:]
+    df = pdParseGeneCtFile(inFile)
+    print(df.info())
+    plotlyMkScatterplots(df, columns_to_plot)
+
+
 if __name__=='__main__':
-    Tee()
-    main(sys.argv[1:])
+    # Tee()
+    # main(sys.argv[1:])
+    fake_args = ["/data16/anniec/working/200419_SJA246-248/200427_SJA246-248_S.geneCt",
+                 "test_out_prefix", "200210_SJA247Nugen", "200210_SJA246Nugen"]
+    main_plotly_and_pandas(fake_args)
+    
