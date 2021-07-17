@@ -85,11 +85,5 @@ def main_plotly_and_pandas(args):
 
 
 if __name__=='__main__':
-    # Tee()
-    # main(sys.argv[1:])
-    fake_args = ["/data16/anniec/working/200419_SJA246-248/200427_SJA246-248_S.geneCt",
-                 "test_out_prefix",
-                 "200210_SJA247Nugen", #"200210_SJA246Nugen",
-                 "200210_SJA248Nugen"]
-    main_plotly_and_pandas(fake_args)
-    
+    Tee()
+    main_plotly_and_pandas(sys.argv[1:])
