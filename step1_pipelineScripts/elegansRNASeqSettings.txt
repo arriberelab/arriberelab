@@ -1,0 +1,14 @@
+#210629 pipeline settings for elegans RNA-seq data from
+#the Arribere lab using the NEBNext library kit.
+#
+adaptorSeq|0
+minimumReadLength|50
+maximumReadLength|160
+umi5|0
+umi3|0
+genomeDir|/data14/parissa/genomes/210414_srf1004
+genomeAnnots|/data14/parissa/genomes/210414_srf1004/210414_srf1004Genome.gtf
+cores|8
+misMatchMax|6
+outputJoshSAM|True
+optString|--outFilterScoreMinOverLread 0 --outFilterMatchNminOverLread 0 --outFilterMatchNmin 0
