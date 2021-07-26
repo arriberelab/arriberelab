@@ -16,7 +16,7 @@ Input: inFile.geneCt - tab-delimited file of format:
 
 Output: scatter plot with myFavoriteGenes highlighted
 
-run as python3 plotGeneCts_plotly.py inFile.geneCt outPrefix colName1_y colName2_x
+run as python3 plotGeneCts_plotly.py inFile.geneCt outputFile(.pdf/.svg) colName1_y colName2_x
 """
 import sys
 from logJosh import Tee
@@ -39,7 +39,7 @@ def pdParseGeneCtFile(inFile):
     return dataframe
 
 
-def plotlyMkScatterPlot(geneCtDF, columns_to_plot):
+def plotlyMkScatterPlot(geneCtDF, output_file, columns_to_plot):
     import plotly.express as px
     fig = px.scatter(geneCtDF,
                      x=columns_to_plot[1], y=columns_to_plot[0],
@@ -51,15 +51,16 @@ def plotlyMkScatterPlot(geneCtDF, columns_to_plot):
     #                   selector=dict(mode='markers'))
     fig.update_xaxes(type="log")
     fig.update_yaxes(type="log")
+    fig.write_image(output_file)
     fig.show()
 
 
-def plotlyMkScatterPlots(geneCtDF, columns_to_plot):
+def plotlyMkScatterPlots(geneCtDF, output_file, columns_to_plot):
     from plotly.subplots import make_subplots
     import plotly.graph_objects as go
     
     if len(columns_to_plot) == 2:
-        plotlyMkScatterPlot(geneCtDF, columns_to_plot)
+        plotlyMkScatterPlot(geneCtDF, output_file, columns_to_plot)
     else:
         fig = make_subplots(rows=1, cols=len(columns_to_plot)-1)
         
@@ -78,17 +79,17 @@ def plotlyMkScatterPlots(geneCtDF, columns_to_plot):
             fig.update_yaxes(title_text=y_key,
                              type="log",
                              row=1, col=plot_num)
-        fig.update_layout(title_text="Customizing Subplot Axes",
+        fig.update_layout(title_text="Testing multi-plot",
                           showlegend=False)
         fig.show()
 
 
 def main_plotly_and_pandas(args):
-    inFile,outPrefix=args[0:2]
+    inFile,outFile=args[0:2]
     columns_to_plot = args[2:]
     df = pdParseGeneCtFile(inFile)
     print(df.info())
-    plotlyMkScatterPlots(df, columns_to_plot)
+    plotlyMkScatterPlots(df, outFile, columns_to_plot)
 
 
 if __name__ == '__main__':
