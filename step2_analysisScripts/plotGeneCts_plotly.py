@@ -18,17 +18,24 @@ Output: scatter plot with myFavoriteGenes highlighted
 
 run as python3 plotGeneCts_plotly.py inFile.geneCt outPrefix colName1 colName2
 """
-import sys, common, csv
+import sys
 from logJosh import Tee
+
+# Hardcoded path to the tsv file that has gene names & WBGene IDs:
+PATH_TO_GENE_CONVERTER = "../geneNames_and_WBGenes.tsv"
+ADD_GENE_NAME_FLAG = True
 
 
 def pdParseGeneCtFile(inFile):
     import pandas as pd
     dataframe = pd.read_csv(inFile, sep="\t")
-    dataframe.rename(columns={"Unnamed: 0": "gene_id"}, inplace=True)
-    gene_name_df = pd.read_csv("../geneNames_and_WBGenes.tsv", sep="\t")
-    dataframe = dataframe.merge(gene_name_df[["gene_id", "gene_name"]], how="left")
-    dataframe["identity"] = dataframe["gene_id"] + " (" + dataframe["gene_name"] + ")"
+    dataframe.rename(columns={dataframe.columns[1]: "gene_id"}, inplace=True)
+    if ADD_GENE_NAME_FLAG:
+        gene_name_df = pd.read_csv(PATH_TO_GENE_CONVERTER, sep="\t")
+        dataframe = dataframe.merge(gene_name_df[["gene_id", "gene_name"]], how="left")
+        dataframe["identity"] = dataframe["gene_name"] + " (" + dataframe["gene_id"] + ")"
+    else:
+        dataframe["identity"] = dataframe["gene_id"]
     return dataframe
 
 
@@ -84,6 +91,6 @@ def main_plotly_and_pandas(args):
     plotlyMkScatterPlots(df, columns_to_plot)
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     Tee()
     main_plotly_and_pandas(sys.argv[1:])
