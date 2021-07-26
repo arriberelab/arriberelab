@@ -16,7 +16,7 @@ Input: inFile.geneCt - tab-delimited file of format:
 
 Output: scatter plot with myFavoriteGenes highlighted
 
-run as python3 plotGeneCts_plotly.py inFile.geneCt outPrefix colName1 colName2
+run as python3 plotGeneCts_plotly.py inFile.geneCt outPrefix colName1_y colName2_x
 """
 import sys
 from logJosh import Tee
@@ -42,7 +42,7 @@ def pdParseGeneCtFile(inFile):
 def plotlyMkScatterPlot(geneCtDF, columns_to_plot):
     import plotly.express as px
     fig = px.scatter(geneCtDF,
-                     x=columns_to_plot[0], y=columns_to_plot[1],
+                     x=columns_to_plot[1], y=columns_to_plot[0],
                      hover_name="identity")
     # fig.update_traces(marker=dict(size=12, opacity=0.5, color='#696969',
     #                               line=dict(width=1,
