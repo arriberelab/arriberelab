@@ -29,7 +29,7 @@ ADD_GENE_NAME_FLAG = True
 def pdParseGeneCtFile(inFile):
     import pandas as pd
     dataframe = pd.read_csv(inFile, sep="\t")
-    dataframe.rename(columns={dataframe.columns[1]: "gene_id"}, inplace=True)
+    dataframe.rename(columns={dataframe.columns[0]: "gene_id"}, inplace=True)
     if ADD_GENE_NAME_FLAG:
         gene_name_df = pd.read_csv(PATH_TO_GENE_CONVERTER, sep="\t")
         dataframe = dataframe.merge(gene_name_df[["gene_id", "gene_name"]], how="left")
