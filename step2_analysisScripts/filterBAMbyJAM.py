@@ -15,17 +15,16 @@ The reason we need this script is because there are several
 Run:
     python3 filterBAMbyJAM.py path/to/bam path/to/jam path/to/new_bam
 """
-import pandas as pd
-import subprocess as sub
-import io
-import sys
-from collections import namedtuple
+from pandas import read_csv, DataFrame
+from subprocess import check_output, run
+from io import BytesIO
+from sys import argv
 from typing import NamedTuple
 
 
 class BamHeadersAndDf(NamedTuple):
     headers: str
-    df: pd.DataFrame
+    df: DataFrame
 
 
 def bam_to_df(bam_path) -> BamHeadersAndDf:
@@ -38,13 +37,13 @@ def bam_to_df(bam_path) -> BamHeadersAndDf:
     bam_dtypes_list = [o, i, chr_cat, i, i, o, o, i, i, o, o, o, o, o, o]
     bam_dtypes_dict = {i: bam_dtypes_list[i] for i in range(15)}
 
-    output = sub.check_output(f"samtools view {bam_path}", shell=True)
-    df = pd.read_csv(io.BytesIO(output),
-                     encoding='utf8',
-                     sep="\t",
-                     names=range(15),
-                     dtype=bam_dtypes_dict,
-                     )
+    output = check_output(f"samtools view {bam_path}", shell=True)
+    df = read_csv(BytesIO(output),
+                  encoding='utf8',
+                  sep="\t",
+                  names=range(15),
+                  dtype=bam_dtypes_dict,
+                  )
     df = df.rename(columns={0: 'read_id',
                             1: 'strand',
                             2: 'chr',
@@ -61,17 +60,17 @@ def bam_to_df(bam_path) -> BamHeadersAndDf:
                             13: 'AS',
                             14: 'nM'})
     
-    header = sub.check_output(f"samtools view -H {bam_path}", shell=True).decode("utf-8")
+    header = check_output(f"samtools view -H {bam_path}", shell=True).decode("utf-8")
     output = BamHeadersAndDf(header, df)
     return output
 
 
-def jam_to_df(jam_path) -> pd.DataFrame:
-    df = pd.read_csv(jam_path, sep="\t")
+def jam_to_df(jam_path) -> DataFrame:
+    df = read_csv(jam_path, sep="\t")
     return df
 
 
-def filter_bam_with_jam(bam_obj: BamHeadersAndDf, jam_df: pd.DataFrame) -> BamHeadersAndDf:
+def filter_bam_with_jam(bam_obj: BamHeadersAndDf, jam_df: DataFrame) -> BamHeadersAndDf:
     filtered_bam_df = bam_obj.df[bam_obj.df.read_id.isin(jam_df.read_id)].reset_index(drop=True)
     retained_headers = bam_obj.headers
     return BamHeadersAndDf(retained_headers, filtered_bam_df)
@@ -82,7 +81,7 @@ def save_bam_obj(bam_obj: BamHeadersAndDf, output_path: str):
     buffer = header + df.to_csv(sep="\t",
                                 header=False,
                                 index=False)
-    sub.run(f"samtools view -S -b - > {output_path}", input=buffer.encode('utf-8'), shell=True)
+    run(f"samtools view -S -b - > {output_path}", input=buffer.encode('utf-8'), shell=True)
 
 
 def main(bam_path, jam_path, output_path):
@@ -122,5 +121,5 @@ def troubleshoot_run():
 
 if __name__ == '__main__':
     # troubleshoot_run()
-    bam, jam, out = sys.argv[1:]
+    bam, jam, out = argv[1:]
     main(bam, jam, out)
