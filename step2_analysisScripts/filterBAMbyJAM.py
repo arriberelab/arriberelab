@@ -20,8 +20,12 @@ import subprocess as sub
 import io
 import sys
 from collections import namedtuple
+from typing import NamedTuple
 
-BamHeadersAndDf = namedtuple("BamHeadersAndDf", ["headers", "df"])
+
+class BamHeadersAndDf(NamedTuple):
+    headers: str
+    df: pd.DataFrame
 
 
 def bam_to_df(bam_path) -> BamHeadersAndDf:
@@ -113,7 +117,7 @@ def troubleshoot_run():
     main(test_bam_path, test_jam_path, test_output_path)
     test_finished = bam_to_df(test_output_path)
     print(test_finished.headers)
-    print(test_finished.df)
+    print(test_finished.df.info)
 
 
 if __name__ == '__main__':
