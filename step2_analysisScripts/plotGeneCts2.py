@@ -116,9 +116,11 @@ def mkScatterPlots(geneCts,columns,genesToHighlight,outPrefix):
     for gene in geneCts:
         yval=geneCts[gene][yLib]
         xval=geneCts[gene][xLib]
-        if yval>300:
-            if xval<300:
-                print (gene,yval,xval)
+        if yval>5000:
+            if xval<4000:
+                print(gene,xval,yval)
+                #if gene in genesToHighlight[0][1]:
+                #    print (gene,yval,xval)
 
 def main(args):
     inFile,myFavoriteGenes,outPrefix=args[0:3]
