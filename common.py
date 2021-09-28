@@ -143,7 +143,7 @@ def unPickle(file):
 
 
 def rePickle(obJect, file):
-    with open(file, 'w') as f:
+    with open(file, 'wb') as f:
         dump(obJect, f, protocol=2)
 
 
