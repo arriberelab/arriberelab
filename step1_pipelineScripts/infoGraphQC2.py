@@ -36,13 +36,13 @@ def mkPlot(dfStart,dfStop,df,outPrefix):
     ##plot the metaStart
     seaborn.heatmap(dfStart,ax=axs[0],cmap="YlGnBu",
         square=True,
-        linewidths=.5,
+        linewidths=.5,vmax=400,
         xticklabels=3,#makes the labels every 3 nts
         cbar=True,cbar_ax=cbar_ax)
     ##plot the metaStop
     seaborn.heatmap(dfStop,ax=axs[1],cmap="YlGnBu",
         square=True,
-        linewidths=.5,
+        linewidths=.5,vmax=400,
         xticklabels=3,#makes the labels every 3 nts
         cbar=True,cbar_ax=cbar_ax)
     ##plot the read length bar graph
