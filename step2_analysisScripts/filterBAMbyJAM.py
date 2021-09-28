@@ -3,7 +3,7 @@
 filterBAMbyJAM.py
 Marcus Viscardi,    September 08, 2021
 
-Simple script to load the bam from STAR and a final jam
+Simple script to load the bam file from STAR and a final jam
     file, then output a new filtered bam file.
 The reason we need this script is because there are several
     steps of read filtering that we do after the STAR step
