@@ -519,7 +519,7 @@ def plotBarGraph2(barGraphData,verticalPosition,Height,pixelPerNt):
     theMax=max([entry[1] for entry in barGraphData['+']])
     #comment out the below three lines to remove this
     #theMin=0
-    #theMax=190
+    #theMax=20
     #print('Min and Max ordinate scale hard-coded as %s and %s.'%(theMin,theMax))
     
     c=canvas.canvas()
@@ -697,7 +697,7 @@ def main(args):
                         [style.linestyle.dashed])
     pixelPerNt=float(plotWidth)/(rightBound-leftBound)
     #draw a scale bar
-    N=15#bps
+    N=10#bps
     c.fill(path.rect(plotWidth-N*pixelPerNt,0,pixelPerNt*N,5),[pyx.color.cmyk.black])
     c.text(plotWidth-(N/2.)*pixelPerNt,-5,'%s bp'%(N),[text.halign.boxcenter,text.valign.top])
     if os.path.isfile(readFiles):
