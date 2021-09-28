@@ -13,7 +13,7 @@ The reason we need this script is because there are several
     IGV!
 
 Run:
-    python3 filterBAMbyJAM.py path/to/bam path/to/jam path/to/new_bam
+    python3 filterBAMbyJAM.py path/to/bam path/to/jam output_path/to/new_bam
 """
 from pandas import read_csv, DataFrame
 from subprocess import check_output, run
