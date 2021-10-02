@@ -32,7 +32,11 @@ def mkPlot(dfStart,dfStop,df,outPrefix):
     fig,axs=matplotlib.pyplot.subplots(nrows=4,ncols=1,
         figsize=(6.4,4.8*2))
     ##set some parameters for the heatmap colorkey
-    cbar_ax = fig.add_axes([.81,.55,.03,.3],title='RPM')
+    cbar_ax = fig.add_axes([.86,  # x origin (was .81)
+                            .55,  # y origin
+                            .03,  # x width
+                            .3],  # y width
+                           title='RPM')
     ##plot the metaStart
     seaborn.heatmap(dfStart,ax=axs[0],cmap="YlGnBu",
         square=True,
