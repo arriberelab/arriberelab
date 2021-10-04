@@ -51,7 +51,8 @@ ABSOLUTE_DEFAULT_DICT = {'keepNonUnique': False, 'outputJoshSAM': False,
                                        f'--outFilterMatchNminOverLread 0.3 '
                                        f'--outReadsUnmapped Fastx '
                                        f'--outSJfilterOverhangMin 1000 1000 1000 1000 ',
-                         'genomeDir2': False, 'genomeAnnots2': False}
+                         'genomeDir2': False, 'genomeAnnots2': False,
+                         'heatmapWindows': [-21, 21, -30, 12]}
 
 
 def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
@@ -278,6 +279,9 @@ def parseArguments():
                         help='Number of cores to use.')
     parser.add_argument('--misMatchMax', metavar='misMatchMax', type=int, default=None,
                         help='Number of mismatches to tolerate during mapping.')
+    parser.add_argument('--heatmapWindows', nargs=4, metavar=('upStart', 'downStart', 'upStop', 'downStop'),
+                        help="Change the window sizes of the QC heatmaps that come out of the pipeline. This "
+                             "argument takes 4 values seperated by spaces: upStart downStart upStop downStop")
     # Flag Arguments: (just add these as tags to change pipeline functionality)
     parser.add_argument('-k', '--keepNonUnique', action='store_true',
                         help="Boolean flag to allow non-unique reads in the final .jam file(s).")
@@ -352,6 +356,11 @@ def combineSettingsAndArguments():
             finalArgDict[key] = True
         elif finalArgDict[key] == "False":
             finalArgDict[key] = False
+        elif key == "heatmapWindows":
+            if isinstance(arg, list):
+                finalArgDict[key] = list(map(int, arg))
+            else:
+                finalArgDict[key] = list(map(int, arg.split()))
         else:
             try:
                 finalArgDict[key] = int(arg)
