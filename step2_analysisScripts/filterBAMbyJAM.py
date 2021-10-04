@@ -13,7 +13,7 @@ The reason we need this script is because there are several
     IGV!
 
 Run:
-    python3 filterBAMbyJAM.py path/to/bam path/to/jam output_path/to/new_bam
+    python3 filterBAMbyJAM.py path/to/bam path/to/jam output_path/to/new_bam_name (no .bam)
 """
 from pandas import read_csv, DataFrame
 from subprocess import check_output, run
@@ -76,12 +76,15 @@ def filter_bam_with_jam(bam_obj: BamHeadersAndDf, jam_df: DataFrame) -> BamHeade
     return BamHeadersAndDf(retained_headers, filtered_bam_df)
 
 
-def save_bam_obj(bam_obj: BamHeadersAndDf, output_path: str):
+def save_sort_and_index_bam_obj(bam_obj: BamHeadersAndDf, output_path: str):
     header, df = bam_obj
     buffer = header + df.to_csv(sep="\t",
                                 header=False,
                                 index=False)
-    run(f"samtools view -S -b - > {output_path}", input=buffer.encode('utf-8'), shell=True)
+    # subprocess.run accepts the input param to pass to the bash call!
+    run(f"samtools view -S -b - | samtools sort -o {output_path}.sorted.bam",
+        input=buffer.encode('utf-8'), shell=True)
+    run(f'samtools index {output_path}.sorted.bam', shell=True)
 
 
 def main(bam_path, jam_path, output_path):
@@ -98,7 +101,7 @@ def main(bam_path, jam_path, output_path):
     print(f"Finished filtering reads based off content of JAM file\n"
           f"{new_bam.df.shape[0]:>15} reads passed\n")
     print(f"Started saving new BAM file. . .", end="\r")
-    save_bam_obj(new_bam, output_path)
+    save_sort_and_index_bam_obj(new_bam, output_path)
     print(f"Saved reads that passed to new BAM file at: {output_path}\n")
 
 
@@ -111,10 +114,10 @@ def troubleshoot_run():
                     "200716_JK_0043_N8_processed/" \
                     "200716_JK_0043_15-18.allChrs.jam"
     
-    test_output_path = "./deleteme2.bam"
+    test_output_path = "./deleteme2"
     
     main(test_bam_path, test_jam_path, test_output_path)
-    test_finished = bam_to_df(test_output_path)
+    test_finished = bam_to_df(test_output_path+".sorted.bam")
     print(test_finished.headers)
     print(test_finished.df.info)
 
