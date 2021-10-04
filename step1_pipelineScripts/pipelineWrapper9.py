@@ -58,7 +58,7 @@ ABSOLUTE_DEFAULT_DICT = {'keepNonUnique': False, 'outputJoshSAM': False,
 def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
          maximumReadLength, genomeDir, genomeAnnots, cores, misMatchMax,
          umi5, umi3, optString, filterMap, optString2, genomeDir2, genomeAnnots2, misMatchMax2,
-         keepNonUnique, outputJoshSAM, regenerate, **otherkwargs):
+         keepNonUnique, outputJoshSAM, regenerate, heatmapWindows, **otherkwargs):
     """
     Main: Does the work of the pipeline. Large number of parameters accepts input from combineSettingsAndArguments as a
     keyword dictionary
@@ -242,7 +242,8 @@ def main(fastqFile, settings, outPrefix, adaptorSeq, minimumReadLength,
     print(f"\033[1m\n{' QC Infographic ':=^{lineWidth}}\033[0m")
     ############################################################################################################
     print('Making infographic ')
-    infoGraphQC2.main([outPrefix+'.allChrs.jam',minimumReadLength,maximumReadLength,-21,21,-30,12,outPrefix+'.qc'])
+    upStart, downStart, upStop, downStop = heatmapWindows  # 10/04/21 MJV: Before these were inline as: -21,21,-30,12
+    infoGraphQC2.main([outPrefix+'.allChrs.jam',minimumReadLength,maximumReadLength,upStart,downStart,upStop,downStop,outPrefix+'.qc'])
     thecountReads2.main([fastqFile, outPrefix])
 
 def parseArguments():
