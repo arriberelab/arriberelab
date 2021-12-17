@@ -10,6 +10,8 @@ Either way the real goal here is to parse the *allChrs.txt annotation file into 
     use pandas to split the dataframe up into individual chromosomes. The advantage here will be to do the same with
     the reads, allowing us to parallelize each chromosome. Further splitting could be done within each chr. This avoids
     my major worry of trying to avoid memory conflicts while setting up multiprocessing.
+    
+Run w/ python3 parseAllChrstxtToDataframe.py pathTo.allChrs.txt
 """
 
 import argparse
