@@ -111,16 +111,18 @@ def mkScatterPlots(geneCts,columns,genesToHighlight,outPrefix):
     c.writePDFfile(outPrefix)
     
     #if you want to print genes in a specific read count range:
+    """
     yLib=columns[0]
     xLib=columns[1]
     for gene in geneCts:
         yval=geneCts[gene][yLib]
         xval=geneCts[gene][xLib]
-        if yval>5000:
-            if xval<4000:
-                print(gene,xval,yval)
-                #if gene in genesToHighlight[0][1]:
-                #    print (gene,yval,xval)
+        if yval>200:
+            if xval<40:
+                #print(gene,xval,yval)
+                if gene in genesToHighlight[0][1]:
+                    print (gene,yval,xval)
+    """
 
 def main(args):
     inFile,myFavoriteGenes,outPrefix=args[0:3]
