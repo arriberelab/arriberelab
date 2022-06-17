@@ -66,6 +66,7 @@ def plotlyMkScatterPlot(geneCtDF, output_file, columns_to_plot):
     fig.update_xaxes(type="log")
     fig.update_yaxes(type="log")
     fig.write_image(output_file)
+    fig.write_html(output_file + ".html")
     fig.show()
 
 
