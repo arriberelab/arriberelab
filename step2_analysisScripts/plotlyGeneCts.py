@@ -15,20 +15,20 @@ Input: inFile.geneCt - tab-delimited file of format:
         want to plot. By default, the first column name
         will be the y-axis for all plots
 
-Output: scatter plot with myFavoriteGenes highlighted
+Output: scatter plot with myFavoriteGenes highlighted, also it will spit out an HTML file that is interactive!
 
 run as:
-python3 plotGeneCts_plotly.py inFile.geneCt outputFile(.pdf/.svg) myFavWBGenes.txt [space seperated list of cols]
+python3 plotlyGeneCts.py inFile.geneCt outputFile(.pdf/.svg/.png) myFavWBGenes.txt [space seperated list of cols]
                                     First col will be the Y-axis for all, following will be X-axes^
 
 If you don't want to highlight any genes:
-    just write NONE instead of a path to a myFavGenes.txt file!
+    just write the word NONE instead of a path to a myFavGenes.txt file!
 """
-import sys
+import sys, os
 
 # Hardcoded path to the tsv file that has gene names & WBGene IDs:
 #   This file should get copied over by anyone that pulled this script from github!
-PATH_TO_GENE_CONVERTER = "../geneNames_and_WBGenes.tsv"
+PATH_TO_GENE_CONVERTER = f"{os.path.abspath(os.path.dirname(__file__))}/../geneNames_and_WBGenes.tsv"
 ADD_GENE_NAME_FLAG = True
 
 
@@ -47,7 +47,16 @@ def pdParseGeneCtFile(inFile, fav_genes_file_path):
         dataframe['fav_gene'] = False
 
     if ADD_GENE_NAME_FLAG:
-        gene_name_df = pd.read_csv(PATH_TO_GENE_CONVERTER, sep="\t")
+        try:
+            gene_name_df = pd.read_csv(PATH_TO_GENE_CONVERTER, sep="\t")
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Could not find the gene_id to gene_name converter file at: "
+                                    f"{PATH_TO_GENE_CONVERTER}\nThis should have been loaded with the github repo! "
+                                    f"But you may need to change the hardcoded path in this script.\n\t"
+                                    f"For example, on geneGenie you can change line 31 of this script to say:"
+                                    f"\n\t\tPATH_TO_GENE_CONVERTER = "
+                                    f"\"/data14/roton/scripts/arriberelab/geneNames_and_WBGenes.tsv\""
+                                    f"\n\tAnd this will solve the FileNotFoundError!")
         dataframe = dataframe.merge(gene_name_df[["gene_id", "gene_name"]], how="left")
         dataframe["identity"] = dataframe["gene_name"] + " (" + dataframe["gene_id"] + ")"
     else:
@@ -99,6 +108,8 @@ def plotlyMkScatterPlots(geneCtDF, output_file, columns_to_plot):
                              type="log",
                              row=1, col=plot_num)
         fig.update_layout(showlegend=False)
+        fig.write_image(output_file)
+        fig.write_html(output_file + ".html")
         fig.show()
 
 
