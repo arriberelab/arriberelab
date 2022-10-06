@@ -228,7 +228,7 @@ def parseAllChrsToDF(annot_file: str,
     
     # Split the chr_index column into two
     try:
-        annot_df[['chr', 'chr_pos']] = DataFrame(annot_df['chr'].str.split('_').values.tolist(),
+        annot_df[['chr', 'chr_pos']] = DataFrame(annot_df['chr'].str.rsplit('_', n=1).values.tolist(),
                                                  index=annot_df.index)
     except ValueError as error:
         with open(annot_file, 'r') as file:
