@@ -30,7 +30,7 @@ import sys, os
 #   This file should get copied over by anyone that pulled this script from github!
 PATH_TO_GENE_CONVERTER = f"{os.path.abspath(os.path.dirname(__file__))}/../geneNames_and_WBGenes.tsv"
 ADD_GENE_NAME_FLAG = True
-COLOR_PER_FAV_GENE = False
+COLOR_PER_FAV_GENE = True
 
 
 def pdParseGeneCtFile(inFile, fav_genes_file_path):
@@ -73,11 +73,25 @@ def pdParseGeneCtFile(inFile, fav_genes_file_path):
 def plotlyMkScatterPlot(geneCtDF, output_file, columns_to_plot):
     import plotly.express as px
     from plotly.colors import DEFAULT_PLOTLY_COLORS as DEFAULT_COLORS
+    
+    if COLOR_PER_FAV_GENE:
+        import itertools
+        default_colors_loop = itertools.cycle(DEFAULT_COLORS)
+        color_tool = geneCtDF['fav_gene'].replace({gene_id: next(default_colors_loop)
+                                                   for i, gene_id
+                                                   in enumerate(geneCtDF['fav_gene'].unique())})
+    else:
+        color_tool = geneCtDF['fav_gene'].replace({
+            True: DEFAULT_COLORS[1],
+            False: DEFAULT_COLORS[0]})
+    
     fig = px.scatter(geneCtDF,
                      x=columns_to_plot[1], y=columns_to_plot[0],
-                     color='fav_gene',
-                     color_discrete_sequence=DEFAULT_COLORS,
+                     color=color_tool,
+                     # color_discrete_sequence=DEFAULT_COLORS,
                      hover_name="identity")
+    if COLOR_PER_FAV_GENE:
+        fig.update_layout(showlegend=False)
     fig.update_xaxes(type="log")
     fig.update_yaxes(type="log")
     return fig
@@ -92,14 +106,24 @@ def plotlyMkScatterPlots(geneCtDF, output_file, columns_to_plot):
         fig = plotlyMkScatterPlot(geneCtDF, output_file, columns_to_plot)
     else:
         fig = make_subplots(rows=1, cols=len(columns_to_plot)-1)
-
+        
+        if COLOR_PER_FAV_GENE:
+            import itertools
+            default_colors_loop = itertools.cycle(DEFAULT_COLORS)
+            color_tool = geneCtDF['fav_gene'].replace({gene_id: next(default_colors_loop)
+                                                       for i, gene_id
+                                                       in enumerate(geneCtDF['fav_gene'].unique())})
+        else:
+            color_tool = geneCtDF['fav_gene'].replace({
+                                             True: DEFAULT_COLORS[1],
+                                             False: DEFAULT_COLORS[0]})
+        
         y_key = columns_to_plot[0]
         for plot_num, x_key in enumerate(columns_to_plot[1:]):
             plot_num += 1
             fig.add_trace(go.Scatter(x=geneCtDF[x_key], y=geneCtDF[y_key],
-                                     marker_color=geneCtDF['fav_gene'].replace({
-                                         True: DEFAULT_COLORS[1],
-                                         False: DEFAULT_COLORS[0]}),
+                                     # This is the error causer!
+                                     marker_color=color_tool,
                                      name=f"{x_key} vs {y_key}",
                                      mode="markers",
                                      hovertext=geneCtDF["identity"],
