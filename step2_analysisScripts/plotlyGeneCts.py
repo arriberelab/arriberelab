@@ -30,6 +30,7 @@ import sys, os
 #   This file should get copied over by anyone that pulled this script from github!
 PATH_TO_GENE_CONVERTER = f"{os.path.abspath(os.path.dirname(__file__))}/../geneNames_and_WBGenes.tsv"
 ADD_GENE_NAME_FLAG = True
+COLOR_PER_FAV_GENE = False
 
 
 def pdParseGeneCtFile(inFile, fav_genes_file_path):
@@ -40,9 +41,14 @@ def pdParseGeneCtFile(inFile, fav_genes_file_path):
     if fav_genes_file_path.lower() != 'none':
         # The following loads the list of fav genes
         fav_gene_list = pd.read_csv(fav_genes_file_path, names=['gene_id']).gene_id.to_list()
-        # Then this makes a column w/ True if the gene was in the favorites list
-        #   and False if not. We can then color everything by that!
-        dataframe['fav_gene'] = dataframe['gene_id'].isin(fav_gene_list)
+        if COLOR_PER_FAV_GENE:
+            # Marcus 11/11/22:
+            # This and the flag at the top of the file allows for a single color per fav gene
+            dataframe.loc[dataframe['gene_id'].isin(fav_gene_list), 'fav_gene'] = dataframe.gene_id
+        else:
+            # Then this makes a column w/ True if the gene was in the favorites list
+            #   and False if not. We can then color everything by that!
+            dataframe['fav_gene'] = dataframe['gene_id'].isin(fav_gene_list)
     else:
         dataframe['fav_gene'] = False
 
@@ -74,9 +80,7 @@ def plotlyMkScatterPlot(geneCtDF, output_file, columns_to_plot):
                      hover_name="identity")
     fig.update_xaxes(type="log")
     fig.update_yaxes(type="log")
-    fig.write_image(output_file)
-    fig.write_html(output_file + ".html")
-    fig.show()
+    return fig
 
 
 def plotlyMkScatterPlots(geneCtDF, output_file, columns_to_plot):
@@ -85,7 +89,7 @@ def plotlyMkScatterPlots(geneCtDF, output_file, columns_to_plot):
     from plotly.colors import DEFAULT_PLOTLY_COLORS as DEFAULT_COLORS
 
     if len(columns_to_plot) == 2:
-        plotlyMkScatterPlot(geneCtDF, output_file, columns_to_plot)
+        fig = plotlyMkScatterPlot(geneCtDF, output_file, columns_to_plot)
     else:
         fig = make_subplots(rows=1, cols=len(columns_to_plot)-1)
 
@@ -108,9 +112,9 @@ def plotlyMkScatterPlots(geneCtDF, output_file, columns_to_plot):
                              type="log",
                              row=1, col=plot_num)
         fig.update_layout(showlegend=False)
-        fig.write_image(output_file)
-        fig.write_html(output_file + ".html")
-        fig.show()
+    fig.write_image(output_file)
+    fig.write_html(output_file + ".html")
+    fig.show()
 
 
 def main_plotly_and_pandas(args):
