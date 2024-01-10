@@ -90,7 +90,10 @@ def getGeneCts(libsDict,outPrefix,SorAS,bounds=False,diffExp=False):
     writeGeneCtFile(outPrefix2,aa,genes)
     
     #Now run DESeq
-    rscriptLocation='/data16/joshua/scripts/'
+    # Added by Marcus on 1/9/2024, this will look for
+    #   the median_normalize_DESeq2.r script in the same
+    #   directory as this script!!
+    rscriptLocation = os.path.dirname(os.path.realpath(__file__))
     if not diffExp:
         os.system(f'Rscript {rscriptLocation}median_normalize_DESeq2.r '+outPrefix2+'.geneCt '+\
                   outPrefix2+'.conditions '+outPrefix2+'.libTypes '+outPrefix2+'.DESeqgeneCts')
