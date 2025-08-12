@@ -2,14 +2,15 @@
 converted to python 3 on 4/17/2020
 
 Joshua Arribere Oct 7, 2013
+Marcus Viscardi Jan 9, 2024 - At some point someone updated this to work with jam files rather than JoshSam
 
 Script to get gene counts for both Sense and Antisense-mapping reads separately, per gene.
     Will output gene ct file, and then run DESeq to median normalize the same file.
 
 Input: libsFile.txt - tab-delimited file of the format
-        name1   cond1    file1.joshSAM
+        name1   cond1    file1.jam
         ...
-        namen   condj   filen.joshSAM
+        namen   condj   filen.jam
     Here condi is used to combine all libraries from the same condition. e.g. L1 libraries or mutant libraries.
         condi can be any string. It will be used for DESeq, whereas namei will appear as the header in the outFile.
     relStart,relStop - two numbers that will be used to cutoff any reads that fall outside of these bounds.
@@ -89,13 +90,20 @@ def getGeneCts(libsDict,outPrefix,SorAS,bounds=False,diffExp=False):
     writeGeneCtFile(outPrefix2,aa,genes)
     
     #Now run DESeq
+<<<<<<< HEAD
     #rscriptLocation='/data15/joshua/github/200329_arribereLabPipeline/step2_analysisScripts/'
     rscriptLocation= '/data14/chloe/scripts/arribere_github/arriberelab/step2_analysisScripts/'
+=======
+    # Added by Marcus on 1/9/2024, this will look for
+    #   the median_normalize_DESeq2.r script in the same
+    #   directory as this script!!
+    rscriptLocation = os.path.dirname(os.path.realpath(__file__))
+>>>>>>> c082f6a2d514550d84c6d94d8a6ec29594df7fca
     if not diffExp:
-        os.system(f'Rscript {rscriptLocation}median_normalize_DESeq.r '+outPrefix2+'.geneCt '+\
+        os.system(f'Rscript {rscriptLocation}median_normalize_DESeq2.r '+outPrefix2+'.geneCt '+\
                   outPrefix2+'.conditions '+outPrefix2+'.libTypes '+outPrefix2+'.DESeqgeneCts')
     else:
-        os.system(f'Rscript {rscriptLocation}median_normalize_DESeq.r '+outPrefix2+'.geneCt '+\
+        os.system(f'Rscript {rscriptLocation}median_normalize_DESeq2.r '+outPrefix2+'.geneCt '+\
                   outPrefix2+'.conditions '+outPrefix2+'.libTypes '+outPrefix2+'.DESeqgeneCts 1')
     
     #Remove the useless intermediate files
