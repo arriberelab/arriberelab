@@ -89,7 +89,8 @@ def getGeneCts(libsDict,outPrefix,SorAS,bounds=False,diffExp=False):
     writeGeneCtFile(outPrefix2,aa,genes)
     
     #Now run DESeq
-    rscriptLocation='/data15/joshua/github/200329_arribereLabPipeline/step2_analysisScripts/'
+    #rscriptLocation='/data15/joshua/github/200329_arribereLabPipeline/step2_analysisScripts/'
+    rscriptLocation= '/data14/chloe/scripts/arribere_github/arriberelab/step2_analysisScripts/'
     if not diffExp:
         os.system(f'Rscript {rscriptLocation}median_normalize_DESeq.r '+outPrefix2+'.geneCt '+\
                   outPrefix2+'.conditions '+outPrefix2+'.libTypes '+outPrefix2+'.DESeqgeneCts')
