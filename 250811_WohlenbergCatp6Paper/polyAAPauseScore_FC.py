@@ -1,7 +1,7 @@
 """
 polyAAPauseScore_FC.py
 
-Modified from polyAAPauseScore.py
+Modified from polyAAPauseScore.py by ChatGPT to add log2FC plot 
 
 Features:
 - Input jam format: replicate\tcondition\tjamFile
