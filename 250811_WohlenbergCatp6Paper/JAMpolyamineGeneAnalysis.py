@@ -2,7 +2,7 @@
 Chloe Wohlenberg 3/23/24
 Python3
 
-Script to calculate a score representing the prediction of low vs high polyamine concentrations based on ribosome occupancy in different regions of polyamine synthesis genes
+Script to calculate a score representing the prediction of low vs high polyamine concentrations based on ribosome occupancy in different regions of polyamine synthesis genes. 
 
 Input:
 readsFile - path to library jam-formatted file
@@ -58,7 +58,7 @@ def getReads(readsFile, readSizes, offset):
 	##
 	return aa
 
-#now we want to sum the total number of reads in region1 vs region2. This is also modified from metaGeneForaBunchofPositions3.py
+#now we want to sum the total number of reads in region1 vs region2. This is also modified from metaGeneForaBunchofPositions3.py using help of ChatGPT
 def getRegionReads(reads_dict, gene_name,  start_region, end_region):
 	"""
 	reads_dict={positions:ct}, position is some number. Will get the read
